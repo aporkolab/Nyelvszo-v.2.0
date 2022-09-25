@@ -29,7 +29,6 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
-              "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/font-awesome/css/font-awesome.min.css"
             ],
             "scripts": []
@@ -96,7 +95,6 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
-              "./node_modules/bootstrap/dist/css/bootstrap.min.css",
               "./node_modules/font-awesome/css/font-awesome.min.css"
             ],
             "scripts": []
@@ -105,5 +103,7 @@
       }
     }
   },
-  "defaultProject": "nyelvszo2.0"
+  "cli": {
+    "analytics": "528515fa-c143-4318-9dd8-70a1837e0517"
+  }
 }

@@ -1,6 +1,6 @@
 import { User } from './../model/user';
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -16,7 +16,7 @@ export interface ILoginData {
   password?: string;
 }
 
-@Injectable({
+@Inject({
   providedIn: 'root',
 })
 export class AuthService {
