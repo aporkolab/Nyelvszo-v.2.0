@@ -21,6 +21,6 @@ import { FilterPipe } from '../pipe/filter.pipe';
     IconModule,
     FormsModule,
   ],
-  exports: [NgxDataTableComponent, FilterPipe, SorterPipe],
+  exports: [NgxDataTableComponent],
 })
 export class DataTableModule {}

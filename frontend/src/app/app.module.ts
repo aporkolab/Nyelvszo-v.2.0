@@ -20,6 +20,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfigService, IMenuItem } from './service/config.service';
 import { DataTableModule } from './data-table/data-table.module';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ DataTableModule,
       timeOut: 5000,
       extendedTimeOut: 3000,
     }),
+    FontAwesomeModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
