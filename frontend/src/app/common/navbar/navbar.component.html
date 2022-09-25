@@ -1,22 +1,30 @@
-<nav class="navbar navbar-light bg-light">
-	<div class="container-fluid">
-		<a class="navbar-brand" href="#">
-			<img src="../../../assets/img/famobase.svg" alt="" width="30" height="24" class="d-inline-block align-text-top">
-			FaMoBase
-		</a>
-		<ul class="nav nav-tabs">
-			<li class="nav-item">
-				<a class="nav-link active" aria-current="page" href="#">Active</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="#">Link</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="#">Link</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-			</li>
-		</ul>
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow b-example-divider">
+	<img class="navbar-brand col-md-4 col-lg-1 me-0 px-3 fs-6" src="../../../assets/img/logo_text.png">
+	<div
+		class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-flex flex-column flex-shrink-0 p-3 bg-light"
+		style="width: 280px;">
+		<!-- <div class="navbar-brand col-md-2 col-lg-1 me-0 px-3 fs-6">
+			<span class=" d-flex flex-column flex-shrink-0" *ngIf="(familyMember$ | async)">Welcome,
+				{{this.familyMember$.value?.first_name
+				+
+				' ' + this.familyMember$.value?.last_name}}! </span>
+			<span class="flex-column mb-auto" *ngIf="(familyMember$ | async)">Your level of the role: {{
+				this.familyMember$.value?.role}}. </span>
+			<br>
+			<span class="flex-column mb-auto" *ngIf="(familyMember$ | async)"
+				right>{{rightsOfAdmin(this.familyMember$.value?.role || 1)}}</span>
+		</div>
 	</div>
-</nav>
+	<div class="navbar-nav">
+		<div class="nav-item text-nowrap">
+			<a class="nav-link px-3" routerLink="/login">
+				<span *ngIf="(familyMember$ | async)">Sign out
+					<i-feather name="log-out"></i-feather>
+				</span>
+				<span *ngIf="!(familyMember$ | async)">Sign in
+					<i-feather name="log-in"></i-feather>
+				</span>
+			</a>
+		</div> -->
+	</div>
+</header>
