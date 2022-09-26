@@ -1,5 +1,5 @@
 <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow b-example-divider">
-	<img class="navbar-brand col-md-4 col-lg-1 me-0 px-3 fs-6" src="../../../assets/img/logo_text.png">
+	<img class="navbar-brand col-md-4 col-lg-1 me-0 px-3 fs-6" src="../../../assets/img/minlogo.png" width="25%">
 	<div
 		class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-flex flex-column flex-shrink-0 p-3 bg-light"
 		style="width: 280px;">
@@ -14,17 +14,18 @@
 			<span class="flex-column mb-auto" *ngIf="(familyMember$ | async)"
 				right>{{rightsOfAdmin(this.familyMember$.value?.role || 1)}}</span>
 		</div>
-	</div>
-	<div class="navbar-nav">
-		<div class="nav-item text-nowrap">
-			<a class="nav-link px-3" routerLink="/login">
-				<span *ngIf="(familyMember$ | async)">Sign out
-					<i-feather name="log-out"></i-feather>
-				</span>
-				<span *ngIf="!(familyMember$ | async)">Sign in
-					<i-feather name="log-in"></i-feather>
-				</span>
-			</a>
-		</div> -->
+	</div> -->
+		<div class="navbar-nav">
+			<div class="nav-item text-nowrap">
+				<a class="nav-link px-3" routerLink="/login">
+					<span *ngIf="(user$ | async)">Sign out
+						<i-feather name="log-out"></i-feather>
+					</span>
+					<span *ngIf="!(user$ | async)">Sign in
+						<i-feather name="log-in"></i-feather>
+					</span>
+				</a>
+			</div>
+		</div>
 	</div>
 </header>
