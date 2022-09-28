@@ -1,1 +1,62 @@
-<p>login works!</p>
+<body>
+	<div class="main-wrapper">
+
+		<div class="
+          auth-wrapper
+          d-flex
+          no-block
+          justify-content-center
+          align-items-center
+          bg-dark
+        ">
+			<div class="auth-box bg-dark border-top border-secondary">
+				<div id="loginform">
+					<div class="text-center pt-3 pb-3">
+						<span class="db"><img src="../../../assets/img/FaMoBase_login_logo.png" alt="logo" width="250" /></span>
+					</div>
+					<!-- Form -->
+					<form (ngSubmit)="onLogin()" #loginForm="ngForm" class="form-horizontal mt-3" id="loginform">
+						<div class="row pb-4">
+							<div class="col-12">
+								<div class="input-group mb-3">
+									<div class="input-group-prepend">
+										<span class="input-group-text bg-success text-white h-100" id="basic-addon1"><i
+												class="mdi mdi-account fs-4"></i></span>
+									</div>
+									<input [(ngModel)]="loginData.email" [email]="true" type="email" class="form-control form-control-lg"
+										placeholder="Email" name="email" aria-label="Email" aria-describedby="basic-addon1" [email]="true"
+										required>
+								</div>
+								<div [hidden]="loginForm.controls['email']?.valid" class="alert alert-danger" role="alert">
+									The email of the family member must be valid and unique!
+								</div>
+							</div>
+							<div class="input-group mb-3">
+								<div class="input-group-prepend">
+									<span class="input-group-text bg-warning text-white h-100" id="basic-addon2"><i
+											class="mdi mdi-lock fs-4"></i></span>
+								</div>
+								<input [(ngModel)]="loginData.password" type="password" class="form-control form-control-lg"
+									placeholder="Password" name="password" aria-label="Password" aria-describedby="basic-addon1" required
+									pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$">
+							</div>
+							<div [hidden]="loginForm.controls['password']?.valid" class="alert alert-danger" role="alert">
+								For security reasons, new the password of the family member must be minimum 8 characters, must
+								contains at least 1 letter and 1 number!
+							</div>
+						</div>
+						<div class="row border-top border-secondary">
+
+							<div class="text-center pt-3 pb-3 col-6">
+								<button class="btn btn-success float-end text-white" type="submit" [disabled]="loginForm.invalid"
+									*ngIf="loginForm.valid">
+									Login
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+
+			</div>
+		</div>
+	</div>

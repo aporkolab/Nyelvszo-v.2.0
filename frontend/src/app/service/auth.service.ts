@@ -38,6 +38,14 @@ export class AuthService {
       this.user$.next(loginObject.user);
     }
 
+  //   this.user$.subscribe({
+  //     next: (user) => {
+  //         // this.router.navigate(['/']);
+  //         this.access_token$.next('');
+  //         sessionStorage.removeItem('login');
+  //       }
+  //     }
+  // )}
     this.user$.subscribe({
       next: (user) => {
         if (user) {
@@ -50,6 +58,7 @@ export class AuthService {
       },
     });
   }
+  
 
   login(loginData: ILoginData): void {
     this.http.post<IAuthModel>(this.loginUrl, loginData).subscribe({

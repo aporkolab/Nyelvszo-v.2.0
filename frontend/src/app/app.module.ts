@@ -15,11 +15,16 @@ import { EntriesEditorComponent } from './page/entries-editor/entries-editor.com
 import { UsersComponent } from './page/users/users.component';
 import { UsersEditorComponent } from './page/users-editor/users-editor.component';
 import { IconModule } from './icon/icon.module';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfigService, IMenuItem } from './service/config.service';
 import { DataTableModule } from './data-table/data-table.module';
+import { PrefaceComponent } from './page/preface/preface.component';
+import { VersionhistoryComponent } from './page/versionhistory/versionhistory.component';
+import { ContactComponent } from './page/contact/contact.component';
+import { JwtInterceptor } from './service/jwt.interceptor';
+import { AuthService } from './service/auth.service';
 
 @NgModule({
   declarations: [
@@ -31,12 +36,15 @@ import { DataTableModule } from './data-table/data-table.module';
     EntriesComponent,
     EntriesEditorComponent,
     UsersComponent,
-    UsersEditorComponent
+    UsersEditorComponent,
+    PrefaceComponent,
+    VersionhistoryComponent,
+    ContactComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-DataTableModule,
+    DataTableModule,
     IconModule,
     HttpClientModule,
     CommonModule,
@@ -52,8 +60,16 @@ DataTableModule,
       extendedTimeOut: 3000,
     }),
   ],
-  providers: [],
-  bootstrap: [AppComponent]
+  exports: [FormsModule],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: JwtInterceptor,
+      deps: [AuthService],
+      multi: true,
+    },
+  ],
+  bootstrap: [AppComponent],
 })
 export class AppModule {   sidebar: IMenuItem[] = this.config.sidebarMenu;
 

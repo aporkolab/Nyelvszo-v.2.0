@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import {
   Home,
-  Film,
-  Video,
+  BookOpen,
+  FileText,
   User,
-  Cast,
+  MessageCircle,
   Calendar,
   Users,
   Youtube,
@@ -25,10 +25,10 @@ import {
 
 const icons = {
   Home,
-  Film,
-  Video,
+  BookOpen,
+  FileText,
   User,
-  Cast,
+  MessageCircle,
   Calendar,
   Users,
   Youtube,

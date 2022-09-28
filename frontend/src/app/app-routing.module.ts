@@ -6,9 +6,11 @@ import { RouterModule, Routes } from '@angular/router';
 import { ForbiddenComponent } from './page/forbidden/forbidden.component';
 import { HomeComponent } from './page/home/home.component';
 import { LoginComponent } from './page/login/login.component';
-
- import { AuthGuardService } from './service/auth-guard.service';
-  import { RoleGuardService } from './service/role-guard.service';
+import { AuthGuardService } from './service/auth-guard.service';
+import { RoleGuardService } from './service/role-guard.service';
+import { VersionhistoryComponent } from './page/versionhistory/versionhistory.component';
+import { PrefaceComponent } from './page/preface/preface.component';
+import { ContactComponent } from './page/contact/contact.component';
 
 
 
@@ -16,17 +18,25 @@ const routes: Routes = [  {
   path: '',
   component: HomeComponent,
 },
-{
-  path: '**',
-  component: HomeComponent,
-},
-{
-  path: '',
-  component: HomeComponent,
-},
+// {
+//   path: '**',
+//   component: HomeComponent,
+// },
 {
   path: 'login',
   component: LoginComponent,
+},
+{
+  path: 'versionhistory',
+  component: VersionhistoryComponent,
+},
+{
+  path: 'preface',
+  component: PrefaceComponent,
+},
+{
+  path: 'contact',
+  component:ContactComponent,
 },
 {
   path: 'forbidden',
@@ -35,10 +45,6 @@ const routes: Routes = [  {
 {
   path: 'entries',
   component: EntriesComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 1,
-  },
 },
 {
   path: 'users',

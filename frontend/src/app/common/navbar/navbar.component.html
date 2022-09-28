@@ -1,9 +1,9 @@
-<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow b-example-divider">
+<!-- <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow b-example-divider">
 	<img class="navbar-brand col-md-4 col-lg-1 me-0 px-3 fs-6" src="../../../assets/img/minlogo.png" width="25%">
 	<div
 		class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-flex flex-column flex-shrink-0 p-3 bg-light"
 		style="width: 280px;">
-		<!-- <div class="navbar-brand col-md-2 col-lg-1 me-0 px-3 fs-6">
+		<div class="navbar-brand col-md-2 col-lg-1 me-0 px-3 fs-6">
 			<span class=" d-flex flex-column flex-shrink-0" *ngIf="(familyMember$ | async)">Welcome,
 				{{this.familyMember$.value?.first_name
 				+
@@ -15,7 +15,7 @@
 				right>{{rightsOfAdmin(this.familyMember$.value?.role || 1)}}</span>
 		</div>
 	</div> -->
-		<div class="navbar-nav">
+<!-- <div class="navbar-nav">
 			<div class="nav-item text-nowrap">
 				<a class="nav-link px-3" routerLink="/login">
 					<span *ngIf="(user$ | async)">Sign out
@@ -28,4 +28,76 @@
 			</div>
 		</div>
 	</div>
+</header> -->
+
+<header>
+	<div class="px-3 py-2 text-bg-dark">
+		<div class="container">
+			<div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+				<a href="/" class="d-flex align-items-center my-2 my-lg-0 me-lg-auto text-white text-decoration-none">
+					<img class="bi me-2" width="100" height="100" role="img" src="../../../assets/img/minlogo.png"
+						aria-label="NyelvSzo">
+				</a>
+
+				<ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
+					<li>
+						<a [routerLink]="['/']" class="nav-link text-secondary">
+							<i-feather name="home"></i-feather>
+							Home
+						</a>
+					</li>
+					<li>
+						<a [routerLink]="['/preface']" routerLinkActive="active" class="nav-link text-white">
+							<i-feather name="book-open"></i-feather>
+							Preface
+						</a>
+					</li>
+					<li>
+						<a routerLink="/versionhistory" class="nav-link text-white">
+							<i-feather name="file-text"></i-feather>
+							Version history
+						</a>
+					</li>
+					<li>
+						<a [routerLink]="['/contact']" class="nav-link text-white">
+							<i-feather name="message-circle"></i-feather>
+							Contact
+						</a>
+					</li>
+					<!-- <li>
+						<a href="#" class="nav-link text-white">
+							<svg class="bi d-block mx-auto mb-1" width="24" height="24">
+								<use xlink:href="#people-circle"></use>
+							</svg>
+							Customers
+						</a>
+					</li> -->
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="px-3 py-2 border-bottom mb-3">
+		<div class="container d-flex flex-wrap justify-content-center">
+			<form class="col-12 col-lg-auto mb-2 mb-lg-0 me-lg-auto" role="search">
+				<input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+			</form>
+
+			<div>
+				<span class=" d-flex flex-column flex-shrink-0" *ngIf="(user$ | async)">Welcome,
+					{{this.user$.value?.firstName
+					+
+					' ' + this.user$.value?.lastName}}! </span>
+				<span class="flex-column mb-auto" *ngIf="(user$ | async)">Your level of the role: {{
+					this.user$.value?.role}}. </span>
+				<br>
+				<span class="flex-column mb-auto" *ngIf="(user$ | async)" right>{{rightsOfAdmin(this.user$.value?.role
+					|| 1)}}</span>
+			</div>
+			<button *ngIf="(user$ | async)" type="button" class="btn btn-light text-dark me-2">Sign out<i-feather
+					name="log-out"></i-feather></button>
+			<button *ngIf="!(user$ | async)" type="button" class="btn btn-light text-dark me-2">Sign in<i-feather
+					name="log-in"></i-feather></button>
+		</div>
+	</div>
+
 </header>
