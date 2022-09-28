@@ -1,0 +1,23 @@
+[
+  {
+    "firstName": "Ádám",
+    "lastName": "Dr. Porkoláb",
+    "email": "adam@porkolab.digital",
+    "role": 3,
+    "password": "tarara"
+  },
+  {
+    "firstName": "Tamás",
+    "lastName": "Dr. Fekete",
+    "email": "f.tamas@gmail.com",
+    "role": 3,
+    "password": "jelszo"
+  },
+  {
+    "firstName": "Mókus",
+    "lastName": "Minta",
+    "email": "minta@minta.hu",
+    "role": 3,
+    "password": "szilvasbuktat"
+  }
+]
