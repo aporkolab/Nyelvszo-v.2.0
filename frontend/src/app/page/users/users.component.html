@@ -1,1 +1,2 @@
-<p>users works!</p>
+<ngx-data-table *ngIf="list$ |async as list" [columns]="columns" [entity]="entity" [list]="list"
+	(selectOne)="onSelectOne($event)" (deleteOne)="onDeleteOne($event)"></ngx-data-table>

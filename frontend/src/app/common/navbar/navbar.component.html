@@ -47,6 +47,12 @@
 						</a>
 					</li>
 					<li>
+						<a [routerLink]="['/entries']" routerLinkActive="active" class="nav-link text-white">
+							<i-feather name="filter"></i-feather>
+							Search
+						</a>
+					</li>
+					<li>
 						<a [routerLink]="['/preface']" routerLinkActive="active" class="nav-link text-white">
 							<i-feather name="book-open"></i-feather>
 							Preface
@@ -64,14 +70,12 @@
 							Contact
 						</a>
 					</li>
-					<!-- <li>
-						<a href="#" class="nav-link text-white">
-							<svg class="bi d-block mx-auto mb-1" width="24" height="24">
-								<use xlink:href="#people-circle"></use>
-							</svg>
-							Customers
+					<li>
+						<a [routerLink]="['/users']" routerLinkActive="active" class="nav-link text-white">
+							<i-feather name="users"></i-feather>
+							Users
 						</a>
-					</li> -->
+					</li>
 				</ul>
 			</div>
 		</div>
@@ -95,8 +99,8 @@
 			</div>
 			<button *ngIf="(user$ | async)" type="button" class="btn btn-light text-dark me-2">Sign out<i-feather
 					name="log-out"></i-feather></button>
-			<button *ngIf="!(user$ | async)" type="button" class="btn btn-light text-dark me-2">Sign in<i-feather
-					name="log-in"></i-feather></button>
+			<button *ngIf="!(user$ | async)" type="button" class="btn btn-light text-dark me-2" [routerLink]="['/login']">Sign
+				in<i-feather name="log-in"></i-feather></button>
 		</div>
 	</div>
 

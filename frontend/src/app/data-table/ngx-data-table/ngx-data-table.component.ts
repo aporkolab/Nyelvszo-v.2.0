@@ -110,7 +110,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
   showInfoAboutSorting() {
     this.notifyService.showInfo(
       'Click the icons next to the column titles to sort the entire table by this column.',
-      'FaMoBase v.1.0.0'
+      'NyelvSzo v.2.0.0'
     );
   }
 

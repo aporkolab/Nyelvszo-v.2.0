@@ -11,7 +11,7 @@ import { NotificationService } from 'src/app/service/notification.service';
   styleUrls: ['./entries.component.scss']
 })
 export class EntriesComponent implements OnInit {
-  columns = this.config.movieTableColumns;
+  columns = this.config.entriesTableColumns;
   list$ = this.entryService.getAll();
   entity = 'Entry';
 

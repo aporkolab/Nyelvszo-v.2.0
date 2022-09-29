@@ -10,6 +10,6 @@ import { ConfigService } from './config.service';
 export class UserService extends BaseService<User> {
   constructor(http: HttpClient, config: ConfigService) {
     super(http, config);
-    this.entity = 'family-members';
+    this.entity = 'users';
   }
 }

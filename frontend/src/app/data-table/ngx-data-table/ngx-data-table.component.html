@@ -1,17 +1,27 @@
 <div class="searchField form-group">
-	<div class="row align-items-center">
-		<div class="col-12 select_container">
-
-			<label for="tableSearch">Keresés:</label>
-			<select [(ngModel)]="filterKey" id="tableSearch" class="form-control">
-				<option>Oszlopban..</option>
-				<option *ngFor="let key of columns">
-					{{ key.title }}
-				</option>
-			</select>
-		</div>
-		<div class="mb-3 input_container">
-			<input [(ngModel)]="phrase" type="text" class="form-control" placeholder="Search...">
+	<div class="s004">
+		<img src="../../../assets/img/logo.png" alt="NyelvSzo logo" id="logo">
+		<legend>WHAT ARE YOU LOOKING FOR?</legend>
+		<div class="row align-items-center">
+			<div class="col-12 select_container">
+				<label for="tableSearch">Keresés:</label>
+				<select [(ngModel)]="filterKey" id="tableSearch" class="form-control">
+					<option>Oszlopban..</option>
+					<option *ngFor="let key of columns">
+						{{ key.title }}
+					</option>
+				</select>
+			</div>
+			<div class="mb-3 input_container">
+				<input [(ngModel)]="phrase" type="text" class="form-control" placeholder="Search...">
+			</div>
+			<button class="btn-search" type="button">
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+					<path
+						d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z">
+					</path>
+				</svg>
+			</button>
 		</div>
 	</div>
 </div>
@@ -29,7 +39,8 @@
 		</td>
 	</tr>
 	<div>
-		<button *ngIf="this.auth.user$.value?.role === 3" [routerLink]="'edit/0'" class="btn btn-success col-12">Add a new
+		<button *ngIf="this.auth.user$.value?.role === 3" [routerLink]="'edit/0'" class="btn btn-success col-12">Add a
+			new
 			{{ entity }} <i-feather name="user-plus">
 			</i-feather></button>
 	</div>
@@ -43,7 +54,6 @@
 						<i-feather (click)="onColumnSelect(col.key)" name="Shuffle" (mouseover)="showInfoAboutSorting()">
 						</i-feather>
 					</th>
-					<th class="table-light">IMDB link</th>
 					<th class="table-light"></th>
 				</tr>
 			</thead>
@@ -51,17 +61,15 @@
 				<tr filteredList=li *ngFor="let row of li | slice: startSlice:endSlice | filter: '':''">
 					<td *ngFor="let col of columns">{{ row[col.key] }}</td>
 					<td>
-						<!-- <td *ngIf="row['imdbID']">
-							<a href="https://www.imdb.com/title/{{ row['imdbID'] }}" target="_blank">IMDB link <i-feather
-									name="Globe">
-								</i-feather></a>
-						</td> -->
+						<!-- <td *ngIf="this.auth.user$.value?.role===3 && row['_id']">
+
+					</td> -->
 					<td>
 						<div class="btn-group">
-							<button (click)="onSelect(row)" class="btn btn-warning">
+							<button *ngIf="this.auth.user$.value?.role === 3" (click)="onSelect(row)" class="btn btn-warning">
 								<i-feather name="Settings">Edit </i-feather>
 							</button>
-							<button (click)="onDelete(row)" class="btn btn-danger">
+							<button *ngIf="this.auth.user$.value?.role === 3" (click)="onDelete(row)" class="btn btn-danger">
 								<i-feather name="file-minus" data-confirm="Are you sure to delete this item?">Delete </i-feather>
 							</button>
 						</div>

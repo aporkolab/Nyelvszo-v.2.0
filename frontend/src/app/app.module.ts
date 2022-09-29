@@ -50,7 +50,7 @@ import { AuthService } from './service/auth.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    BrowserAnimationsModule,
+        BrowserAnimationsModule, // required animations module
     ToastrModule.forRoot({
       positionClass: 'toast-top-center',
       onActivateTick: true,

@@ -11,6 +11,7 @@ import { RoleGuardService } from './service/role-guard.service';
 import { VersionhistoryComponent } from './page/versionhistory/versionhistory.component';
 import { PrefaceComponent } from './page/preface/preface.component';
 import { ContactComponent } from './page/contact/contact.component';
+import { EntriesEditorComponent } from './page/entries-editor/entries-editor.component';
 
 
 
@@ -45,6 +46,22 @@ const routes: Routes = [  {
 {
   path: 'entries',
   component: EntriesComponent,
+},
+{
+  path: 'entries/edit/`0`',
+  component: EntriesEditorComponent,
+  canActivate: [AuthGuardService, RoleGuardService],
+  data: {
+    expectedRole: 3,
+  },
+},
+{
+  path: 'entries/edit/:id',
+  component: EntriesEditorComponent,
+  canActivate: [AuthGuardService, RoleGuardService],
+  data: {
+    expectedRole: 3,
+  },
 },
 {
   path: 'users',

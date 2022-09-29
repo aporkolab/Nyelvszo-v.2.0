@@ -9,5 +9,5 @@ import { ConfigService, IMenuItem } from './service/config.service';
 export class AppComponent {
   constructor(private config: ConfigService) {}
   sidebar: IMenuItem[] = this.config.sidebarMenu;
-  title = 'vizsgaremek';
+  title = 'NyelvSzo2.0';
 }
