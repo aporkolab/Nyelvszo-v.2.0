@@ -17,7 +17,7 @@ import { EntriesEditorComponent } from './page/entries-editor/entries-editor.com
 
 const routes: Routes = [  {
   path: '',
-  component: HomeComponent,
+  component: EntriesComponent,
 },
 // {
 //   path: '**',

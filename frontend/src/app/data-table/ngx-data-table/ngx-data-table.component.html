@@ -6,14 +6,14 @@
 			<div class="col-12 select_container input-field">
 				<select [(ngModel)]="filterKey" id="tableSearch" class="form-control">
 					<option>Search in every column</option>
-					<option *ngFor="let key of columns">
+					<option *ngFor="let key of columns" [selected]="key.title === filterKey" [value]="key.title">
 						{{ key.title }}
 					</option>
 				</select>
 			</div>
 			<div class="mb-3 input_container">
 				<input [(ngModel)]="phrase" type="text" class="form-control" id="choices-text-preset-values"
-					placeholder="Search...">
+					placeholder="Put your fingers to the keyboard to start...">
 			</div>
 		</div>
 	</div>

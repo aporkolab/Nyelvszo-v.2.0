@@ -14,8 +14,9 @@ export interface INgxTableColumn {
   styleUrls: ['./ngx-data-table.component.scss'],
 })
 export class NgxDataTableComponent<T extends { [x: string]: any }>
-  implements OnInit
+implements OnInit
 {
+  [x: string]: any;
   @Input() list: T[] = [];
   @Input() columns: INgxTableColumn[] = [];
   @Input() entity: string = '';
@@ -26,7 +27,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
   
   keys: {[x:string]:string} = {};
   phrase: string = '';
-  filterKey: string = '';
+  filterKey: string = 'Search in every column';
 
   filteredList!: T[];
   flattenedList: T[] = [];
