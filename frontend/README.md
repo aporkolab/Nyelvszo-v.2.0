@@ -1,5 +1,7 @@
 # Nyelvszo2.0
 
+This is a custom error page, inspired by the free, CodePen Home 403 forbidden (CSS hover) template by Piotr Galor. (https://codepen.io/pgalor/pen/dqQqqx)
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.8.
 
 ## Development server

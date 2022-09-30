@@ -8,7 +8,6 @@ import { AuthService } from 'src/app/service/auth.service';
 })
 export class NavbarComponent implements OnInit {
   user$ = this.auth.user$;
-
   rights = '';
 
   constructor(private auth: AuthService) {}
@@ -20,11 +19,11 @@ export class NavbarComponent implements OnInit {
       case 1:
         this.rights = '';
         return (this.rights =
-          'You may view all tables except family members, but you may not create, edit or delete any entities.');
+          'You may view all tables except users, but you may not create, edit or delete any entities.');
       case 2:
         this.rights = '';
         return (this.rights =
-          'You may view all tables except family members, and you may edit any of them but you may not create or delete any entities.');
+          'You may view all tables except users, and you may edit any of them but you may not create or delete any entities.');
       case 3:
         this.rights = '';
         return (this.rights =

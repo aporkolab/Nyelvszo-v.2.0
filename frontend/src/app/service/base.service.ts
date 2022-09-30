@@ -20,6 +20,7 @@ getAll(): Observable<T[]> {
   return this.http.get<T[]>(`${this.apiUrl}/${this.entity}`);
 }
 
+
 getOne(_id: string | number): Observable<T> {
   return this.http.get<T>(`${this.apiUrl}/${this.entity}/${_id}`);
 }

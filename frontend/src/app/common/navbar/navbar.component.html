@@ -1,35 +1,3 @@
-<!-- <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow b-example-divider">
-	<img class="navbar-brand col-md-4 col-lg-1 me-0 px-3 fs-6" src="../../../assets/img/minlogo.png" width="25%">
-	<div
-		class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow d-flex flex-column flex-shrink-0 p-3 bg-light"
-		style="width: 280px;">
-		<div class="navbar-brand col-md-2 col-lg-1 me-0 px-3 fs-6">
-			<span class=" d-flex flex-column flex-shrink-0" *ngIf="(familyMember$ | async)">Welcome,
-				{{this.familyMember$.value?.first_name
-				+
-				' ' + this.familyMember$.value?.last_name}}! </span>
-			<span class="flex-column mb-auto" *ngIf="(familyMember$ | async)">Your level of the role: {{
-				this.familyMember$.value?.role}}. </span>
-			<br>
-			<span class="flex-column mb-auto" *ngIf="(familyMember$ | async)"
-				right>{{rightsOfAdmin(this.familyMember$.value?.role || 1)}}</span>
-		</div>
-	</div> -->
-<!-- <div class="navbar-nav">
-			<div class="nav-item text-nowrap">
-				<a class="nav-link px-3" routerLink="/login">
-					<span *ngIf="(user$ | async)">Sign out
-						<i-feather name="log-out"></i-feather>
-					</span>
-					<span *ngIf="!(user$ | async)">Sign in
-						<i-feather name="log-in"></i-feather>
-					</span>
-				</a>
-			</div>
-		</div>
-	</div>
-</header> -->
-
 <header>
 	<div class="px-3 py-2 text-bg-dark">
 		<div class="container">
@@ -82,9 +50,9 @@
 	</div>
 	<div class="px-3 py-2 border-bottom mb-3">
 		<div class="container d-flex flex-wrap justify-content-center">
-			<form class="col-12 col-lg-auto mb-2 mb-lg-0 me-lg-auto" role="search">
+			<!-- <form class="col-12 col-lg-auto mb-2 mb-lg-0 me-lg-auto" role="search">
 				<input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-			</form>
+			</form> -->
 
 			<div>
 				<span class=" d-flex flex-column flex-shrink-0" *ngIf="(user$ | async)">Welcome,
@@ -97,8 +65,10 @@
 				<span class="flex-column mb-auto" *ngIf="(user$ | async)" right>{{rightsOfAdmin(this.user$.value?.role
 					|| 1)}}</span>
 			</div>
-			<button *ngIf="(user$ | async)" type="button" class="btn btn-light text-dark me-2">Sign out<i-feather
-					name="log-out"></i-feather></button>
+			<button *ngIf="(user$ | async)" type="button" class="btn btn-light text-dark me-2" [routerLink]="['/login']">Sign
+				out
+				<i-feather name="log-out"></i-feather>
+			</button>
 			<button *ngIf="!(user$ | async)" type="button" class="btn btn-light text-dark me-2" [routerLink]="['/login']">Sign
 				in<i-feather name="log-in"></i-feather></button>
 		</div>

@@ -1,33 +1,25 @@
-<div class="searchField form-group">
-	<div class="s004">
+<div class="s004">
+	<div class="form-group">
 		<img src="../../../assets/img/logo.png" alt="NyelvSzo logo" id="logo">
 		<legend>WHAT ARE YOU LOOKING FOR?</legend>
-		<div class="row align-items-center">
-			<div class="col-12 select_container">
-				<label for="tableSearch">Keresés:</label>
+		<div class="tableData inner-form">
+			<div class="col-12 select_container input-field">
 				<select [(ngModel)]="filterKey" id="tableSearch" class="form-control">
-					<option>Oszlopban..</option>
+					<option>Search in every column</option>
 					<option *ngFor="let key of columns">
 						{{ key.title }}
 					</option>
 				</select>
 			</div>
 			<div class="mb-3 input_container">
-				<input [(ngModel)]="phrase" type="text" class="form-control" placeholder="Search...">
+				<input [(ngModel)]="phrase" type="text" class="form-control" id="choices-text-preset-values"
+					placeholder="Search...">
 			</div>
-			<button class="btn-search" type="button">
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-					<path
-						d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z">
-					</path>
-				</svg>
-			</button>
 		</div>
 	</div>
 </div>
 
-
-<div class="col-12 scroll ">
+<div class="col-12 scroll tableData">
 	<tr *ngIf="!(list) || list.length == 0">
 		<td colspan="3">
 			<div class="preloader">
@@ -45,7 +37,7 @@
 			</i-feather></button>
 	</div>
 
-	<div class="row table-responsive">
+	<div class="row table-responsive" *ngIf="phrase || this.auth.user$.value?.role === 3">
 		<table class="table table-striped table-hover table-dark">
 			<thead>
 				<tr>
@@ -58,12 +50,12 @@
 				</tr>
 			</thead>
 			<tbody *ngIf="list | filter: phrase:keys[filterKey] as li">
-				<tr filteredList=li *ngFor="let row of li | slice: startSlice:endSlice | filter: '':''">
+				<tr filteredList=li
+					*ngFor="let row of li | slice: startSlice:endSlice | filter: '':'' | sorter:columnKey:sortDir">
 					<td *ngFor="let col of columns">{{ row[col.key] }}</td>
 					<td>
 						<!-- <td *ngIf="this.auth.user$.value?.role===3 && row['_id']">
-
-					</td> -->
+								</td> -->
 					<td>
 						<div class="btn-group">
 							<button *ngIf="this.auth.user$.value?.role === 3" (click)="onSelect(row)" class="btn btn-warning">
@@ -80,21 +72,21 @@
 
 	</div>
 
-	<nav aria-label="paginator">
+	<nav aria-label="paginator" *ngIf="pageList.length >= 10 && this.auth.user$.value?.role === 3">
 		<ul class="pagination pagination-lg mt-4 nav justify-content-center">
 			<li [className]="page===1 ? 'page-item disabled' : 'page-item'">
-				<button class="page-link" (click)="jumptoPage(page - 1)" [disabled]="page===1">
+				<button class="page-link" (click)="jumpToPage(page - 1)" [disabled]="page===1">
 					Previous<i-feather name="corner-down-left">
 					</i-feather>
 				</button>
 			</li>
 			<li *ngFor="let pageNum of pageList" class="page-item">
-				<button [className]="page===pageNum ? 'page-link active' : 'page-link'" (click)=" jumptoPage(pageNum)">{{
+				<button [className]="page===pageNum ? 'page-link active' : 'page-link'" (click)=" jumpToPage(pageNum)">{{
 					pageNum
 					}}</button>
 			</li>
 			<li [className]="page===pageList.length ? 'page-item disabled' : 'page-item'">
-				<button class="page-link" (click)="jumptoPage(page + 1)" [disabled]="page===pageList.length">Next<i-feather
+				<button class="page-link" (click)="jumpToPage(page + 1)" [disabled]="page===pageList.length">Next<i-feather
 						name="corner-down-right">
 					</i-feather></button>
 			</li>

@@ -16,7 +16,6 @@ export interface INgxTableColumn {
 export class NgxDataTableComponent<T extends { [x: string]: any }>
   implements OnInit
 {
-  @Input() name: string = '';
   @Input() list: T[] = [];
   @Input() columns: INgxTableColumn[] = [];
   @Input() entity: string = '';
@@ -39,7 +38,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
   page: number = 1;
 
   get pageList(): number[] {
-    const pageSize = Math.ceil(this.list.length / this.pageSize);
+    const pageSize = Math.ceil(this.filteredList.length / this.pageSize);
     return new Array(pageSize).fill(1).map((x, i) => i + 1);
   }
 
@@ -62,14 +61,14 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
     for(const column of this.columns) {
       this.keys[column.title] = column.key;
     }
-    // todo avoid mutating the original list
+
     this.flattenedList = this.list.map((item) => {
       for (const key in item) {
-        // convert boolean to "igen" or "nem"
+
         if (typeof item[key] === 'boolean') {
           item[key] = item[key] ? ('igen' as any) : 'nem';
         }
-        // if item.key is object, flatten it
+
         if (item[key] && typeof item[key] === 'object') {
           let merged: any = '';
           for (const subKey in item[key]) {
@@ -101,7 +100,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
     this.router.navigate(['forbidden']);
   }
 
-  jumptoPage(pageNum: number): void {
+  jumpToPage(pageNum: number): void {
     this.page = pageNum;
     this.startSlice = this.pageSize * (pageNum - 1);
     this.endSlice = this.startSlice + this.pageSize;
@@ -110,7 +109,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }>
   showInfoAboutSorting() {
     this.notifyService.showInfo(
       'Click the icons next to the column titles to sort the entire table by this column.',
-      'NyelvSzo v.2.0.0'
+      'NyelvSzó v.2.0.0'
     );
   }
 
