@@ -15,7 +15,7 @@ import { EntriesEditorComponent } from './page/entries-editor/entries-editor.com
 import { UsersComponent } from './page/users/users.component';
 import { UsersEditorComponent } from './page/users-editor/users-editor.component';
 import { IconModule } from './icon/icon.module';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfigService, IMenuItem } from './service/config.service';
@@ -25,6 +25,8 @@ import { VersionhistoryComponent } from './page/versionhistory/versionhistory.co
 import { ContactComponent } from './page/contact/contact.component';
 import { JwtInterceptor } from './service/jwt.interceptor';
 import { AuthService } from './service/auth.service';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 @NgModule({
   declarations: [
@@ -59,8 +61,17 @@ import { AuthService } from './service/auth.service';
       timeOut: 5000,
       extendedTimeOut: 3000,
     }),
+    TranslateModule.forRoot(
+      {
+        loader:{
+          provide: TranslateLoader,
+          useFactory: httpTranslateLoader,
+          deps: [HttpClient]
+        }
+      }
+    )
   ],
-  exports: [FormsModule],
+  exports: [FormsModule, TranslateModule],
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
@@ -74,3 +85,7 @@ import { AuthService } from './service/auth.service';
 export class AppModule {   sidebar: IMenuItem[] = this.config.sidebarMenu;
 
   constructor(private config: ConfigService) {}}
+
+  export function httpTranslateLoader(http: HttpClient){
+    return new TranslateHttpLoader(http);
+  }

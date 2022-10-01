@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
 
 @Component({
@@ -10,7 +11,9 @@ export class NavbarComponent implements OnInit {
   user$ = this.auth.user$;
   rights = '';
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService,public translate: TranslateService
+  ) {translate.addLangs(['en', 'hu']);
+  translate.setDefaultLang('hu');}
 
   ngOnInit(): void {}
 
@@ -33,5 +36,9 @@ export class NavbarComponent implements OnInit {
         return (this.rights =
           'Invalid role value. The role value can only be 1, 2 or 3.');
     }
+  }
+
+    switchLanguage(lang: string){
+    this.translate.use(lang);
   }
 }

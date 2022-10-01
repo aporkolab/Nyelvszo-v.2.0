@@ -9,6 +9,7 @@
     "test": "ng test"
   },
   "private": true,
+  "homepage": "https://nyelvszo.eu",
   "dependencies": {
     "@angular/animations": "^14.2.4",
     "@angular/common": "~14.2.3",
@@ -18,6 +19,8 @@
     "@angular/platform-browser": "~14.2.3",
     "@angular/platform-browser-dynamic": "~14.2.3",
     "@angular/router": "~14.2.3",
+    "@ngx-translate/core": "^14.0.0",
+    "@ngx-translate/http-loader": "^7.0.0",
     "@popperjs/core": "^2.11.6",
     "angular-feather": "^6.3.0",
     "bootstrap": "^5.2.1",

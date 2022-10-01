@@ -14,14 +14,9 @@
 					<div class="text-center pt-3 pb-3">
 						<span class="db"><img src="../../../assets/img/minlogo.png" alt="logo" width="250" /></span>
 					</div>
-					<h3 class="col-12">Kedves Kolléga! <br>Jelen menüpont a bejelentkezéssel csak a szótári adatbázis gondozásához
-						szükséges.<br>
-						Újabb
-						hozzáféréseket csak nagyon indokolt esetben tudunk adni. <br>A szótáradatbázis használata mindig díjmentes
-						és
-						szabadon elérhető marad, ahhoz nem szükséges bejelentkezés. <br><br>Dr. Porkoláb Ádám és Dr. Fekete Tamás
-						<br>(a
-						szerzők)
+					<h3 class="col-12">{{'Greetings'|translate}} <br>{{'notNeeded'|translate}}<br>
+						{{'noMoreAccess'|translate}} <br>{{'freeOfCharge'|translate}}<br><br>{{'authorsName'|translate}}
+						<br>{{'Authors'|translate}}
 					</h3>
 					<!-- Form -->
 					<form (ngSubmit)="onLogin()" #loginForm="ngForm" class="form-horizontal mt-3" id="loginform">
@@ -37,7 +32,7 @@
 										required>
 								</div>
 								<div [hidden]="loginForm.controls['email']?.valid" class="alert alert-danger" role="alert">
-									The email of the family member must be valid and unique!
+									{{'emailValid'|translate}}
 								</div>
 							</div>
 							<div class="input-group mb-3">
@@ -46,12 +41,11 @@
 											class="mdi mdi-lock fs-4"></i></span>
 								</div>
 								<input [(ngModel)]="loginData.password" type="password" class="form-control form-control-lg"
-									placeholder="Password" name="password" aria-label="Password" aria-describedby="basic-addon1" required
-									pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$">
+									placeholder="{{'Password'|translate}}" name="password" aria-label="Password"
+									aria-describedby="basic-addon1" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$">
 							</div>
 							<div [hidden]="loginForm.controls['password']?.valid" class="alert alert-danger" role="alert">
-								For security reasons, new the password of the family member must be minimum 8 characters, must
-								contains at least 1 letter and 1 number!
+								{{'passValid'|translate}}
 							</div>
 						</div>
 						<div class="row border-top border-secondary">
@@ -59,7 +53,7 @@
 							<div class="text-center pt-3 pb-3 col-6">
 								<button class="btn btn-success float-end text-white" type="submit" [disabled]="loginForm.invalid"
 									*ngIf="loginForm.valid">
-									Login
+									{{'Sign in'|translate}}
 								</button>
 							</div>
 						</div>

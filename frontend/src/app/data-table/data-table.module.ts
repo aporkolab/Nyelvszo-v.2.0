@@ -9,6 +9,10 @@ import { IconModule } from '../icon/icon.module';
 import { FormsModule } from '@angular/forms';
 import { SorterPipe } from '../pipe/sorter.pipe';
 import { FilterPipe } from '../pipe/filter.pipe';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+
 
 @NgModule({
   declarations: [NgxDataTableComponent, SorterPipe, FilterPipe],
@@ -20,7 +24,20 @@ import { FilterPipe } from '../pipe/filter.pipe';
     AppRoutingModule,
     IconModule,
     FormsModule,
+    TranslateModule.forRoot(
+      {
+        loader:{
+          provide: TranslateLoader,
+          useFactory: httpTranslateLoader,
+          deps: [HttpClient]
+        }
+      }
+    )
   ],
-  exports: [NgxDataTableComponent],
+  exports: [NgxDataTableComponent, TranslateModule],
 })
 export class DataTableModule {}
+
+export function httpTranslateLoader(http: HttpClient){
+    return new TranslateHttpLoader(http);
+  }

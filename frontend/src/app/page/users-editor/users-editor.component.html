@@ -2,15 +2,15 @@
 	<div class="col-12 d-flex justify-content-center text-center">
 		<div class="card">
 			<div class="card-header card-header-primary">
-				<h4 class="card-title" *ngIf="user$ | async">Edit the data of the Family member</h4>
-				<h4 class="card-title" *ngIf="!(user$ | async)">Add a new Family member</h4>
+				<h4 class="card-title" *ngIf="user$ | async">{{'editUser'|translate}}</h4>
+				<h4 class="card-title" *ngIf="!(user$ | async)">{{'addNewUser'|translate}}</h4>
 
 			</div>
 			<div class="card-body">
 				<form #userForm="ngForm">
 					<input type="hidden" name="id" [(ngModel)]="user._id">
 
-					<h3 class="h5 text-secondary">First name *</h3>
+					<h3 class="h5 text-secondary">{{'firstName'|translate}} *</h3>
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
@@ -18,12 +18,12 @@
 									pattern="^[a-űA-Űa-zA-Z \-\.,!()']{3,60}$">
 							</div>
 							<div [hidden]="userForm.controls['firstName']?.valid" class="alert alert-danger" role="alert">
-								The first name of the family member must be at least 3 letters and must not contains numbers!
+								{{'firstNameValid'|translate}}
 							</div>
 						</div>
 					</div>
 
-					<h3 class="h5 text-secondary">Last name *</h3>
+					<h3 class="h5 text-secondary">{{'lastName'|translate}} *</h3>
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
@@ -31,24 +31,24 @@
 									pattern="^[a-űA-Űa-zA-Z \-\.,!()']{3,60}$">
 							</div>
 							<div [hidden]="userForm.controls['lastName']?.valid" class="alert alert-danger" role="alert">
-								The last name of the family member must be at least 3 letters and must not contains numbers!
+								{{'lastNameValid'|translate}}
 							</div>
 						</div>
 					</div>
 
-					<h3 class="h5 text-secondary">E-mail *</h3>
+					<h3 class="h5 text-secondary">{{'email'|translate}} *</h3>
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
 								<input type="email" class="form-control" name="email" [(ngModel)]="user.email" [email]="true">
 							</div>
 							<div [hidden]="userForm.controls['email']?.valid" class="alert alert-danger" role="alert">
-								The email of the family member must be valid and unique!
+								{{'emailValid'|translate}}
 							</div>
 						</div>
 					</div>
 
-					<h3 class="h5 text-secondary"> Role *</h3>
+					<h3 class="h5 text-secondary"> {{'role'|translate}} *</h3>
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
@@ -56,13 +56,13 @@
 									pattern="^[1-3]{1}$">
 							</div>
 							<div [hidden]="userForm.controls['role']?.valid" class="alert alert-danger" role="alert">
-								The role number of the family member must be 1 (viewer), 2(archiver) or 3(administrator)!
+								{{'roleValid'|translate}}
 							</div>
 						</div>
 					</div>
 
 
-					<h3 class="h5 text-secondary">Password *</h3>
+					<h3 class="h5 text-secondary">{{'Password'|translate}} *</h3>
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
@@ -70,9 +70,7 @@
 									pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{7,}$">
 							</div>
 							<div [hidden]="userForm.controls['password']?.valid" class="alert alert-danger" role="alert">
-								For security reasons we store only the encryted password. When you add a new password of the family
-								member must be minimum 7 characters, must contains at least 1 letter and 1 number! Before save the
-								password will be automatically encrypted.
+								{{'passValid2'|translate}}
 							</div>
 						</div>
 					</div>
@@ -80,13 +78,10 @@
 
 
 					<button *ngIf="user$ | async" (click)="onUpdate(user)" [disabled]="userForm.invalid" type="submit"
-						class="btn btn-primary pull-right me-md-3">Update
-						data of family member</button>
+						class="btn btn-primary pull-right me-md-3">{{'updateUser'|translate}}</button>
 					<button *ngIf="!(user$ | async)" (click)="onCreate(user)" [disabled]="userForm.invalid" type="submit"
-						class="btn btn-primary pull-right me-md-3">Create
-						data of family member</button>
-					<button routerLink="/users" type="button" class="btn btn-danger pull-left">Cancel
-						edit</button>
+						class="btn btn-primary pull-right me-md-3">{{'createUser'|translate}}</button>
+					<button routerLink="/users" type="button" class="btn btn-danger pull-left">{{'cancelEdit'|translate}}</button>
 					<div class="clearfix"></div>
 				</form>
 			</div>

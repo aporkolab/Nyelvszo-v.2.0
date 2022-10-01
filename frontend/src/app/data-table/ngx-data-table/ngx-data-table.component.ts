@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
 import { NotificationService } from 'src/app/service/notification.service';
 
@@ -54,8 +55,10 @@ implements OnInit
   constructor(
     private notifyService: NotificationService,
     public auth: AuthService,
-    public router: Router
-  ) {}
+    public router: Router,
+    public translate: TranslateService
+  ) {translate.addLangs(['en', 'hu']);
+  translate.setDefaultLang('hu');}
 
   ngOnInit(): void {
     this.filteredList = this.list;
@@ -114,5 +117,7 @@ implements OnInit
     );
   }
 
-  
+    switchLanguage(lang: string){
+    this.translate.use(lang);
+  }
 }

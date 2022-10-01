@@ -1,10 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+
 html {
-  line-height: 1.15;
-  /* 1 */
+
   -ms-text-size-adjust: 100%;
   /* 2 */
   -webkit-text-size-adjust: 100%;
   /* 2 */
+  font-family: 'Poppins', sans-serif;
 }
 
 .table {
@@ -33,10 +35,6 @@ section {
   display: block;
 }
 
-/**
- * Correct the font size and margin on `h1` elements within `section` and
- * `article` contexts in Chrome, Firefox, and Safari.
- */
 h1 {
   font-size: 2em;
   margin: 0.67em 0;
@@ -51,13 +49,10 @@ h1 {
 figcaption,
 figure,
 main {
-  /* 1 */
   display: block;
 }
 
-/**
- * Add the correct margin in IE 8.
- */
+
 figure {
   margin: 1em 40px;
 }
@@ -304,27 +299,13 @@ fieldset {
  *    `fieldset` elements in all browsers.
  */
 legend {
-  box-sizing: border-box;
-  /* 1 */
-  color: inherit;
-  /* 2 */
-  display: table;
-  /* 1 */
-  max-width: 100%;
-  /* 1 */
-  padding: 0;
-  /* 3 */
-  white-space: normal;
-  /* 1 */
+
+  color: whitesmoke;
+  font-size: 3rem;
 }
 
-/**
- * 1. Add the correct display in IE 9-.
- * 2. Add the correct vertical alignment in Chrome, Firefox, and Opera.
- */
+
 progress {
-  display: inline-block;
-  /* 1 */
   vertical-align: baseline;
   /* 2 */
 }
