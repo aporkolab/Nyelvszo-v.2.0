@@ -1,0 +1,15 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/fkbpanik/db.poorky.com"
+PassengerBaseURI "/"
+PassengerNodejs "/home/fkbpanik/nodevenv/db.poorky.com/16/bin/node"
+PassengerAppType node
+PassengerStartupFile ./src/index.js
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+RewriteEngine On 
+  # If an existing asset or directory is requested go to it as it is 
+  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR] 
+  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d 
+  RewriteRule ^ - [L] 
+ 
+  # If the requested resource doesn't exist, use index.html 
+  RewriteRule ^ /index.html

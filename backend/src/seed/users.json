@@ -4,20 +4,20 @@
     "lastName": "Dr. Porkoláb",
     "email": "adam@porkolab.digital",
     "role": 3,
-    "password": "tarara"
+    "password": "tararara1"
   },
   {
     "firstName": "Tamás",
     "lastName": "Dr. Fekete",
     "email": "f.tamas@gmail.com",
     "role": 3,
-    "password": "jelszo"
+    "password": "jelszojelszo2"
   },
   {
     "firstName": "Mókus",
     "lastName": "Minta",
     "email": "minta@minta.hu",
     "role": 3,
-    "password": "szilvasbuktat"
+    "password": "szilvasbuktat3"
   }
 ]

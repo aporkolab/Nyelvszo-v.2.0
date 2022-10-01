@@ -42,9 +42,10 @@ app.use(bodyParser.json());
 
 const authencticateJwt = require('./models/auth/authenticate');
 
-//For production -->normal working, with authentication, please comment out this block if you want to run to the integration tests
-
 app.use('/entries', require('./controllers/entry/router'));
+app.use('/versionhistory', require('./controllers/entry/router'));
+app.use('/contact', require('./controllers/entry/router'));
+app.use('/preface', require('./controllers/entry/router'));
 app.use('/users', authencticateJwt, require('./controllers/user/router'));
 app.use('/login', require('./controllers/login/router'));
 
@@ -52,11 +53,11 @@ app.use('/login', require('./controllers/login/router'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
-// If yout want to sure to work the backend by run, just comment out this block
+// // If yout want to sure to work the backend by run, just comment out this block
 
 // app.use('/', (req, res, next) => {
 // 	console.log(req.url);
-// 	res.send('The FaMoBase v.1.0.0 backend is working!');
+// 	res.send('The NyelvSzó v.2.0.0 backend is working!');
 // });
 
 app.use((err, req, res, next) => {
