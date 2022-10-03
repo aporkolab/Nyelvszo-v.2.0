@@ -1,7 +1,83 @@
+# Documentation - NyelvSzó v.2.0.0
+
+## **1. Purpose of the application**
+The present application is **NyelvSzó v.2.0.0** (English-Hungarian Linguistic Dictionary - in Hungarian: "Angol-magyar **Nyelv**észeti Szak**szó**tár"), whose main purpose is to make the set of linguistic terms collected by Dr. Ádám Porkoláb and Dr. Tamás Fekete easily searchable and extensible.
+
+Users have roles assigned to their profiles: in the program, only authors and administrators have the right to add, edit and delete entries in the entire database. Users who are not logged in can also search and view information.
+
+## **2. Install the application**
+
+1. If you do not have the Git version control software installed, download and install the version for your operating system from https://git-scm.com.
+
+2. If you do not have the NodeJS runtime environment installed, download and install the version marked "LTS" from https://nodejs.org/en/.
+
+3. If you do not have the Angular framework installed on your system, do so by issuing the `npm i -g @angular/cli` command in PowerShell.
+
+4. If you do not have Docker containerization software installed, download and install the appropriate version for your operating system from https://docs.docker.com/get-docker/.
+
+5. clone the contents of the relevant GitHub repository. So in PowerShell, issue the following command:
+
+   `git clone https://github.com/APorkolab/Nyelvszo-v.2.0.git`
+
+6. Install the application dependencies:
+
+   - Backend
+
+     - In the terminal, go to the /backend folder (`cd backend`) and run `npm i`.
+
+   - frontend
+     - On the terminal, go to the /frontend folder and run `npm i`.*
+
+7.1. For manual installation:
+
+   - In the terminal, issue the `ng build` command.
+
+   - The contents of the /frontend/dist/frontend folder must be copied to the /backend/public folder.
+
+   OR
+
+7.2. For automatic installation:
+
+   - In the terminal, go to the /backend folder and run the `npm run build` command.
+   - It is important to install using only one of the methods.
+
+## **2. Configure the application**
+
+- In the _/frontend/environments_ folder, configure the API endpoint path:
+
+  - _environment.ts_ file: http://127.0.0.1:3000/
+  - _environment.prod.ts_ file: http://localhost:3000/
+
+## **3. Start the application**
+
+- Both the backend and the frontend can be started with the `npm start` command.
+
+
+## **4. Description of roles**
+
+
+| |User |Editor |Administrator |
+| ------------ | ------------ | ------------ | ------------ |
+| Their value ("role") in the database | 1 | 2 | 3 |
+| Rights | You can view everything except the user table, but you cannot create, edit or delete entities.  | You can view all tables and edit, create or delete entities in any table except the user table. | You can view all tables and create, edit or delete any entities. |
+
+## **4. Contact information**
+##### Web development, design: Dr. Ádám Porkoláb
+- **About the website and general questions and comments:**
+Dr. Ádám Porkoláb (adam@porkolab.digital)
+  
+- **About the dictionary material and corrections:**
+Dr. Tamás Fekete (fekete.tamas@pte.hu)  
+  
+## **5. Legal information**
+© Copyright 2021-2023 Dr. Ádám Porkoláb - Dr. Tamás Fekete.  
+  
+The dictionary material and the search engine are protected by Hungarian copyright law, private use of both intellectual products is permitted, commercial use requires the permission of the authors. Resale is prohibited.
+
 # Dokumentáció - NyelvSzó v.2.0.0
 
 ## **1. Az alkalmazás célja**
-Jelen alkalmazás a **NyelvSzó v.2.0.0** (Angol-magyar **Nyelv**észeti Szak**szó**tár  - családi filmadatbázis), melynek fő célja, hogy a Dr. Porkoláb Ádám és Dr. Fekete Tamás által gyűjtött, nyelvészeti szakkifejezéshalmaz könnyedén kereshetővé és bővíthetővé váljék.
+Jelen alkalmazás a **NyelvSzó v.2.0.0** (Angol-magyar **Nyelv**észeti Szak**szó**tár), melynek fő célja, hogy a Dr. Porkoláb Ádám és Dr. Fekete Tamás által gyűjtött, nyelvészeti szakkifejezéshalmaz könnyedén kereshetővé és bővíthetővé váljék.
 
 A felhasználók esetében szerepkörök is vannak a profiljukhoz rendelve: a programban - alapesetben - csak a szerzők és az adminisztrátorok rendelkeznek szócikklétrehozási, szerkesztési és -törlési joggal a teljes adatbázisban. A nem bejelentkezett felhasználók is tudnak keresni és információkat megtekinteni.
 
