@@ -1,4 +1,11 @@
-# Documentation - NyelvSzó v.2.0.0
+# NyelvSzó v.2.0.0
+
+[![Build](https://img.shields.io/github/actions/workflow/status/APorkolab/Nyelvszo-v.2.0/ci.yml?branch=main)](../../actions)
+[![License](https://img.shields.io/badge/license-MIT-informational.svg)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/APorkolab/Nyelvszo-v.2.0.svg)](../../issues)
+[![Live Demo](https://img.shields.io/badge/live-nyelvszo.eu-success)](https://nyelvszo.eu/)
+
+# Documentation
 
 ## **1. Purpose of the application**
 The present application is **NyelvSzó v.2.0.0** (English-Hungarian Linguistic Dictionary - in Hungarian: "Angol-magyar **Nyelv**észeti Szak**szó**tár"), whose main purpose is to make the set of linguistic terms collected by Dr. Ádám Porkoláb and Dr. Tamás Fekete easily searchable and extensible.
