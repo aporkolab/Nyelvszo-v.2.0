@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ToastrModule } from 'ngx-toastr';
 
 import { EntriesComponent } from './entries.component';
 
@@ -8,9 +10,8 @@ describe('EntriesComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ EntriesComponent ]
-    })
-    .compileComponents();
+      imports: [EntriesComponent, HttpClientTestingModule, ToastrModule.forRoot()],
+    }).compileComponents();
   });
 
   beforeEach(() => {

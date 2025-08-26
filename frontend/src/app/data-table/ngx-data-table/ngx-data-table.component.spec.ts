@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ToastrModule } from 'ngx-toastr';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { NgxDataTableComponent } from './ngx-data-table.component';
 
@@ -8,9 +11,13 @@ describe('NgxDataTableComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ NgxDataTableComponent ]
-    })
-    .compileComponents();
+      imports: [
+        NgxDataTableComponent,
+        ToastrModule.forRoot(),
+        HttpClientTestingModule,
+        TranslateModule.forRoot(),
+      ],
+    }).compileComponents();
   });
 
   beforeEach(() => {

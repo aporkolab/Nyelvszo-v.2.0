@@ -1,21 +1,15 @@
 import { EntryService } from 'src/app/service/entry.service';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideToastr } from 'ngx-toastr';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ToastrModule } from 'ngx-toastr';
 
-
-describe('BaseService', () => {
+describe('EntryService', () => {
   let service: EntryService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        EntryService,
-        provideHttpClientTesting(), // NG0201: HttpClient fix
-        provideToastr(),            // Toastr token fix
-        provideNoopAnimations(),    // Toastr-hoz animáció nélküli provider
-      ],
+      imports: [HttpClientTestingModule, ToastrModule.forRoot()],
+      providers: [EntryService],
     });
     service = TestBed.inject(EntryService);
   });

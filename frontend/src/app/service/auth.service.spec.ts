@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideToastr } from 'ngx-toastr';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ToastrModule } from 'ngx-toastr';
 
 import { AuthService } from './auth.service';
 
@@ -10,12 +9,8 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClientTesting(),
-        provideToastr(),
-        provideNoopAnimations(),
-        AuthService,
-      ],
+      imports: [HttpClientTestingModule, ToastrModule.forRoot()],
+      providers: [AuthService],
     });
     service = TestBed.inject(AuthService);
   });
