@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
-  provideHttpClientTesting,
+  HttpClientTestingModule,
 } from '@angular/common/http/testing';
 import { BehaviorSubject } from 'rxjs';
 
@@ -19,10 +19,10 @@ describe('JwtInterceptor', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
-        provideHttpClientTesting(),                      
         { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
-        { provide: AuthService, useClass: AuthServiceMock },      
+        { provide: AuthService, useClass: AuthServiceMock },
       ],
     });
 
