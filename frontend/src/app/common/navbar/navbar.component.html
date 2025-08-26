@@ -68,8 +68,7 @@
 
 			<div>
 				<span class=" d-flex flex-column flex-shrink-0" *ngIf="(user$ | async)">{{'Welcome'|translate}},
-					{{this.user$.value?.firstName
-					+
+					{{this.user$.value?.firstName					+
 					' ' + this.user$.value?.lastName}}! </span>
 				<span class="flex-column mb-auto" *ngIf="(user$ | async)">{{'Your level of the role'|translate}}: {{
 					this.user$.value?.role}}. </span>

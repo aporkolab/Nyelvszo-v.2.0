@@ -1,8 +1,16 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { CommonModule } from '@angular/common'; 
+import { RouterModule } from '@angular/router';      
+import { FormsModule } from '@angular/forms';          
+import { TranslateModule } from '@ngx-translate/core';
+import { IconModule } from '../../icon/icon.module';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
 import { NotificationService } from 'src/app/service/notification.service';
+
+import { FilterPipe } from '../../pipe/filter.pipe';
+import { SorterPipe } from '../../pipe/sorter.pipe';
 
 export interface INgxTableColumn {
   title: string;
@@ -11,6 +19,11 @@ export interface INgxTableColumn {
 
 @Component({
   selector: 'ngx-data-table',
+  standalone: true,
+  imports: [
+    CommonModule, RouterModule, FormsModule, TranslateModule, IconModule,
+    FilterPipe, SorterPipe
+  ],
   templateUrl: './ngx-data-table.component.html',
   styleUrls: ['./ngx-data-table.component.scss'],
 })

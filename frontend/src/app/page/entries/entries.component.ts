@@ -4,12 +4,17 @@ import { Entry } from 'src/app/model/entry';
 import { ConfigService } from 'src/app/service/config.service';
 import { EntryService } from 'src/app/service/entry.service';
 import { NotificationService } from 'src/app/service/notification.service';
+import { NgxDataTableComponent } from '../../data-table/ngx-data-table/ngx-data-table.component';
+import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
+  standalone: true,
   selector: 'app-entries',
+  imports: [CommonModule, NgxDataTableComponent, TranslateModule],
   templateUrl: './entries.component.html',
-  styleUrls: ['./entries.component.scss']
 })
+
 export class EntriesComponent implements OnInit {
   columns;
   list$;

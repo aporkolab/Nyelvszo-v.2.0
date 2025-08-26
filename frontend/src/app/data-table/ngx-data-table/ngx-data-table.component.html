@@ -54,7 +54,7 @@
 					*ngFor="let row of li | slice: startSlice:endSlice | filter: '':'' | sorter:columnKey:sortDir">
 					<td *ngFor="let col of columns">{{ row[col.key] }}</td>
 					<td>
-						<!-- <td *ngIf="this.auth.user$.value?.role===3 && row['_id']">
+						<!-- <td *ngIf="this.auth.user$.value.role===3 && row['_id']">
 								</td> -->
 					<td>
 						<div class="btn-group">

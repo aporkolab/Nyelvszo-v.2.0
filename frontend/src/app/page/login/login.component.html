@@ -31,7 +31,7 @@
 										placeholder="Email" name="email" aria-label="Email" aria-describedby="basic-addon1" [email]="true"
 										required>
 								</div>
-								<div [hidden]="loginForm.controls['email']?.valid" class="alert alert-danger" role="alert">
+								<div [hidden]="loginForm.controls['email'].valid" class="alert alert-danger" role="alert">
 									{{'emailValid'|translate}}
 								</div>
 							</div>
@@ -44,7 +44,7 @@
 									placeholder="{{'Password'|translate}}" name="password" aria-label="Password"
 									aria-describedby="basic-addon1" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$">
 							</div>
-							<div [hidden]="loginForm.controls['password']?.valid" class="alert alert-danger" role="alert">
+							<div [hidden]="loginForm.controls['password'].valid" class="alert alert-danger" role="alert">
 								{{'passValid'|translate}}
 							</div>
 						</div>

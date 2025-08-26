@@ -15,7 +15,7 @@
 								<input type="text" class="form-control" name="hungarian" [(ngModel)]="entry.hungarian" required required
 									pattern="^[a-űA-Űa-zA-Z \-\.,!()'0-9:]{3,60}$">
 							</div>
-							<div [hidden]="entryForm.controls['hungarian']?.valid" class="alert alert-danger" role="alert">
+							<div [hidden]="entryForm.controls['hungarian'].valid" class="alert alert-danger" role="alert">
 								{{'hungarianValid'|translate}}
 							</div>
 						</div>
@@ -28,7 +28,7 @@
 								<input type="text" class="form-control" name="fieldOfExpertise" [(ngModel)]="entry.fieldOfExpertise"
 									required pattern="^[a-űA-Űa-zA-Z \-\.,!()'0-9:]{2,60}$">
 							</div>
-							<div [hidden]="entryForm.controls['fieldOfExpertise']?.valid" class="alert alert-danger" role="alert">
+							<div [hidden]="entryForm.controls['fieldOfExpertise'].valid" class="alert alert-danger" role="alert">
 								{{'fofValid'|translate}}
 							</div>
 						</div>
@@ -41,7 +41,7 @@
 								<input type="text" class="form-control" name="wordType" [(ngModel)]="entry.wordType" required
 									pattern="^[a-űA-Űa-zA-Z \-\.,!() ']{2,60}$">
 							</div>
-							<div [hidden]="entryForm.controls['wordType']?.valid" class="alert alert-danger" role="alert">
+							<div [hidden]="entryForm.controls['wordType'].valid" class="alert alert-danger" role="alert">
 								{{'wordTypeValid'|translate}}
 							</div>
 						</div>
@@ -54,7 +54,7 @@
 								<input type="text" class="form-control" name="english" [(ngModel)]="entry.english" required
 									pattern="^[a-űA-Űa-zA-Z \-\.,!() ' |]{5,60}$">
 							</div>
-							<div [hidden]="entryForm.controls['english']?.valid" class="alert alert-danger" role="alert">
+							<div [hidden]="entryForm.controls['english'].valid" class="alert alert-danger" role="alert">
 								{{'englishValid'|translate}}
 							</div>
 						</div>

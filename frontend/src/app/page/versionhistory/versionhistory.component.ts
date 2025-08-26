@@ -1,10 +1,13 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
-@Component({
-  selector: 'app-versionhistory',
-  templateUrl: './versionhistory.component.html',
-  styleUrls: ['./versionhistory.component.scss']
-})
+  @Component({
+    standalone: true,
+    selector: 'app-versionhistory',
+    imports: [CommonModule, TranslateModule],
+    templateUrl: './versionhistory.component.html',
+  })
 export class VersionhistoryComponent implements OnInit {
 
   constructor() { }

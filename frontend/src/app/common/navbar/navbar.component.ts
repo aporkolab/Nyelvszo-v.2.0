@@ -1,11 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
-
+import { CommonModule } from '@angular/common';  
+import { RouterModule } from '@angular/router';     
+import { TranslateModule } from '@ngx-translate/core'; 
+import { IconModule } from '../../icon/icon.module';  
 @Component({
   selector: 'app-navbar',
+  standalone: true,
+  imports: [CommonModule, RouterModule, TranslateModule, IconModule],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss']
+  styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit {
   user$;

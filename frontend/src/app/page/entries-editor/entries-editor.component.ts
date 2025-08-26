@@ -1,14 +1,19 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { Entry } from 'src/app/model/entry';
 import { EntryService } from 'src/app/service/entry.service';
 import { NotificationService } from 'src/app/service/notification.service';
 
+
 @Component({
+  standalone: true,
   selector: 'app-entries-editor',
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   templateUrl: './entries-editor.component.html',
-  styleUrls: ['./entries-editor.component.scss']
 })
 export class EntriesEditorComponent implements OnInit {
 entry$!: Observable<Entry>;

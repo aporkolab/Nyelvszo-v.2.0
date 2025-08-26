@@ -1,11 +1,15 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { IconModule } from 'src/app/icon/icon.module';
 import { AuthService, ILoginData } from 'src/app/service/auth.service';
 
 @Component({
+  standalone: true,
   selector: 'app-login',
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
   loginData: ILoginData = {};

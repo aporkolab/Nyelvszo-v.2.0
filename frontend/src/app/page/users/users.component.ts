@@ -1,14 +1,18 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { NgxDataTableComponent } from 'src/app/data-table/ngx-data-table/ngx-data-table.component';
 import { User } from 'src/app/model/user';
 import { ConfigService } from 'src/app/service/config.service';
 import { NotificationService } from 'src/app/service/notification.service';
 import { UserService } from 'src/app/service/user.service';
 
 @Component({
+  standalone: true,
   selector: 'app-users',
+  imports: [CommonModule, NgxDataTableComponent, TranslateModule],
   templateUrl: './users.component.html',
-  styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit {
   columns;

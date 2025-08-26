@@ -1,4 +1,7 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 let first = document.querySelector('.first') as HTMLDivElement | null;
 let second = document.querySelector('.second') as HTMLDivElement | null;
@@ -6,9 +9,10 @@ let third = document.querySelector('.third') as HTMLDivElement | null;
 let container = document.querySelector('.container') as HTMLDivElement | null;
 let redirect = document.querySelector('.redirect') as HTMLDivElement | null;
 @Component({
+  standalone: true,
   selector: 'app-forbidden',
+  imports: [CommonModule, RouterModule, TranslateModule],
   templateUrl: './forbidden.component.html',
-  styleUrls: ['./forbidden.component.scss']
 })
 export class ForbiddenComponent implements OnInit {
   constructor() {  

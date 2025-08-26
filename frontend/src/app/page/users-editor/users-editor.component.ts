@@ -1,14 +1,18 @@
 import { UserService } from 'src/app/service/user.service';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { User } from 'src/app/model/user';
 import { NotificationService } from 'src/app/service/notification.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
+  standalone: true,
   selector: 'app-users-editor',
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   templateUrl: './users-editor.component.html',
-  styleUrls: ['./users-editor.component.scss']
 })
 export class UsersEditorComponent implements OnInit {
   user$!: Observable<User>;
