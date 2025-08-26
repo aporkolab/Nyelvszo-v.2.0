@@ -11,8 +11,8 @@ import { UserService } from 'src/app/service/user.service';
   styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit {
-  columns = this.config.usersTableColumn;
-  list$ = this.userService.getAll();
+  columns;
+  list$;
   entity = 'User';
 
   constructor(
@@ -20,7 +20,10 @@ export class UsersComponent implements OnInit {
     private userService: UserService,
     private router: Router,
     private notifyService: NotificationService
-  ) {}
+  ) {
+    this.columns = this.config.usersTableColumn;
+    this.list$ = this.userService.getAll();
+  }
 
   ngOnInit(): void {}
 

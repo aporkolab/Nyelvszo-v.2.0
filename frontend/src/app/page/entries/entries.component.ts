@@ -11,8 +11,8 @@ import { NotificationService } from 'src/app/service/notification.service';
   styleUrls: ['./entries.component.scss']
 })
 export class EntriesComponent implements OnInit {
-  columns = this.config.entriesTableColumns;
-  list$ = this.entryService.getAll();
+  columns;
+  list$;
   entity = 'Entry';
 
   constructor(
@@ -20,7 +20,10 @@ export class EntriesComponent implements OnInit {
     private entryService: EntryService,
     private router: Router,
     private notifyService: NotificationService
-  ) {}
+  ) {
+    this.columns = this.config.entriesTableColumns;
+    this.list$ = this.entryService.getAll();
+  }
 
   ngOnInit(): void {}
 
