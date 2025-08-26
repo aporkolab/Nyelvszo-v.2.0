@@ -8,12 +8,17 @@ import { AuthService } from 'src/app/service/auth.service';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
-  user$ = this.auth.user$;
+  user$;
   rights = '';
 
-  constructor(private auth: AuthService,public translate: TranslateService
-  ) {translate.addLangs(['en', 'hu']);
-  translate.setDefaultLang('hu');}
+  constructor(
+    private auth: AuthService,
+    public translate: TranslateService
+  ) {
+    this.user$ = this.auth.user$;
+    translate.addLangs(['en', 'hu']);
+    translate.setDefaultLang('hu');
+  }
 
   ngOnInit(): void {}
 
