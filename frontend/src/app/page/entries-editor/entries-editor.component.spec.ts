@@ -1,11 +1,14 @@
+// entries-editor.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';         // <<< EZ KELL
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ToastrModule } from 'ngx-toastr';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
+import { ToastrModule } from 'ngx-toastr';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { EntriesEditorComponent } from './entries-editor.component';
+import { Entry } from '../../model/entry';
 
 describe('EntriesEditorComponent', () => {
   let component: EntriesEditorComponent;
@@ -14,12 +17,13 @@ describe('EntriesEditorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        EntriesEditorComponent,
+        EntriesEditorComponent,     // standalone
+        ReactiveFormsModule,        // <<< FormsModule helyett EZ
         HttpClientTestingModule,
-        ToastrModule.forRoot(),
         RouterTestingModule,
         TranslateModule.forRoot(),
-        FormsModule,
+        ToastrModule.forRoot(),
+        NoopAnimationsModule,
       ],
     }).compileComponents();
   });
@@ -27,15 +31,27 @@ describe('EntriesEditorComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(EntriesEditorComponent);
     component = fixture.componentInstance;
-    component.entry = {
+
+    const mockEntry: Entry = {
+      _id: '1',
       id: 1,
-      word: 'Test Word',
+      english: 'Test Word',
+      hungarian: 'Teszt szó',
+      fieldOfExpertise: 'general',
+      wordType: 'noun',
       description: 'Test Description',
       example: 'Test Example',
       sound: 'Test Sound',
       topic: 'Test Topic',
-      language: 'Test Language',
+      language: 'en',
     };
+
+    // @Input előbb:
+    component.entry = mockEntry;
+
+    // ha a komponens NEM ngOnInit-ben hozza létre a formot, biztosítsd itt:
+    // component.form = new FormGroup({ ... });  // csak ha szükséges
+
     fixture.detectChanges();
   });
 

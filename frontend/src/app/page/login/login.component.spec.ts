@@ -5,6 +5,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { IconModule } from 'src/app/icon/icon.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { LoginComponent } from './login.component';
 
@@ -15,13 +16,14 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        LoginComponent,
+        LoginComponent,             // standalone
+        FormsModule,                // template-driven forms
         HttpClientTestingModule,
-        ToastrModule.forRoot(),
         RouterTestingModule,
         IconModule,
         TranslateModule.forRoot(),
-        FormsModule,
+        ToastrModule.forRoot(),
+        NoopAnimationsModule,
       ],
     }).compileComponents();
   });
@@ -29,6 +31,9 @@ describe('LoginComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+
+    component.loginData = { email: '', password: '' };
+
     fixture.detectChanges();
   });
 

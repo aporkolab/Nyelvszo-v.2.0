@@ -7,10 +7,17 @@ module.exports = function (config) {
       require('karma-chrome-launcher'),
       require('@angular-devkit/build-angular/plugins/karma'),
     ],
-    client: {
-      jasmine: {},
-      clearContext: false,
+    exclude: [
+          '**/assets/js/extention/custom-materialize.js'
+        ],
+  client: {
+    jasmine: {
+      random: false,
+      failFast: false,
+      stopOnSpecFailure: false
     },
+    clearContext: false
+  },
     reporters: ['progress'],
     browsers: ['ChromeHeadless'],
     singleRun: true,

@@ -78,4 +78,14 @@ export class UsersEditorComponent implements OnInit {
       'NyelvSzó v.2.0.0'
     );
   }
+
+  onSubmit(user: User) {
+    // ha van _id -> update, különben create
+    if (user && user._id) {
+      this.onUpdate(user);
+    } else {
+      this.onCreate(user);
+    }
+  }
+
 }

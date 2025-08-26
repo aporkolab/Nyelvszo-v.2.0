@@ -1,11 +1,32 @@
+// src/app/page/users-editor/users-editor.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ToastrModule } from 'ngx-toastr';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ToastrModule } from 'ngx-toastr';
 
 import { UsersEditorComponent } from './users-editor.component';
+import { User } from '../../model/user'; // igazítsd az elérési utat
+
+function createUser(overrides: Partial<User> = {}): User {
+  return {
+    _id: 'u-1',
+    id: 1,
+    firstName: 'Test',
+    lastName: 'User',
+    name: 'Test User',
+    email: 'test@test.com',
+    password: 'Password1',
+    role: 1,
+    active: true,
+    language: 'en',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  } as User;
+}
 
 describe('UsersEditorComponent', () => {
   let component: UsersEditorComponent;
@@ -14,12 +35,13 @@ describe('UsersEditorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        UsersEditorComponent,
+        UsersEditorComponent,       // standalone komponens
+        FormsModule,                // template-driven formokhoz
         HttpClientTestingModule,
-        ToastrModule.forRoot(),
         RouterTestingModule,
         TranslateModule.forRoot(),
-        FormsModule,
+        ToastrModule.forRoot(),
+        NoopAnimationsModule,
       ],
     }).compileComponents();
   });
@@ -27,14 +49,10 @@ describe('UsersEditorComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(UsersEditorComponent);
     component = fixture.componentInstance;
-    component.user = {
-      id: 1,
-      name: 'Test User',
-      email: 'test@test.com',
-      password: 'password',
-      role: 1,
-      active: true,
-    };
+
+    // @Input beállítás az első change detection előtt
+    component.user = createUser();
+
     fixture.detectChanges();
   });
 

@@ -42,6 +42,15 @@ entry$!: Observable<Entry>;
     });
   }
 
+  onSubmit(entry: Entry) {
+    if (entry && entry._id) {
+      this.onUpdate(entry);
+    } else {
+      this.onCreate(entry);
+    }
+  }
+
+
   onUpdate(entry: Entry) {
     this.entryService.update(entry).subscribe({
       next: (category) => this.router.navigate(['/', 'entries']),

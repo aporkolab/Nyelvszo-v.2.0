@@ -93,13 +93,31 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
+            "fileReplacements": [
+              {
+                "replace": "src/assets/js/extention/custom-materialize.js",
+                "with": "src/testing/stubs/materialize.stub.js"
+              },
+              {
+                "replace": "src/assets/js/extention/choices.js",
+                "with": "src/testing/stubs/choices.stub.js"
+              },
+              {
+                "replace": "src/assets/js/extention/flatpickr.js",
+                "with": "src/testing/stubs/flatpickr.stub.js"
+              }
+            ],
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
               "./node_modules/bootstrap/dist/css/bootstrap.min.css",
               "./node_modules/font-awesome/css/font-awesome.min.css"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/js/extention/choices.js",
+              "src/assets/js/extention/custom-materialize.js",
+              "src/assets/js/extention/flatpickr.js"
+            ]
           }
         }
       }
