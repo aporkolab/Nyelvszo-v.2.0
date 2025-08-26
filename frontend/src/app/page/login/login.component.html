@@ -27,9 +27,10 @@
 								</span>
 							</div>
 							<input [(ngModel)]="loginData.email" type="email" class="form-control form-control-lg" placeholder="Email"
-								name="email" aria-label="Email" aria-describedby="basic-addon1" email required />
+								name="email" aria-label="Email" aria-describedby="basic-addon1" email required #emailModel="ngModel" />
 						</div>
-						<div *ngIf="loginForm?.controls?.email?.invalid" class="alert alert-danger" role="alert">
+						<div *ngIf="emailModel.invalid && (emailModel.dirty || emailModel.touched)" class="alert alert-danger"
+							role="alert">
 							{{ 'emailValid' | translate }}
 						</div>
 					</div>
@@ -43,9 +44,11 @@
 							</div>
 							<input [(ngModel)]="loginData.password" type="password" class="form-control form-control-lg"
 								placeholder="{{ 'Password' | translate }}" name="password" aria-label="Password"
-								aria-describedby="basic-addon2" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$" />
+								aria-describedby="basic-addon2" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+								#passwordModel="ngModel" />
 						</div>
-						<div *ngIf="loginForm?.controls?.password?.invalid" class="alert alert-danger" role="alert">
+						<div *ngIf="passwordModel.invalid && (passwordModel.dirty || passwordModel.touched)"
+							class="alert alert-danger" role="alert">
 							{{ 'passValid' | translate }}
 						</div>
 					</div>
@@ -53,7 +56,7 @@
 
 				<div class="row border-top border-secondary">
 					<div class="text-center pt-3 pb-3 col-6">
-						<button class="btn btn-success float-end text-white" type="submit" [disabled]="loginForm?.invalid">
+						<button class="btn btn-success float-end text-white" type="submit" [disabled]="loginForm.invalid">
 							{{ 'Sign in' | translate }}
 						</button>
 					</div>
