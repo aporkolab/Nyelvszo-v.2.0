@@ -1,4 +1,4 @@
-# NyelvSzó v.2.0.0
+# NyelvSzó v.2.2.0
 
 [![Build](https://img.shields.io/github/actions/workflow/status/APorkolab/Nyelvszo-v.2.0/ci.yml?branch=main)](../../actions)
 [![License](https://img.shields.io/badge/license-MIT-informational.svg)](LICENSE)
