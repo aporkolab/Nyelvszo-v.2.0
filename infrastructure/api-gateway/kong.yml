@@ -1,0 +1,187 @@
+# Kong API Gateway Configuration - State-of-the-Art
+_format_version: "3.0"
+_transform: true
+
+services:
+  # Auth Service
+  - name: auth-service
+    url: http://auth-service:3001
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          hour: 1000
+      - name: prometheus
+        config:
+          per_consumer: true
+    routes:
+      - name: auth-routes
+        paths:
+          - /api/v1/auth
+        strip_path: true
+        
+  # Dictionary Service
+  - name: dictionary-service
+    url: http://dictionary-service:3002
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 300
+          hour: 5000
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - "X-Service: dictionary-service"
+      - name: prometheus
+    routes:
+      - name: dictionary-routes
+        paths:
+          - /api/v1/entries
+          - /api/v1/search
+        strip_path: true
+
+  # User Management Service
+  - name: user-service
+    url: http://user-service:3003
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+      - name: rate-limiting
+        config:
+          minute: 50
+          hour: 500
+    routes:
+      - name: user-routes
+        paths:
+          - /api/v1/users
+        strip_path: true
+
+  # Analytics Service
+  - name: analytics-service
+    url: http://analytics-service:3004
+    plugins:
+      - name: jwt
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - "X-Service: analytics-service"
+    routes:
+      - name: analytics-routes
+        paths:
+          - /api/v1/analytics
+          - /api/v1/metrics
+        strip_path: true
+
+  # Search Service (AI/ML Enhanced)
+  - name: search-service
+    url: http://search-service:3005
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 200
+          hour: 2000
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - "X-Service: search-service"
+              - "X-AI-Powered: true"
+    routes:
+      - name: search-routes
+        paths:
+          - /api/v1/search/smart
+          - /api/v1/search/semantic
+          - /api/v1/recommendations
+        strip_path: true
+
+# Global Plugins
+plugins:
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+      
+  - name: request-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid
+      echo_downstream: true
+      
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  - name: zipkin
+    config:
+      http_endpoint: http://jaeger:9411/api/v2/spans
+      service_name: nyelvszo-gateway
+      
+  - name: cors
+    config:
+      origins:
+        - "https://nyelvszo.eu"
+        - "https://app.nyelvszo.eu"
+        - "https://admin.nyelvszo.eu"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - Authorization
+        - X-Correlation-ID
+        - X-Request-ID
+      credentials: true
+      max_age: 3600
+
+# Consumers (API Keys/JWT Users)
+consumers:
+  - username: admin
+    custom_id: admin-user
+    plugins:
+      - name: jwt
+        config:
+          key: admin-key
+          secret: ${{JWT_ADMIN_SECRET}}
+          
+  - username: public-api
+    custom_id: public-api-client
+    plugins:
+      - name: key-auth
+        config:
+          key: ${{PUBLIC_API_KEY}}
+
+# Advanced Rate Limiting
+rate_limiting_advanced:
+  - consumer: admin
+    config:
+      limit:
+        - 1000
+      window_size:
+        - 60
+      sync_rate: 0.5
+      
+  - consumer: public-api
+    config:
+      limit:
+        - 500
+      window_size:
+        - 60
+      sync_rate: 0.3
