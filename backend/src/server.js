@@ -77,7 +77,6 @@ mongoose.connect(`mongodb+srv://${user}:${pass}@${host}/${name}`, {
 		maxPoolSize: process.env.DB_MAX_POOL_SIZE || 10,
 		serverSelectionTimeoutMS: process.env.DB_CONNECTION_TIMEOUT_MS || 30000,
 		socketTimeoutMS: process.env.DB_SOCKET_TIMEOUT_MS || 45000,
-		bufferMaxEntries: 0,
 		retryWrites: true,
 	})
 	.then(
@@ -147,6 +146,9 @@ app.use('/preface', require('./controllers/entry/router'));
 app.use('/users', authenticate, require('./controllers/user/router'));
 app.use('/login', require('./controllers/login/router'));
 
+// Real-time WebSocket management routes
+app.use('/api/websocket', require('./routes/websocket'));
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
@@ -155,9 +157,19 @@ app.get('/', (req, res) => {
 	res.json({
 		name: 'NyelvSzó API',
 		version: '2.2.0',
-		message: 'Welcome to the NyelvSzó API',
+		message: 'Welcome to the NyelvSzó API - Now with Real-time Features!',
 		documentation: '/api-docs',
 		health: '/health',
+		webSocket: '/ws',
+		webSocketAdmin: '/api/websocket',
+		features: {
+			realTimeSearch: true,
+			liveCollaboration: true,
+			pushNotifications: true,
+			eventStreaming: true,
+			aiSearch: true,
+			cqrsEventStore: true
+		},
 		timestamp: new Date().toISOString()
 	});
 });

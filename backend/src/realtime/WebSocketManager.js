@@ -188,6 +188,10 @@ class WebSocketManager extends EventEmitter {
           await this.handleJoinRoom(clientId, message.payload);
           break;
         
+        case 'unsubscribe':
+          await this.handleUnsubscribe(clientId, message.payload);
+          break;
+        
         case 'leave_room':
           await this.handleLeaveRoom(clientId, message.payload);
           break;
@@ -489,6 +493,125 @@ class WebSocketManager extends EventEmitter {
       
       this.sendError(clientId, 'EDIT_FAILED', 'Failed to process entry edit');
     }
+  }
+
+  /**
+   * Handle unsubscription from channels
+   */
+  async handleUnsubscribe(clientId, payload) {
+    const { channels } = payload;
+    
+    if (!Array.isArray(channels)) {
+      this.sendError(clientId, 'INVALID_CHANNELS', 'Channels must be an array');
+      return;
+    }
+
+    const client = this.clients.get(clientId);
+    if (!client) return;
+
+    const unsubscribed = [];
+
+    for (const channel of channels) {
+      if (client.subscriptions.has(channel)) {
+        client.subscriptions.delete(channel);
+        unsubscribed.push(channel);
+      }
+    }
+
+    this.sendToClient(clientId, {
+      type: 'unsubscribed',
+      payload: {
+        channels: unsubscribed,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    logger.debug('Client unsubscribed from channels', {
+      clientId,
+      userId: client.userId,
+      channels: unsubscribed
+    });
+  }
+
+  /**
+   * Handle leaving a room
+   */
+  async handleLeaveRoom(clientId, payload) {
+    const { roomId } = payload;
+    
+    const room = this.rooms.get(roomId);
+    if (room && room.has(clientId)) {
+      room.delete(clientId);
+      
+      // Clean up empty room
+      if (room.size === 0) {
+        this.rooms.delete(roomId);
+      }
+    }
+    
+    const client = this.clients.get(clientId);
+    
+    this.sendToClient(clientId, {
+      type: 'room_left',
+      payload: {
+        roomId,
+        memberCount: room ? room.size : 0,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    // Notify other room members if room still exists
+    if (room && room.size > 0) {
+      this.broadcastToRoom(roomId, {
+        type: 'user_left',
+        payload: {
+          userId: client?.userId,
+          email: client?.email,
+          roomId,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
+    logger.debug('Client left room', {
+      clientId,
+      roomId,
+      remainingMembers: room ? room.size : 0
+    });
+  }
+
+  /**
+   * Handle chat messages (placeholder)
+   */
+  async handleChatMessage(clientId, payload) {
+    const { roomId, message } = payload;
+    const client = this.clients.get(clientId);
+    
+    if (!client || !client.userId) {
+      this.sendError(clientId, 'UNAUTHORIZED', 'Authentication required');
+      return;
+    }
+
+    // Broadcast message to room
+    this.broadcastToRoom(roomId, {
+      type: 'chat_message',
+      payload: {
+        message,
+        user: {
+          userId: client.userId,
+          email: client.email
+        },
+        roomId,
+        timestamp: new Date().toISOString()
+      }
+    }, [clientId]); // Exclude sender
+
+    logger.debug('Chat message sent', {
+      clientId,
+      userId: client.userId,
+      roomId,
+      messageLength: message?.length
+    });
   }
 
   /**

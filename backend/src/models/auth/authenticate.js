@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const createError = require('http-errors');
-const logger = require('../logger/logger');
+const logger = require('../../logger/logger');
 
 /**
  * JWT Authentication middleware

@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authenticate, authorize } = require('../models/auth/authenticate');
 const logger = require('../logger/logger');
+
+// Helper function to create auth middleware with roles
+const auth = (roles = []) => {
+  if (roles.length === 0) {
+    return authenticate;
+  }
+  return [authenticate, authorize(roles)];
+};
 
 /**
  * WEBSOCKET MANAGEMENT ROUTES
