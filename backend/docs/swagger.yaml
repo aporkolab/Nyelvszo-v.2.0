@@ -1,0 +1,965 @@
+openapi: 3.0.0
+info:
+  title: NyelvSzó API
+  description: |
+    Angol-magyar Nyelvészeti Szakszótár API dokumentáció.
+    
+    Ez az API lehetővé teszi a nyelvészeti szakkifejezések keresését, létrehozását, módosítását és törlését.
+    Három felhasználói szerepkör létezik:
+    - **Felhasználó (1)**: Csak megtekintés
+    - **Szerkesztő (2)**: Szócikkek kezelése
+    - **Adminisztrátor (3)**: Teljes hozzáférés
+    
+    ## Autentikáció
+    Az API JWT (JSON Web Token) alapú autentikációt használ. A token-t a `/login` végponton lehet megszerezni.
+    
+    ## Rate Limiting
+    - Általános végpontok: 100 kérés / 15 perc / IP
+    - Login végpont: 5 kérés / 15 perc / IP
+    
+  version: 2.2.0
+  contact:
+    name: Dr. Ádám Porkoláb
+    email: adam@porkolab.digital
+    url: https://nyelvszo.eu
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.nyelvszo.eu
+    description: Production server
+
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT access token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "user@example.com"
+              password: "SecurePassword123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /login/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get a new access token using refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  description: Valid refresh token
+              required:
+                - refreshToken
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accessToken:
+                    type: string
+                  expiresIn:
+                    type: string
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /entries:
+    get:
+      tags:
+        - Entries
+      summary: Get all entries
+      description: Retrieve all dictionary entries with optional filtering
+      operationId: getAllEntries
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search term for filtering entries
+          schema:
+            type: string
+        - name: fieldOfExpertise
+          in: query
+          description: Filter by field of expertise
+          schema:
+            type: string
+        - name: wordType
+          in: query
+          description: Filter by word type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of entries retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Entry'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Entries
+      summary: Create new entry
+      description: Create a new dictionary entry (requires editor role or higher)
+      operationId: createEntry
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryInput'
+      responses:
+        '201':
+          description: Entry created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /entries/{id}:
+    get:
+      tags:
+        - Entries
+      summary: Get entry by ID
+      description: Retrieve a specific dictionary entry by its ID
+      operationId: getEntryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entry ID
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: Entry retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Entries
+      summary: Update entry
+      description: Update an existing dictionary entry (requires editor role or higher)
+      operationId: updateEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entry ID
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryInput'
+      responses:
+        '200':
+          description: Entry updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Entries
+      summary: Partially update entry
+      description: Partially update an existing dictionary entry (requires editor role or higher)
+      operationId: patchEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entry ID
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryUpdateInput'
+      responses:
+        '200':
+          description: Entry updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Entries
+      summary: Delete entry
+      description: Delete a dictionary entry (requires editor role or higher)
+      operationId: deleteEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entry ID
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: Entry deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Entry deleted successfully"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve all users (requires authentication)
+      operationId: getAllUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: role
+          in: query
+          description: Filter by user role
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Users
+      summary: Create new user
+      description: Create a new user (requires admin role)
+      operationId: createUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions (admin required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check the health status of the API
+      operationId: healthCheck
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: API is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT authentication. Add 'Bearer ' prefix to your JWT token.
+        Example: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+
+  schemas:
+    Entry:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectId
+          description: Unique identifier
+          example: "507f1f77bcf86cd799439011"
+        hungarian:
+          type: string
+          description: Hungarian term
+          example: "számítógép"
+          maxLength: 500
+        english:
+          type: string
+          description: English term
+          example: "computer"
+          maxLength: 500
+        fieldOfExpertise:
+          type: string
+          description: Field of expertise
+          example: "informatika"
+          maxLength: 200
+        wordType:
+          type: string
+          description: Type of word (noun, verb, etc.)
+          example: "főnév"
+          maxLength: 100
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - _id
+        - hungarian
+        - english
+        - fieldOfExpertise
+
+    EntryInput:
+      type: object
+      properties:
+        hungarian:
+          type: string
+          description: Hungarian term
+          example: "számítógép"
+          minLength: 1
+          maxLength: 500
+        english:
+          type: string
+          description: English term
+          example: "computer"
+          minLength: 1
+          maxLength: 500
+        fieldOfExpertise:
+          type: string
+          description: Field of expertise
+          example: "informatika"
+          minLength: 1
+          maxLength: 200
+        wordType:
+          type: string
+          description: Type of word (noun, verb, etc.)
+          example: "főnév"
+          minLength: 1
+          maxLength: 100
+      required:
+        - hungarian
+        - english
+        - fieldOfExpertise
+
+    EntryUpdateInput:
+      type: object
+      properties:
+        hungarian:
+          type: string
+          description: Hungarian term
+          example: "számítógép"
+          minLength: 1
+          maxLength: 500
+        english:
+          type: string
+          description: English term
+          example: "computer"
+          minLength: 1
+          maxLength: 500
+        fieldOfExpertise:
+          type: string
+          description: Field of expertise
+          example: "informatika"
+          minLength: 1
+          maxLength: 200
+        wordType:
+          type: string
+          description: Type of word (noun, verb, etc.)
+          example: "főnév"
+          minLength: 1
+          maxLength: 100
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectId
+          description: Unique identifier
+          example: "507f1f77bcf86cd799439011"
+        firstName:
+          type: string
+          description: First name
+          example: "János"
+        lastName:
+          type: string
+          description: Last name
+          example: "Kovács"
+        email:
+          type: string
+          format: email
+          description: Email address
+          example: "janos.kovacs@example.com"
+        role:
+          type: integer
+          description: User role (1=User, 2=Editor, 3=Admin)
+          enum: [1, 2, 3]
+          example: 2
+        isActive:
+          type: boolean
+          description: Whether user is active
+          example: true
+        lastLogin:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - _id
+        - firstName
+        - lastName
+        - email
+        - role
+
+    UserInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: First name
+          example: "János"
+          minLength: 2
+          maxLength: 100
+          pattern: '^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\s-]+$'
+        lastName:
+          type: string
+          description: Last name
+          example: "Kovács"
+          minLength: 2
+          maxLength: 100
+          pattern: '^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\s-]+$'
+        email:
+          type: string
+          format: email
+          description: Email address
+          example: "janos.kovacs@example.com"
+          maxLength: 255
+        role:
+          type: integer
+          description: User role (1=User, 2=Editor, 3=Admin)
+          enum: [1, 2, 3]
+          example: 2
+        password:
+          type: string
+          description: Password (minimum 8 chars, must contain uppercase, lowercase, number, and special character)
+          example: "SecurePassword123!"
+          minLength: 8
+          maxLength: 128
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]'
+      required:
+        - firstName
+        - lastName
+        - email
+        - role
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "user@example.com"
+        password:
+          type: string
+          description: User password
+          example: "SecurePassword123!"
+      required:
+        - email
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Login success status
+          example: true
+        accessToken:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/User'
+        expiresIn:
+          type: string
+          description: Token expiration time
+          example: "1h"
+      required:
+        - success
+        - accessToken
+        - user
+        - expiresIn
+
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          description: Current page number
+          example: 1
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 10
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 200
+        itemsPerPage:
+          type: integer
+          description: Number of items per page
+          example: 20
+        hasNextPage:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        hasPrevPage:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["OK", "ERROR"]
+          description: Health status
+          example: "OK"
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        version:
+          type: string
+          description: API version
+          example: "2.2.0"
+        uptime:
+          type: number
+          description: Server uptime in seconds
+          example: 3600.5
+        database:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: ["connected", "disconnected", "error"]
+              example: "connected"
+            responseTime:
+              type: number
+              description: Database response time in milliseconds
+              example: 15.2
+        memory:
+          type: object
+          properties:
+            used:
+              type: number
+              description: Used memory in bytes
+              example: 104857600
+            total:
+              type: number
+              description: Total memory in bytes
+              example: 1073741824
+            usage:
+              type: number
+              description: Memory usage percentage
+              example: 9.77
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+        message:
+          type: string
+          description: Detailed error message
+          example: "The provided email or password is incorrect"
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 401
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        path:
+          type: string
+          description: Request path where error occurred
+          example: "/login"
+      required:
+        - error
+        - statusCode
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Validation Error"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Input validation failed"
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 400
+        details:
+          type: array
+          description: Validation error details
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field that failed validation
+                example: "email"
+              message:
+                type: string
+                description: Validation error message
+                example: "Please provide a valid email address"
+              value:
+                description: The invalid value that was provided
+                example: "invalid-email"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        path:
+          type: string
+          description: Request path where error occurred
+          example: "/users"
+      required:
+        - error
+        - statusCode
+        - details
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Entries
+    description: Dictionary entries management
+  - name: Users
+    description: User management (admin only)
+  - name: Health
+    description: API health monitoring
