@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NyelvSzó WebSocket Test Client</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.authenticated {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .panel h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background-color: #dc3545;
+        }
+        
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin: 5px 0;
+        }
+        
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        
+        .log {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .stat-item {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .message-examples {
+            display: grid;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .message-example {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .message-example:hover {
+            background: #ffeaa7;
+        }
+        
+        .message-example code {
+            background: none;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 NyelvSzó WebSocket Test Client</h1>
+    
+    <div class="container">
+        <div id="connectionStatus" class="status disconnected">
+            ❌ Disconnected
+        </div>
+        
+        <div id="authStatus" class="status disconnected" style="display: none;">
+            🔒 Not Authenticated
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>📊 Connection Statistics</h3>
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <div class="stat-label">Messages Sent</div>
+                <div class="stat-value" id="messagesSent">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Messages Received</div>
+                <div class="stat-value" id="messagesReceived">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Reconnections</div>
+                <div class="stat-value" id="reconnections">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Queue Size</div>
+                <div class="stat-value" id="queueSize">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="container">
+            <h3>🔐 Authentication</h3>
+            <input type="text" id="jwtToken" placeholder="JWT Token (optional - will use from localStorage)" />
+            <button onclick="authenticate()" id="authBtn">Authenticate</button>
+            <button onclick="disconnect()" class="danger">Disconnect</button>
+        </div>
+        
+        <div class="container">
+            <h3>📡 Subscriptions</h3>
+            <input type="text" id="channelName" placeholder="Channel name (e.g., entries:public)" />
+            <button onclick="subscribe()">Subscribe</button>
+            <button onclick="unsubscribe()">Unsubscribe</button>
+            <div>
+                <strong>Active subscriptions:</strong>
+                <div id="subscriptions">None</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="container">
+            <h3>🔍 Real-time Search</h3>
+            <input type="text" id="searchQuery" placeholder="Search query" />
+            <button onclick="performSearch()">Search</button>
+        </div>
+        
+        <div class="container">
+            <h3>🏠 Room Management</h3>
+            <input type="text" id="roomId" placeholder="Room ID (e.g., entry-123)" />
+            <button onclick="joinRoom()">Join Room</button>
+            <button onclick="leaveRoom()">Leave Room</button>
+            <button onclick="sendTyping()">Send Typing</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>📝 Custom Messages</h3>
+        <textarea id="customMessage" placeholder='{"type": "custom", "payload": {"data": "example"}}'></textarea>
+        <button onclick="sendCustomMessage()">Send Custom Message</button>
+        
+        <div class="message-examples">
+            <div class="message-example" onclick="setExampleMessage('heartbeat')">
+                <strong>Heartbeat:</strong> <code>{"type": "heartbeat", "payload": {}}</code>
+            </div>
+            <div class="message-example" onclick="setExampleMessage('subscribe')">
+                <strong>Subscribe:</strong> <code>{"type": "subscribe", "payload": {"channels": ["entries:public"]}}</code>
+            </div>
+            <div class="message-example" onclick="setExampleMessage('search')">
+                <strong>Search:</strong> <code>{"type": "search", "payload": {"query": "alma"}}</code>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>📋 Message Log</h3>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="exportLog()">Export Log</button>
+        <div id="messageLog" class="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+        let isAuthenticated = false;
+        let stats = {
+            messagesSent: 0,
+            messagesReceived: 0,
+            reconnections: 0,
+            queueSize: 0
+        };
+        let subscriptions = new Set();
+        
+        // Auto-detect WebSocket URL
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        // Initialize connection on page load
+        window.onload = function() {
+            log(`🔌 Initializing WebSocket test client`);
+            log(`📡 WebSocket URL: ${wsUrl}`);
+            connect();
+            updateStats();
+            setInterval(updateStats, 1000);
+        };
+        
+        function connect() {
+            if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+                return;
+            }
+            
+            log(`🔄 Connecting to ${wsUrl}...`);
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                isConnected = true;
+                log('✅ WebSocket connected');
+                updateConnectionStatus();
+                
+                // Auto-authenticate if token available
+                const savedToken = localStorage.getItem('ws_auth_token');
+                if (savedToken) {
+                    document.getElementById('jwtToken').value = savedToken;
+                    authenticate();
+                }
+            };
+            
+            ws.onmessage = function(event) {
+                stats.messagesReceived++;
+                const message = JSON.parse(event.data);
+                log(`📨 Received: ${message.type}`, message);
+                
+                // Handle specific message types
+                handleMessage(message);
+            };
+            
+            ws.onclose = function(event) {
+                isConnected = false;
+                isAuthenticated = false;
+                log(`🔌 WebSocket closed: ${event.code} - ${event.reason}`);
+                updateConnectionStatus();
+                
+                // Auto-reconnect after delay
+                setTimeout(connect, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                log(`❌ WebSocket error:`, error);
+            };
+        }
+        
+        function handleMessage(message) {
+            switch (message.type) {
+                case 'connection':
+                    log('🎉 Connection established with features:', message.payload.features);
+                    break;
+                    
+                case 'auth_success':
+                    isAuthenticated = true;
+                    log('✅ Authentication successful:', message.payload);
+                    updateConnectionStatus();
+                    break;
+                    
+                case 'auth_failed':
+                    isAuthenticated = false;
+                    log('❌ Authentication failed:', message.payload);
+                    updateConnectionStatus();
+                    break;
+                    
+                case 'subscribed':
+                    message.payload.channels.forEach(ch => subscriptions.add(ch));
+                    updateSubscriptions();
+                    break;
+                    
+                case 'search_results':
+                    log('🔍 Search results:', message.payload);
+                    break;
+                    
+                case 'notification':
+                    log('🔔 Notification:', message.payload);
+                    break;
+                    
+                case 'room_joined':
+                    log('🏠 Joined room:', message.payload);
+                    break;
+                    
+                case 'user_typing':
+                    log('⌨️ User typing:', message.payload);
+                    break;
+                    
+                case 'error':
+                    log('❌ Server error:', message.payload);
+                    break;
+            }\n        }\n        \n        function authenticate() {\n            const token = document.getElementById('jwtToken').value.trim();\n            \n            if (!token) {\n                alert('Please enter a JWT token');\n                return;\n            }\n            \n            // Save token\n            localStorage.setItem('ws_auth_token', token);\n            \n            send({\n                type: 'auth',\n                payload: { token }\n            });\n        }\n        \n        function subscribe() {\n            const channel = document.getElementById('channelName').value.trim();\n            if (!channel) {\n                alert('Please enter a channel name');\n                return;\n            }\n            \n            send({\n                type: 'subscribe',\n                payload: { channels: [channel] }\n            });\n        }\n        \n        function unsubscribe() {\n            const channel = document.getElementById('channelName').value.trim();\n            if (!channel) {\n                alert('Please enter a channel name');\n                return;\n            }\n            \n            subscriptions.delete(channel);\n            updateSubscriptions();\n            \n            send({\n                type: 'unsubscribe',\n                payload: { channels: [channel] }\n            });\n        }\n        \n        function performSearch() {\n            const query = document.getElementById('searchQuery').value.trim();\n            if (!query) {\n                alert('Please enter a search query');\n                return;\n            }\n            \n            send({\n                type: 'search',\n                payload: { query, options: {} }\n            });\n        }\n        \n        function joinRoom() {\n            const roomId = document.getElementById('roomId').value.trim();\n            if (!roomId) {\n                alert('Please enter a room ID');\n                return;\n            }\n            \n            send({\n                type: 'join_room',\n                payload: { roomId }\n            });\n        }\n        \n        function leaveRoom() {\n            const roomId = document.getElementById('roomId').value.trim();\n            if (!roomId) {\n                alert('Please enter a room ID');\n                return;\n            }\n            \n            send({\n                type: 'leave_room',\n                payload: { roomId }\n            });\n        }\n        \n        function sendTyping() {\n            const roomId = document.getElementById('roomId').value.trim();\n            if (!roomId) {\n                alert('Please enter a room ID');\n                return;\n            }\n            \n            send({\n                type: 'typing',\n                payload: { room: roomId, isTyping: true }\n            });\n            \n            // Stop typing after 3 seconds\n            setTimeout(() => {\n                send({\n                    type: 'typing',\n                    payload: { room: roomId, isTyping: false }\n                });\n            }, 3000);\n        }\n        \n        function sendCustomMessage() {\n            const messageText = document.getElementById('customMessage').value.trim();\n            if (!messageText) {\n                alert('Please enter a message');\n                return;\n            }\n            \n            try {\n                const message = JSON.parse(messageText);\n                send(message);\n            } catch (error) {\n                alert('Invalid JSON: ' + error.message);\n            }\n        }\n        \n        function setExampleMessage(type) {\n            const examples = {\n                heartbeat: '{\"type\": \"heartbeat\", \"payload\": {}}',\n                subscribe: '{\"type\": \"subscribe\", \"payload\": {\"channels\": [\"entries:public\"]}}',\n                search: '{\"type\": \"search\", \"payload\": {\"query\": \"alma\", \"options\": {}}}'\n            };\n            \n            document.getElementById('customMessage').value = examples[type] || '';\n        }\n        \n        function send(message) {\n            if (!isConnected || !ws) {\n                log('⚠️ Not connected, cannot send message');\n                return;\n            }\n            \n            try {\n                ws.send(JSON.stringify(message));\n                stats.messagesSent++;\n                log(`📤 Sent: ${message.type}`, message);\n            } catch (error) {\n                log('❌ Failed to send message:', error);\n            }\n        }\n        \n        function disconnect() {\n            if (ws) {\n                ws.close(1000, 'Manual disconnect');\n            }\n        }\n        \n        function updateConnectionStatus() {\n            const connectionStatus = document.getElementById('connectionStatus');\n            const authStatus = document.getElementById('authStatus');\n            \n            if (isConnected) {\n                connectionStatus.textContent = '✅ Connected';\n                connectionStatus.className = 'status connected';\n            } else {\n                connectionStatus.textContent = '❌ Disconnected';\n                connectionStatus.className = 'status disconnected';\n            }\n            \n            if (isConnected) {\n                authStatus.style.display = 'block';\n                if (isAuthenticated) {\n                    authStatus.textContent = '🔓 Authenticated';\n                    authStatus.className = 'status authenticated';\n                } else {\n                    authStatus.textContent = '🔒 Not Authenticated';\n                    authStatus.className = 'status disconnected';\n                }\n            } else {\n                authStatus.style.display = 'none';\n            }\n        }\n        \n        function updateSubscriptions() {\n            const subsDiv = document.getElementById('subscriptions');\n            if (subscriptions.size === 0) {\n                subsDiv.textContent = 'None';\n            } else {\n                subsDiv.innerHTML = Array.from(subscriptions).map(sub => \n                    `<span style=\"background: #e9ecef; padding: 2px 6px; border-radius: 3px; margin: 2px; display: inline-block;\">${sub}</span>`\n                ).join('');\n            }\n        }\n        \n        function updateStats() {\n            document.getElementById('messagesSent').textContent = stats.messagesSent;\n            document.getElementById('messagesReceived').textContent = stats.messagesReceived;\n            document.getElementById('reconnections').textContent = stats.reconnections;\n            document.getElementById('queueSize').textContent = stats.queueSize;\n        }\n        \n        function log(message, data = null) {\n            const logDiv = document.getElementById('messageLog');\n            const timestamp = new Date().toLocaleTimeString();\n            const logEntry = `[${timestamp}] ${message}${data ? '\\n' + JSON.stringify(data, null, 2) : ''}\\n`;\n            \n            logDiv.textContent += logEntry;\n            logDiv.scrollTop = logDiv.scrollHeight;\n        }\n        \n        function clearLog() {\n            document.getElementById('messageLog').textContent = '';\n        }\n        \n        function exportLog() {\n            const logContent = document.getElementById('messageLog').textContent;\n            const blob = new Blob([logContent], { type: 'text/plain' });\n            const url = URL.createObjectURL(blob);\n            \n            const a = document.createElement('a');\n            a.href = url;\n            a.download = `websocket-log-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;\n            document.body.appendChild(a);\n            a.click();\n            document.body.removeChild(a);\n            URL.revokeObjectURL(url);\n        }\n    </script>\n</body>\n</html>"
