@@ -5,21 +5,13 @@ module.exports = function (config) {
     plugins: [
       require('karma-jasmine'),
       require('karma-chrome-launcher'),
-      require('@angular-devkit/build-angular/plugins/karma'),
+      require('@angular-devkit/build-angular/plugins/karma')
     ],
-    exclude: [
-          '**/assets/js/extention/custom-materialize.js'
-        ],
-  client: {
-    jasmine: {
-      random: false,
-      failFast: false,
-      stopOnSpecFailure: false
+    client: {
+      clearContext: false
     },
-    clearContext: false
-  },
     reporters: ['progress'],
     browsers: ['ChromeHeadless'],
-    singleRun: true,
+    singleRun: true
   });
 };
