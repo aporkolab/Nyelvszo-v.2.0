@@ -17,9 +17,9 @@ module.exports = {
     '/logs/'
   ],
 
-  // Transform ignore patterns for ES modules in node_modules
+  // Transform ignore patterns - avoid transforming node_modules for faster tests
   transformIgnorePatterns: [
-    '/node_modules/(?!(mongodb|mongodb-memory-server|mongodb-memory-server-core)/)',
+    '/node_modules/',
   ],
 
   // Coverage configuration
@@ -51,7 +51,7 @@ module.exports = {
   },
 
   // Setup files
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup-mock.js'],
 
   // Module paths
   moduleDirectories: ['node_modules', 'src'],

@@ -318,7 +318,7 @@ describe('Authentication Integration Tests', () => {
       const response = await request(app)
         .post('/login')
         .send({
-          email: 'test@example.com<script>alert(\"xss\")</script>',
+          email: 'test@example.com<script>alert("xss")</script>',
           password: 'TestPassword123!'
         })
         .expect(400); // Should fail validation
@@ -330,7 +330,7 @@ describe('Authentication Integration Tests', () => {
       const response = await request(app)
         .post('/login')
         .send({
-          email: \"test@example.com'; DROP TABLE users; --\",
+          email: "test@example.com'; DROP TABLE users; --",
           password: 'TestPassword123!'
         })
         .expect(401); // Should fail authentication, not crash
