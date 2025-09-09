@@ -43,8 +43,8 @@ CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
 FROM base AS build
 ENV NODE_ENV=production
 
-# Install dependencies
-RUN npm install
+# Install all dependencies (including dev dependencies for build)
+RUN npm install --include=dev
 
 # Install Angular CLI
 RUN npm install -g @angular/cli@16
