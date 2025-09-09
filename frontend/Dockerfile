@@ -44,7 +44,7 @@ FROM base AS build
 ENV NODE_ENV=production
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Install Angular CLI
 RUN npm install -g @angular/cli@16
