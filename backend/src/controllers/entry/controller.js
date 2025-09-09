@@ -1,5 +1,9 @@
 const Entry = require('../../models/entry');
-const { catchAsync, createNotFoundError, createValidationError } = require('../../middleware/errorHandler');
+const {
+  catchAsync,
+  createNotFoundError,
+  createValidationError,
+} = require('../../middleware/errorHandler');
 const { validate, sanitize } = require('../../middleware/validation');
 const { entrySchema, entryUpdateSchema, idSchema } = require('../../validation/schemas');
 const { presets: cachePresets, invalidateCache } = require('../../middleware/cache');
@@ -18,7 +22,7 @@ const getAllEntries = catchAsync(async (req, res) => {
     fieldOfExpertise,
     wordType,
     sortBy = 'relevance',
-    includeStats = false
+    includeStats = false,
   } = req.query;
 
   // Validate pagination parameters
@@ -31,7 +35,7 @@ const getAllEntries = catchAsync(async (req, res) => {
     limit: limitNum,
     fieldOfExpertise,
     wordType,
-    sortBy
+    sortBy,
   };
 
   // Log search request for analytics
@@ -40,17 +44,14 @@ const getAllEntries = catchAsync(async (req, res) => {
     filters: { fieldOfExpertise, wordType },
     sortBy,
     pagination: { page: pageNum, limit: limitNum },
-    userRole: req.user?.role || 'anonymous'
+    userRole: req.user?.role || 'anonymous',
   });
 
   // Execute search with optimized queries
   const { query, countQuery } = Entry.searchEntries(search, searchOptions);
-  
+
   // Execute both queries in parallel
-  const [entries, totalCount] = await Promise.all([
-    query,
-    countQuery
-  ]);
+  const [entries, totalCount] = await Promise.all([query, countQuery]);
 
   // Calculate pagination metadata
   const totalPages = Math.ceil(totalCount / limitNum);
@@ -68,17 +69,17 @@ const getAllEntries = catchAsync(async (req, res) => {
       hasNextPage,
       hasPrevPage,
       nextPage: hasNextPage ? pageNum + 1 : null,
-      prevPage: hasPrevPage ? pageNum - 1 : null
+      prevPage: hasPrevPage ? pageNum - 1 : null,
     },
     meta: {
       searchTerm: search || null,
       filters: {
         fieldOfExpertise: fieldOfExpertise || null,
-        wordType: wordType || null
+        wordType: wordType || null,
       },
       sortBy,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   };
 
   // Include statistics if requested
@@ -91,7 +92,7 @@ const getAllEntries = catchAsync(async (req, res) => {
   res.set({
     'X-Total-Count': totalCount,
     'X-Page': pageNum,
-    'X-Per-Page': limitNum
+    'X-Per-Page': limitNum,
   });
 
   res.json(response);
@@ -117,16 +118,16 @@ const getEntryById = catchAsync(async (req, res) => {
 
   // Increment view count asynchronously (fire and forget)
   Entry.findByIdAndUpdate(
-    id, 
-    { 
+    id,
+    {
       $inc: { views: 1 },
-      $set: { lastViewed: new Date() }
+      $set: { lastViewed: new Date() },
     },
     { new: false }
-  ).catch(err => {
-    logger.warn('Failed to increment view count', { 
-      entryId: id, 
-      error: err.message 
+  ).catch((err) => {
+    logger.warn('Failed to increment view count', {
+      entryId: id,
+      error: err.message,
     });
   });
 
@@ -136,15 +137,15 @@ const getEntryById = catchAsync(async (req, res) => {
     hungarian: entry.hungarian,
     english: entry.english,
     userRole: req.user?.role || 'anonymous',
-    ip: req.ip
+    ip: req.ip,
   });
 
   res.json({
     data: entry,
     meta: {
       timestamp: new Date().toISOString(),
-      viewed: true
-    }
+      viewed: true,
+    },
   });
 });
 
@@ -159,7 +160,7 @@ const createEntry = [
   catchAsync(async (req, res) => {
     const entryData = {
       ...req.body,
-      createdBy: req.user?.userId || null
+      createdBy: req.user?.userId || null,
     };
 
     const entry = new Entry(entryData);
@@ -170,23 +171,23 @@ const createEntry = [
 
     // Invalidate relevant caches
     invalidateCache.entries();
-    
+
     // Log entry creation
     logger.audit('Entry created', {
       entryId: savedEntry._id,
       hungarian: savedEntry.hungarian,
       english: savedEntry.english,
-      createdBy: req.user?.email
+      createdBy: req.user?.email,
     });
 
     res.status(201).json({
       data: savedEntry,
       meta: {
         message: 'Entry created successfully',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-  })
+  }),
 ];
 
 /**
@@ -202,17 +203,13 @@ const updateEntry = [
     const { id } = req.params;
     const updateData = {
       ...req.body,
-      updatedBy: req.user?.userId || null
+      updatedBy: req.user?.userId || null,
     };
 
-    const entry = await Entry.findOneAndUpdate(
-      { _id: id, isActive: true },
-      updateData,
-      { 
-        new: true, 
-        runValidators: true 
-      }
-    ).populate('createdBy updatedBy', 'firstName lastName');
+    const entry = await Entry.findOneAndUpdate({ _id: id, isActive: true }, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate('createdBy updatedBy', 'firstName lastName');
 
     if (!entry) {
       throw createNotFoundError('Entry');
@@ -220,24 +217,24 @@ const updateEntry = [
 
     // Invalidate relevant caches
     invalidateCache.entries();
-    
+
     // Log entry update
     logger.audit('Entry updated', {
       entryId: id,
       hungarian: entry.hungarian,
       english: entry.english,
       updatedBy: req.user?.email,
-      changes: Object.keys(req.body)
+      changes: Object.keys(req.body),
     });
 
     res.json({
       data: entry,
       meta: {
         message: 'Entry updated successfully',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-  })
+  }),
 ];
 
 /**
@@ -259,9 +256,9 @@ const deleteEntry = [
 
     const entry = await Entry.findOneAndUpdate(
       { _id: id, isActive: true },
-      { 
+      {
         isActive: false,
-        updatedBy: req.user?.userId || null
+        updatedBy: req.user?.userId || null,
       },
       { new: true }
     );
@@ -272,23 +269,23 @@ const deleteEntry = [
 
     // Invalidate relevant caches
     invalidateCache.entries();
-    
+
     // Log entry deletion
     logger.audit('Entry deleted (soft)', {
       entryId: id,
       hungarian: entry.hungarian,
       english: entry.english,
-      deletedBy: req.user?.email
+      deletedBy: req.user?.email,
     });
 
     res.json({
       meta: {
         message: 'Entry deleted successfully',
         entryId: id,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-  })
+  }),
 ];
 
 /**
@@ -307,8 +304,8 @@ const getPopularEntries = catchAsync(async (req, res) => {
     meta: {
       type: 'popular',
       limit: limitNum,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -328,8 +325,8 @@ const getRecentEntries = catchAsync(async (req, res) => {
     meta: {
       type: 'recent',
       limit: limitNum,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -345,18 +342,18 @@ const getStatistics = catchAsync(async (req, res) => {
   const additionalStats = {
     averageViewsPerEntry: stats.totalEntries > 0 ? stats.totalViews / stats.totalEntries : 0,
     entriesPerField: stats.totalEntries > 0 ? stats.totalEntries / stats.totalFields : 0,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
   };
 
   res.json({
     data: {
       ...stats,
-      ...additionalStats
+      ...additionalStats,
     },
     meta: {
       type: 'statistics',
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -380,18 +377,18 @@ const bulkOperations = catchAsync(async (req, res) => {
         // Delete specific entries
         result = await Entry.updateMany(
           { _id: { $in: entries }, isActive: true },
-          { 
+          {
             isActive: false,
-            updatedBy: req.user?.userId 
+            updatedBy: req.user?.userId,
           }
         );
       } else if (filters) {
         // Delete by filters
         result = await Entry.updateMany(
           { ...filters, isActive: true },
-          { 
+          {
             isActive: false,
-            updatedBy: req.user?.userId 
+            updatedBy: req.user?.userId,
           }
         );
       } else {
@@ -403,22 +400,16 @@ const bulkOperations = catchAsync(async (req, res) => {
       if (!req.body.updateData) {
         throw createValidationError('Update data is required');
       }
-      
+
       const updateData = {
         ...req.body.updateData,
-        updatedBy: req.user?.userId
+        updatedBy: req.user?.userId,
       };
 
       if (entries && entries.length > 0) {
-        result = await Entry.updateMany(
-          { _id: { $in: entries }, isActive: true },
-          updateData
-        );
+        result = await Entry.updateMany({ _id: { $in: entries }, isActive: true }, updateData);
       } else if (filters) {
-        result = await Entry.updateMany(
-          { ...filters, isActive: true },
-          updateData
-        );
+        result = await Entry.updateMany({ ...filters, isActive: true }, updateData);
       } else {
         throw createValidationError('Either entries array or filters must be provided');
       }
@@ -435,7 +426,7 @@ const bulkOperations = catchAsync(async (req, res) => {
   logger.audit('Bulk operation performed', {
     operation,
     entriesAffected: result.modifiedCount || result.matchedCount,
-    performedBy: req.user?.email
+    performedBy: req.user?.email,
   });
 
   res.json({
@@ -443,12 +434,12 @@ const bulkOperations = catchAsync(async (req, res) => {
       operation,
       matched: result.matchedCount || 0,
       modified: result.modifiedCount || 0,
-      acknowledged: result.acknowledged
+      acknowledged: result.acknowledged,
     },
     meta: {
       message: `Bulk ${operation} completed successfully`,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
@@ -462,5 +453,5 @@ module.exports = {
   getPopularEntries,
   getRecentEntries,
   getStatistics,
-  bulkOperations
+  bulkOperations,
 };

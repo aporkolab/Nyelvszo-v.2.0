@@ -7,68 +7,58 @@ const controller = require('./controller');
 // Public routes with caching
 
 // Get all entries with search and filtering
-router.get('/', 
-  cachePresets.search, 
-  controller.getAllEntries
-);
+router.get('/', cachePresets.search, controller.getAllEntries);
 
 // Get popular entries
-router.get('/popular', 
-  cachePresets.public, 
-  controller.getPopularEntries
-);
+router.get('/popular', cachePresets.public, controller.getPopularEntries);
 
 // Get recent entries
-router.get('/recent', 
-  cachePresets.public, 
-  controller.getRecentEntries
-);
+router.get('/recent', cachePresets.public, controller.getRecentEntries);
 
 // Get statistics
-router.get('/statistics', 
-  cachePresets.statistics, 
-  controller.getStatistics
-);
+router.get('/statistics', cachePresets.statistics, controller.getStatistics);
 
 // Get single entry by ID
-router.get('/:id', 
-  cachePresets.entries, 
-  controller.getEntryById
-);
+router.get('/:id', cachePresets.entries, controller.getEntryById);
 
 // Protected routes (Editor+ required)
 
 // Create new entry
-router.post('/', 
-  authenticate, 
+router.post(
+  '/',
+  authenticate,
   authorize([2, 3]), // Editor or Admin
   controller.createEntry
 );
 
 // Bulk operations (Admin only)
-router.post('/bulk', 
-  authenticate, 
+router.post(
+  '/bulk',
+  authenticate,
   authorize([3]), // Admin only
   controller.bulkOperations
 );
 
 // Update entry (full update)
-router.put('/:id', 
-  authenticate, 
+router.put(
+  '/:id',
+  authenticate,
   authorize([2, 3]), // Editor or Admin
   controller.updateEntry
 );
 
 // Partial update entry
-router.patch('/:id', 
-  authenticate, 
+router.patch(
+  '/:id',
+  authenticate,
   authorize([2, 3]), // Editor or Admin
   controller.patchEntry
 );
 
 // Delete entry (soft delete)
-router.delete('/:id', 
-  authenticate, 
+router.delete(
+  '/:id',
+  authenticate,
   authorize([2, 3]), // Editor or Admin
   controller.deleteEntry
 );

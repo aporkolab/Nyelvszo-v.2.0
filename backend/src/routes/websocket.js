@@ -13,7 +13,7 @@ const auth = (roles = []) => {
 
 /**
  * WEBSOCKET MANAGEMENT ROUTES
- * 
+ *
  * HTTP endpoints for WebSocket management and monitoring:
  * - Connection statistics
  * - Active sessions monitoring
@@ -28,38 +28,37 @@ const auth = (roles = []) => {
 router.get('/stats', auth(), async (req, res) => {
   try {
     const { webSocketManager } = req.app.locals;
-    
+
     if (!webSocketManager) {
       return res.status(503).json({
         success: false,
-        error: 'WebSocket service unavailable'
+        error: 'WebSocket service unavailable',
       });
     }
 
     const stats = webSocketManager.getStats();
-    
+
     res.json({
       success: true,
       data: {
         connections: stats,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     logger.info('WebSocket stats requested', {
       userId: req.user.userId,
-      stats: stats
+      stats: stats,
     });
-
   } catch (error) {
     logger.error('Error fetching WebSocket stats', {
       error: error.message,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch WebSocket statistics'
+      error: 'Failed to fetch WebSocket statistics',
     });
   }
 });
@@ -71,16 +70,16 @@ router.get('/stats', auth(), async (req, res) => {
 router.get('/sessions', auth(['admin']), async (req, res) => {
   try {
     const { webSocketManager } = req.app.locals;
-    
+
     if (!webSocketManager) {
       return res.status(503).json({
         success: false,
-        error: 'WebSocket service unavailable'
+        error: 'WebSocket service unavailable',
       });
     }
 
     const sessions = [];
-    
+
     // Collect session information
     for (const [clientId, client] of webSocketManager.clients) {
       sessions.push({
@@ -92,7 +91,7 @@ router.get('/sessions', auth(['admin']), async (req, res) => {
         lastHeartbeat: client.lastHeartbeat,
         clientIp: client.clientIp,
         subscriptions: Array.from(client.subscriptions),
-        userAgent: client.userAgent?.substring(0, 100)
+        userAgent: client.userAgent?.substring(0, 100),
       });
     }
 
@@ -104,25 +103,24 @@ router.get('/sessions', auth(['admin']), async (req, res) => {
       data: {
         sessions,
         total: sessions.length,
-        authenticated: sessions.filter(s => s.userId).length,
-        anonymous: sessions.filter(s => !s.userId).length
-      }
+        authenticated: sessions.filter((s) => s.userId).length,
+        anonymous: sessions.filter((s) => !s.userId).length,
+      },
     });
 
     logger.info('WebSocket sessions listed', {
       adminUserId: req.user.userId,
-      totalSessions: sessions.length
+      totalSessions: sessions.length,
     });
-
   } catch (error) {
     logger.error('Error listing WebSocket sessions', {
       error: error.message,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to list WebSocket sessions'
+      error: 'Failed to list WebSocket sessions',
     });
   }
 });
@@ -134,21 +132,21 @@ router.get('/sessions', auth(['admin']), async (req, res) => {
 router.get('/rooms', auth(['admin', 'editor']), async (req, res) => {
   try {
     const { webSocketManager } = req.app.locals;
-    
+
     if (!webSocketManager) {
       return res.status(503).json({
         success: false,
-        error: 'WebSocket service unavailable'
+        error: 'WebSocket service unavailable',
       });
     }
 
     const rooms = [];
-    
+
     for (const [roomId, members] of webSocketManager.rooms) {
       const roomData = {
         roomId,
         memberCount: members.size,
-        members: []
+        members: [],
       };
 
       // Get member details
@@ -159,7 +157,7 @@ router.get('/rooms', auth(['admin', 'editor']), async (req, res) => {
             clientId,
             userId: client.userId,
             email: client.email,
-            connectedAt: client.connectedAt
+            connectedAt: client.connectedAt,
           });
         }
       }
@@ -172,19 +170,18 @@ router.get('/rooms', auth(['admin', 'editor']), async (req, res) => {
       data: {
         rooms,
         totalRooms: rooms.length,
-        totalMembers: rooms.reduce((sum, room) => sum + room.memberCount, 0)
-      }
+        totalMembers: rooms.reduce((sum, room) => sum + room.memberCount, 0),
+      },
     });
-
   } catch (error) {
     logger.error('Error listing WebSocket rooms', {
       error: error.message,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to list WebSocket rooms'
+      error: 'Failed to list WebSocket rooms',
     });
   }
 });
@@ -197,18 +194,18 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
   try {
     const { message, channels = [], userFilter = {} } = req.body;
     const { webSocketManager } = req.app.locals;
-    
+
     if (!webSocketManager) {
       return res.status(503).json({
         success: false,
-        error: 'WebSocket service unavailable'
+        error: 'WebSocket service unavailable',
       });
     }
 
     if (!message || !message.type) {
       return res.status(400).json({
         success: false,
-        error: 'Message type is required'
+        error: 'Message type is required',
       });
     }
 
@@ -222,7 +219,7 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
         filteredCount++;
         continue;
       }
-      
+
       if (userFilter.userId && client.userId !== userFilter.userId) {
         filteredCount++;
         continue;
@@ -230,9 +227,7 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
 
       // Check channel subscriptions if specified
       if (channels.length > 0) {
-        const hasSubscription = channels.some(channel => 
-          client.subscriptions.has(channel)
-        );
+        const hasSubscription = channels.some((channel) => client.subscriptions.has(channel));
         if (!hasSubscription) {
           filteredCount++;
           continue;
@@ -240,14 +235,16 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
       }
 
       // Send message
-      if (webSocketManager.sendToClient(clientId, {
-        type: 'broadcast',
-        payload: {
-          ...message,
-          timestamp: new Date().toISOString(),
-          sender: 'system'
-        }
-      })) {
+      if (
+        webSocketManager.sendToClient(clientId, {
+          type: 'broadcast',
+          payload: {
+            ...message,
+            timestamp: new Date().toISOString(),
+            sender: 'system',
+          },
+        })
+      ) {
         sentCount++;
       }
     }
@@ -257,7 +254,7 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
       messageType: message.type,
       sentTo: sentCount,
       filtered: filteredCount,
-      channels: channels
+      channels: channels,
     });
 
     res.json({
@@ -265,19 +262,18 @@ router.post('/broadcast', auth(['admin']), async (req, res) => {
       data: {
         sent: sentCount,
         filtered: filteredCount,
-        total: webSocketManager.clients.size
-      }
+        total: webSocketManager.clients.size,
+      },
     });
-
   } catch (error) {
     logger.error('Error sending WebSocket broadcast', {
       error: error.message,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to send broadcast message'
+      error: 'Failed to send broadcast message',
     });
   }
 });
@@ -291,20 +287,20 @@ router.post('/disconnect/:clientId', auth(['admin']), async (req, res) => {
     const { clientId } = req.params;
     const { reason = 'Disconnected by admin' } = req.body;
     const { webSocketManager } = req.app.locals;
-    
+
     if (!webSocketManager) {
       return res.status(503).json({
         success: false,
-        error: 'WebSocket service unavailable'
+        error: 'WebSocket service unavailable',
       });
     }
 
     const client = webSocketManager.clients.get(clientId);
-    
+
     if (!client) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found',
       });
     }
 
@@ -313,8 +309,8 @@ router.post('/disconnect/:clientId', auth(['admin']), async (req, res) => {
       type: 'admin_disconnect',
       payload: {
         reason,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     // Close connection
@@ -324,7 +320,7 @@ router.post('/disconnect/:clientId', auth(['admin']), async (req, res) => {
       adminUserId: req.user.userId,
       clientId,
       disconnectedUserId: client.userId,
-      reason
+      reason,
     });
 
     res.json({
@@ -332,20 +328,19 @@ router.post('/disconnect/:clientId', auth(['admin']), async (req, res) => {
       data: {
         clientId,
         reason,
-        disconnectedUser: client.userId
-      }
+        disconnectedUser: client.userId,
+      },
     });
-
   } catch (error) {
     logger.error('Error disconnecting client', {
       error: error.message,
       userId: req.user?.userId,
-      clientId: req.params.clientId
+      clientId: req.params.clientId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to disconnect client'
+      error: 'Failed to disconnect client',
     });
   }
 });
@@ -359,18 +354,18 @@ router.post('/notify/:userId', auth(['admin', 'editor']), async (req, res) => {
     const { userId } = req.params;
     const { notification } = req.body;
     const { webSocketManager, notificationService } = req.app.locals;
-    
+
     if (!webSocketManager || !notificationService) {
       return res.status(503).json({
         success: false,
-        error: 'Real-time services unavailable'
+        error: 'Real-time services unavailable',
       });
     }
 
     if (!notification || !notification.type) {
       return res.status(400).json({
         success: false,
-        error: 'Notification type is required'
+        error: 'Notification type is required',
       });
     }
 
@@ -382,22 +377,22 @@ router.post('/notify/:userId', auth(['admin', 'editor']), async (req, res) => {
         message: notification,
         sender: {
           userId: req.user.userId,
-          email: req.user.email
-        }
+          email: req.user.email,
+        },
       },
       channels: ['websocket'],
       priority: 'high',
       context: {
         source: 'admin_api',
-        sender: req.user.userId
-      }
+        sender: req.user.userId,
+      },
     });
 
     logger.audit('Targeted notification sent', {
       senderUserId: req.user.userId,
       targetUserId: userId,
       notificationId,
-      type: notification.type
+      type: notification.type,
     });
 
     res.json({
@@ -405,20 +400,19 @@ router.post('/notify/:userId', auth(['admin', 'editor']), async (req, res) => {
       data: {
         notificationId,
         targetUser: userId,
-        type: notification.type
-      }
+        type: notification.type,
+      },
     });
-
   } catch (error) {
     logger.error('Error sending targeted notification', {
       error: error.message,
       userId: req.user?.userId,
-      targetUserId: req.params.userId
+      targetUserId: req.params.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to send notification'
+      error: 'Failed to send notification',
     });
   }
 });
@@ -435,34 +429,33 @@ router.get('/config', auth(), async (req, res) => {
         liveCollaboration: req.user.role >= 2, // Editor+
         pushNotifications: true,
         eventStreaming: true,
-        adminFeatures: req.user.role >= 3 // Admin
+        adminFeatures: req.user.role >= 3, // Admin
       },
       limits: {
         maxConnections: parseInt(process.env.WS_MAX_CONNECTIONS) || 1000,
         messageRateLimit: 10, // per minute
-        maxPayloadSize: '100MB'
+        maxPayloadSize: '100MB',
       },
       channels: {
         public: ['entries:public', 'search:suggestions'],
         editor: ['entries:editing', 'collaboration:*'],
-        admin: ['admin:*', 'system:*']
-      }
+        admin: ['admin:*', 'system:*'],
+      },
     };
 
     res.json({
       success: true,
-      data: config
+      data: config,
     });
-
   } catch (error) {
     logger.error('Error fetching WebSocket config', {
       error: error.message,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch configuration'
+      error: 'Failed to fetch configuration',
     });
   }
 });
@@ -474,11 +467,11 @@ router.get('/config', auth(), async (req, res) => {
 router.get('/health', async (req, res) => {
   try {
     const { webSocketManager } = req.app.locals;
-    
+
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      service: 'websocket'
+      service: 'websocket',
     };
 
     if (webSocketManager) {
@@ -486,9 +479,9 @@ router.get('/health', async (req, res) => {
       health.details = {
         connections: stats.totalConnections,
         uptime: stats.uptime,
-        queuedMessages: stats.queuedMessages || 0
+        queuedMessages: stats.queuedMessages || 0,
       };
-      
+
       // Check if service is overloaded
       if (stats.totalConnections > 800) {
         health.status = 'warning';
@@ -499,17 +492,15 @@ router.get('/health', async (req, res) => {
       health.message = 'WebSocket service not available';
     }
 
-    const statusCode = health.status === 'healthy' ? 200 : 
-                      health.status === 'warning' ? 200 : 503;
+    const statusCode = health.status === 'healthy' ? 200 : health.status === 'warning' ? 200 : 503;
 
     res.status(statusCode).json({
       success: health.status !== 'unhealthy',
-      data: health
+      data: health,
     });
-
   } catch (error) {
     logger.error('WebSocket health check failed', {
-      error: error.message
+      error: error.message,
     });
 
     res.status(500).json({
@@ -517,8 +508,8 @@ router.get('/health', async (req, res) => {
       data: {
         status: 'unhealthy',
         message: 'Health check failed',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 });

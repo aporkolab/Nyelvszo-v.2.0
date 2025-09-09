@@ -4,7 +4,7 @@ const { EventStore } = require('../cqrs/events/EventStore');
 
 /**
  * STATE-OF-THE-ART PUSH NOTIFICATION SERVICE
- * 
+ *
  * Enterprise-grade notification system:
  * - Multi-channel notifications (WebSocket, Email, SMS)
  * - Template-based messages with personalization
@@ -17,7 +17,7 @@ const { EventStore } = require('../cqrs/events/EventStore');
 class NotificationService extends EventEmitter {
   constructor(webSocketManager) {
     super();
-    
+
     this.webSocketManager = webSocketManager;
     this.eventStore = new EventStore();
     this.deliveryQueue = new Map();
@@ -28,9 +28,9 @@ class NotificationService extends EventEmitter {
     this.channels = {
       websocket: new WebSocketChannel(webSocketManager),
       email: new EmailChannel(),
-      sms: new SMSChannel()
+      sms: new SMSChannel(),
     };
-    
+
     this.initialize();
   }
 
@@ -41,22 +41,21 @@ class NotificationService extends EventEmitter {
     try {
       // Load notification templates
       this.loadTemplates();
-      
+
       // Setup event store subscription for domain events
       this.subscribeToEvents();
-      
+
       // Start delivery processor
       this.startDeliveryProcessor();
-      
+
       logger.info('Notification Service initialized', {
         channels: Object.keys(this.channels),
-        templates: this.templates.size
+        templates: this.templates.size,
       });
-
     } catch (error) {
       logger.error('Failed to initialize Notification Service', {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
@@ -75,7 +74,7 @@ class NotificationService extends EventEmitter {
         priority = 'normal',
         scheduleAt = null,
         deliveryGuarantee = false,
-        context = {}
+        context = {},
       } = notification;
 
       // Validate recipients
@@ -85,10 +84,10 @@ class NotificationService extends EventEmitter {
 
       // Check rate limits
       for (const recipient of recipients) {
-        if (!await this.checkRateLimit(recipient, template)) {
+        if (!(await this.checkRateLimit(recipient, template))) {
           logger.warn('Notification rate limited', {
             recipient: recipient.userId || recipient.email,
-            template
+            template,
           });
           continue;
         }
@@ -96,23 +95,23 @@ class NotificationService extends EventEmitter {
 
       // Generate notification ID
       const notificationId = this.generateNotificationId();
-      
+
       // Process each recipient
       const deliveryTasks = [];
-      
+
       for (const recipient of recipients) {
         // Get user preferences
         const preferences = await this.getUserPreferences(recipient.userId);
-        
+
         // Filter channels based on preferences
-        const enabledChannels = channels.filter(channel => 
+        const enabledChannels = channels.filter((channel) =>
           preferences.channels.includes(channel)
         );
-        
+
         if (enabledChannels.length === 0) {
           logger.debug('All channels disabled for user', {
             userId: recipient.userId,
-            template
+            template,
           });
           continue;
         }
@@ -127,7 +126,7 @@ class NotificationService extends EventEmitter {
             data: {
               ...data,
               recipient: recipient,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             },
             priority,
             scheduleAt,
@@ -136,7 +135,7 @@ class NotificationService extends EventEmitter {
             attempts: 0,
             maxAttempts: deliveryGuarantee ? 5 : 1,
             createdAt: new Date(),
-            status: 'pending'
+            status: 'pending',
           };
 
           deliveryTasks.push(task);
@@ -146,41 +145,40 @@ class NotificationService extends EventEmitter {
       // Store in delivery queue
       if (deliveryTasks.length > 0) {
         this.deliveryQueue.set(notificationId, deliveryTasks);
-        
+
         logger.info('Notification queued for delivery', {
           notificationId,
           recipients: recipients.length,
           channels: channels,
           template,
-          tasks: deliveryTasks.length
+          tasks: deliveryTasks.length,
         });
 
         // Record event
         await this.recordNotificationEvent('notification_queued', {
           notificationId,
-          recipients: recipients.map(r => r.userId || r.email),
+          recipients: recipients.map((r) => r.userId || r.email),
           template,
           channels,
-          context
+          context,
         });
 
         this.emit('notification_queued', {
           notificationId,
-          tasks: deliveryTasks.length
+          tasks: deliveryTasks.length,
         });
 
         return notificationId;
       }
 
       return null;
-
     } catch (error) {
       logger.error('Failed to send notification', {
         error: error.message,
         notification: {
           template: notification.template,
-          recipients: notification.recipients?.length
-        }
+          recipients: notification.recipients?.length,
+        },
       });
       throw error;
     }
@@ -192,11 +190,11 @@ class NotificationService extends EventEmitter {
   async sendRealTimeNotification(userId, notification) {
     try {
       const userSessions = this.webSocketManager.userSessions.get(userId);
-      
+
       if (!userSessions || userSessions.size === 0) {
         logger.debug('No active sessions for real-time notification', {
           userId,
-          type: notification.type
+          type: notification.type,
         });
         return false;
       }
@@ -204,10 +202,12 @@ class NotificationService extends EventEmitter {
       // Send to all user sessions
       let sentCount = 0;
       for (const clientId of userSessions) {
-        if (this.webSocketManager.sendToClient(clientId, {
-          type: 'notification',
-          payload: notification
-        })) {
+        if (
+          this.webSocketManager.sendToClient(clientId, {
+            type: 'notification',
+            payload: notification,
+          })
+        ) {
           sentCount++;
         }
       }
@@ -216,16 +216,15 @@ class NotificationService extends EventEmitter {
         userId,
         type: notification.type,
         sessions: userSessions.size,
-        sent: sentCount
+        sent: sentCount,
       });
 
       return sentCount > 0;
-
     } catch (error) {
       logger.error('Failed to send real-time notification', {
         error: error.message,
         userId,
-        type: notification.type
+        type: notification.type,
       });
       return false;
     }
@@ -243,8 +242,7 @@ class NotificationService extends EventEmitter {
         // Find tasks ready for processing
         for (const [notificationId, tasks] of this.deliveryQueue) {
           for (const task of tasks) {
-            if (task.status === 'pending' && 
-                (!task.scheduleAt || now >= task.scheduleAt)) {
+            if (task.status === 'pending' && (!task.scheduleAt || now >= task.scheduleAt)) {
               tasksToProcess.push(task);
             }
           }
@@ -252,13 +250,13 @@ class NotificationService extends EventEmitter {
 
         // Process tasks in priority order
         tasksToProcess.sort((a, b) => {
-          const priorityOrder = { 'urgent': 3, 'high': 2, 'normal': 1, 'low': 0 };
+          const priorityOrder = { urgent: 3, high: 2, normal: 1, low: 0 };
           return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
         });
 
         // Process up to 10 tasks per cycle
         const batch = tasksToProcess.slice(0, 10);
-        
+
         for (const task of batch) {
           await this.processDeliveryTask(task);
         }
@@ -266,14 +264,13 @@ class NotificationService extends EventEmitter {
         if (batch.length > 0) {
           logger.debug('Processed delivery batch', {
             processed: batch.length,
-            remaining: tasksToProcess.length - batch.length
+            remaining: tasksToProcess.length - batch.length,
           });
         }
-
       } catch (error) {
         logger.error('Error in delivery processor', {
           error: error.message,
-          stack: error.stack
+          stack: error.stack,
         });
       }
     }, 5000); // Process every 5 seconds
@@ -286,12 +283,12 @@ class NotificationService extends EventEmitter {
     try {
       task.status = 'processing';
       task.attempts++;
-      
+
       logger.debug('Processing delivery task', {
         notificationId: task.notificationId,
         recipient: task.recipient.userId || task.recipient.email,
         channel: task.channel,
-        attempt: task.attempts
+        attempt: task.attempts,
       });
 
       // Get channel handler
@@ -302,20 +299,20 @@ class NotificationService extends EventEmitter {
 
       // Render message from template
       const message = await this.renderMessage(task.template, task.data);
-      
+
       // Attempt delivery
       const result = await channel.send(task.recipient, message, task.context);
-      
+
       if (result.success) {
         task.status = 'delivered';
         task.deliveredAt = new Date();
         task.deliveryResult = result;
-        
+
         logger.info('Notification delivered', {
           notificationId: task.notificationId,
           recipient: task.recipient.userId || task.recipient.email,
           channel: task.channel,
-          attempts: task.attempts
+          attempts: task.attempts,
         });
 
         // Record successful delivery
@@ -324,15 +321,13 @@ class NotificationService extends EventEmitter {
           recipient: task.recipient.userId || task.recipient.email,
           channel: task.channel,
           attempts: task.attempts,
-          deliveryTime: task.deliveredAt - task.createdAt
+          deliveryTime: task.deliveredAt - task.createdAt,
         });
 
         this.emit('notification_delivered', task);
-
       } else {
         throw new Error(result.error || 'Delivery failed');
       }
-
     } catch (error) {
       logger.warn('Delivery task failed', {
         error: error.message,
@@ -340,30 +335,30 @@ class NotificationService extends EventEmitter {
         recipient: task.recipient.userId || task.recipient.email,
         channel: task.channel,
         attempt: task.attempts,
-        maxAttempts: task.maxAttempts
+        maxAttempts: task.maxAttempts,
       });
 
       // Check if we should retry
       if (task.attempts < task.maxAttempts) {
         task.status = 'pending';
         // Exponential backoff
-        task.scheduleAt = new Date(Date.now() + (Math.pow(2, task.attempts) * 1000));
-        
+        task.scheduleAt = new Date(Date.now() + Math.pow(2, task.attempts) * 1000);
+
         logger.debug('Scheduling retry', {
           notificationId: task.notificationId,
           nextAttempt: task.scheduleAt,
-          attemptsLeft: task.maxAttempts - task.attempts
+          attemptsLeft: task.maxAttempts - task.attempts,
         });
       } else {
         task.status = 'failed';
         task.failedAt = new Date();
         task.failureReason = error.message;
-        
+
         logger.error('Notification delivery failed permanently', {
           notificationId: task.notificationId,
           recipient: task.recipient.userId || task.recipient.email,
           channel: task.channel,
-          error: error.message
+          error: error.message,
         });
 
         // Record failure
@@ -372,7 +367,7 @@ class NotificationService extends EventEmitter {
           recipient: task.recipient.userId || task.recipient.email,
           channel: task.channel,
           attempts: task.attempts,
-          error: error.message
+          error: error.message,
         });
 
         this.emit('notification_failed', task);
@@ -391,13 +386,13 @@ class NotificationService extends EventEmitter {
         title: 'New Entry Created',
         message: '{{user.name}} created a new entry: "{{entry.title}}"',
         icon: 'plus-circle',
-        category: 'content'
+        category: 'content',
       },
       email: {
         subject: 'New Entry: {{entry.title}}',
         template: 'entry_created',
-        data: ['user', 'entry']
-      }
+        data: ['user', 'entry'],
+      },
     });
 
     this.templates.set('entry_updated', {
@@ -406,8 +401,8 @@ class NotificationService extends EventEmitter {
         title: 'Entry Updated',
         message: '{{user.name}} updated "{{entry.title}}"',
         icon: 'edit',
-        category: 'content'
-      }
+        category: 'content',
+      },
     });
 
     this.templates.set('entry_approved', {
@@ -417,13 +412,13 @@ class NotificationService extends EventEmitter {
         message: 'Your entry "{{entry.title}}" has been approved!',
         icon: 'check-circle',
         category: 'approval',
-        style: 'success'
+        style: 'success',
       },
       email: {
         subject: 'Entry Approved: {{entry.title}}',
         template: 'entry_approved',
-        data: ['entry', 'approver']
-      }
+        data: ['entry', 'approver'],
+      },
     });
 
     this.templates.set('entry_rejected', {
@@ -433,8 +428,8 @@ class NotificationService extends EventEmitter {
         message: 'Your entry "{{entry.title}}" needs revision. Reason: {{reason}}',
         icon: 'x-circle',
         category: 'approval',
-        style: 'warning'
-      }
+        style: 'warning',
+      },
     });
 
     // Collaboration notifications
@@ -444,8 +439,8 @@ class NotificationService extends EventEmitter {
         title: 'Collaborative Editing',
         message: '{{user.name}} is editing "{{entry.title}}"',
         icon: 'users',
-        category: 'collaboration'
-      }
+        category: 'collaboration',
+      },
     });
 
     // System notifications
@@ -456,8 +451,8 @@ class NotificationService extends EventEmitter {
         message: 'Scheduled maintenance: {{maintenance.description}}',
         icon: 'wrench',
         category: 'system',
-        style: 'info'
-      }
+        style: 'info',
+      },
     });
 
     // Welcome and onboarding
@@ -468,17 +463,17 @@ class NotificationService extends EventEmitter {
         message: 'Welcome {{user.name}}! Start exploring our language resources.',
         icon: 'heart',
         category: 'onboarding',
-        style: 'success'
+        style: 'success',
       },
       email: {
         subject: 'Welcome to NyelvSzó!',
         template: 'welcome',
-        data: ['user']
-      }
+        data: ['user'],
+      },
     });
 
     logger.debug('Notification templates loaded', {
-      count: this.templates.size
+      count: this.templates.size,
     });
   }
 
@@ -492,7 +487,7 @@ class NotificationService extends EventEmitter {
       } catch (error) {
         logger.error('Error handling domain event for notifications', {
           error: error.message,
-          event: event.eventType
+          event: event.eventType,
         });
       }
     });
@@ -544,24 +539,24 @@ class NotificationService extends EventEmitter {
    */
   async notifyEntryCreated(eventData) {
     const { entry, user } = eventData;
-    
+
     // Notify subscribers/followers
     const subscribers = await this.getEntrySubscribers(entry._id);
-    
+
     if (subscribers.length > 0) {
       await this.sendNotification({
         recipients: subscribers,
         template: 'entry_created',
         data: { entry, user },
         channels: ['websocket'],
-        context: { event: 'entry_created' }
+        context: { event: 'entry_created' },
       });
     }
   }
 
   async notifyEntryApproved(eventData) {
     const { entry, approver } = eventData;
-    
+
     // Notify entry author
     await this.sendNotification({
       recipients: [{ userId: entry.authorId }],
@@ -569,13 +564,13 @@ class NotificationService extends EventEmitter {
       data: { entry, approver },
       channels: ['websocket', 'email'],
       priority: 'high',
-      context: { event: 'entry_approved' }
+      context: { event: 'entry_approved' },
     });
   }
 
   async notifyUserWelcome(eventData) {
     const { user } = eventData;
-    
+
     // Send welcome notification
     await this.sendNotification({
       recipients: [{ userId: user._id, email: user.email }],
@@ -583,7 +578,7 @@ class NotificationService extends EventEmitter {
       data: { user },
       channels: ['websocket', 'email'],
       priority: 'high',
-      context: { event: 'user_welcome' }
+      context: { event: 'user_welcome' },
     });
   }
 
@@ -597,7 +592,7 @@ class NotificationService extends EventEmitter {
     }
 
     const rendered = {};
-    
+
     for (const [channel, config] of Object.entries(template)) {
       rendered[channel] = this.interpolateTemplate(config, data);
     }
@@ -616,7 +611,7 @@ class NotificationService extends EventEmitter {
     }
 
     if (Array.isArray(template)) {
-      return template.map(item => this.interpolateTemplate(item, data));
+      return template.map((item) => this.interpolateTemplate(item, data));
     }
 
     if (typeof template === 'object' && template !== null) {
@@ -648,9 +643,9 @@ class NotificationService extends EventEmitter {
     }
 
     const timestamps = this.rateLimiter.get(key);
-    
+
     // Remove old timestamps
-    const validTimestamps = timestamps.filter(ts => now - ts < windowMs);
+    const validTimestamps = timestamps.filter((ts) => now - ts < windowMs);
     this.rateLimiter.set(key, validTimestamps);
 
     if (validTimestamps.length >= maxPerWindow) {
@@ -668,7 +663,7 @@ class NotificationService extends EventEmitter {
     if (!userId) {
       return {
         channels: ['websocket'],
-        categories: ['all']
+        categories: ['all'],
       };
     }
 
@@ -677,7 +672,7 @@ class NotificationService extends EventEmitter {
       this.userPreferences.set(userId, {
         channels: ['websocket', 'email'],
         categories: ['content', 'approval', 'collaboration', 'system'],
-        quiet_hours: { start: 22, end: 8 }
+        quiet_hours: { start: 22, end: 8 },
       });
     }
 
@@ -695,8 +690,8 @@ class NotificationService extends EventEmitter {
         aggregateId: data.notificationId,
         eventData: {
           ...data,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       };
 
       await this.eventStore.appendToStream(
@@ -705,12 +700,11 @@ class NotificationService extends EventEmitter {
         -1,
         { source: 'notification_service' }
       );
-
     } catch (error) {
       logger.error('Failed to record notification event', {
         error: error.message,
         eventType,
-        notificationId: data.notificationId
+        notificationId: data.notificationId,
       });
     }
   }
@@ -732,15 +726,15 @@ class NotificationService extends EventEmitter {
    */
   getStats() {
     const queueStats = Array.from(this.deliveryQueue.values()).flat();
-    
+
     return {
-      queuedTasks: queueStats.filter(t => t.status === 'pending').length,
-      processingTasks: queueStats.filter(t => t.status === 'processing').length,
-      deliveredTasks: queueStats.filter(t => t.status === 'delivered').length,
-      failedTasks: queueStats.filter(t => t.status === 'failed').length,
+      queuedTasks: queueStats.filter((t) => t.status === 'pending').length,
+      processingTasks: queueStats.filter((t) => t.status === 'processing').length,
+      deliveredTasks: queueStats.filter((t) => t.status === 'delivered').length,
+      failedTasks: queueStats.filter((t) => t.status === 'failed').length,
       totalTasks: queueStats.length,
       templates: this.templates.size,
-      channels: Object.keys(this.channels).length
+      channels: Object.keys(this.channels).length,
     };
   }
 }
@@ -787,7 +781,7 @@ class EmailChannel {
       logger.info('Mock email sent', {
         to: recipient.email,
         subject: emailConfig.subject,
-        template: emailConfig.template
+        template: emailConfig.template,
       });
 
       return { success: true, channel: 'email', messageId: 'mock-' + Date.now() };
@@ -811,7 +805,7 @@ class SMSChannel {
       // Mock SMS sending - would integrate with SMS service
       logger.info('Mock SMS sent', {
         to: recipient.phone,
-        message: smsConfig.message
+        message: smsConfig.message,
       });
 
       return { success: true, channel: 'sms', messageId: 'mock-sms-' + Date.now() };

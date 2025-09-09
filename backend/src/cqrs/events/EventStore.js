@@ -4,7 +4,7 @@ const logger = require('../../logger/logger');
 
 /**
  * STATE-OF-THE-ART EVENT SOURCING IMPLEMENTATION
- * 
+ *
  * Enterprise-grade Event Store with CQRS pattern
  * - Event Sourcing for complete audit trail
  * - CQRS for read/write separation
@@ -13,58 +13,61 @@ const logger = require('../../logger/logger');
  */
 
 // Event Schema for MongoDB
-const EventSchema = new mongoose.Schema({
-  streamId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  eventType: {
-    type: String,
-    required: true,
-    index: true
-  },
-  eventVersion: {
-    type: Number,
-    required: true,
-    default: 1
-  },
-  aggregateId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  aggregateType: {
-    type: String,
-    required: true,
-    index: true
-  },
-  eventData: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true
-  },
-  metadata: {
-    userId: String,
-    correlationId: String,
-    causationId: String,
-    timestamp: {
-      type: Date,
-      default: Date.now,
-      index: true
+const EventSchema = new mongoose.Schema(
+  {
+    streamId: {
+      type: String,
+      required: true,
+      index: true,
     },
-    source: String,
-    version: String,
-    traceId: String
+    eventType: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    eventVersion: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
+    aggregateId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    aggregateType: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    eventData: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
+    },
+    metadata: {
+      userId: String,
+      correlationId: String,
+      causationId: String,
+      timestamp: {
+        type: Date,
+        default: Date.now,
+        index: true,
+      },
+      source: String,
+      version: String,
+      traceId: String,
+    },
+    sequenceNumber: {
+      type: Number,
+      required: true,
+      index: true,
+    },
   },
-  sequenceNumber: {
-    type: Number,
-    required: true,
-    index: true
+  {
+    timestamps: true,
+    collection: 'eventstore',
   }
-}, {
-  timestamps: true,
-  collection: 'eventstore'
-});
+);
 
 // Compound indexes for optimal query performance
 EventSchema.index({ streamId: 1, sequenceNumber: 1 }, { unique: true });
@@ -75,35 +78,38 @@ EventSchema.index({ 'metadata.correlationId': 1 });
 const Event = mongoose.model('Event', EventSchema);
 
 // Snapshot Schema for performance optimization
-const SnapshotSchema = new mongoose.Schema({
-  aggregateId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  aggregateType: {
-    type: String,
-    required: true
-  },
-  aggregateVersion: {
-    type: Number,
-    required: true
-  },
-  snapshot: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true
-  },
-  metadata: {
-    timestamp: {
-      type: Date,
-      default: Date.now
+const SnapshotSchema = new mongoose.Schema(
+  {
+    aggregateId: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    userId: String
+    aggregateType: {
+      type: String,
+      required: true,
+    },
+    aggregateVersion: {
+      type: Number,
+      required: true,
+    },
+    snapshot: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
+    },
+    metadata: {
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+      userId: String,
+    },
+  },
+  {
+    timestamps: true,
+    collection: 'snapshots',
   }
-}, {
-  timestamps: true,
-  collection: 'snapshots'
-});
+);
 
 SnapshotSchema.index({ aggregateId: 1, aggregateType: 1 }, { unique: true });
 const Snapshot = mongoose.model('Snapshot', SnapshotSchema);
@@ -125,7 +131,7 @@ class EventStore extends EventEmitter {
    */
   async appendToStream(streamId, events, expectedVersion = -1, metadata = {}) {
     const session = await mongoose.startSession();
-    
+
     try {
       await session.withTransaction(async () => {
         // Get current stream version
@@ -157,16 +163,16 @@ class EventStore extends EventEmitter {
             timestamp: new Date(),
             correlationId: metadata.correlationId || this.generateId(),
             causationId: metadata.causationId,
-            traceId: metadata.traceId || this.generateId()
+            traceId: metadata.traceId || this.generateId(),
           },
-          sequenceNumber: currentVersion + index + 1
+          sequenceNumber: currentVersion + index + 1,
         }));
 
         // Insert events atomically
         const insertedEvents = await Event.insertMany(eventsToInsert, { session });
 
         // Emit events for real-time processing
-        insertedEvents.forEach(event => {
+        insertedEvents.forEach((event) => {
           this.emit('eventAppended', event.toObject());
           this.emit(`event:${event.eventType}`, event.toObject());
           this.emit(`stream:${streamId}`, event.toObject());
@@ -176,7 +182,7 @@ class EventStore extends EventEmitter {
           streamId,
           eventCount: insertedEvents.length,
           newVersion: currentVersion + events.length,
-          correlationId: metadata.correlationId
+          correlationId: metadata.correlationId,
         });
 
         return insertedEvents;
@@ -186,7 +192,7 @@ class EventStore extends EventEmitter {
         error: error.message,
         streamId,
         expectedVersion,
-        metadata
+        metadata,
       });
       throw error;
     } finally {
@@ -207,18 +213,18 @@ class EventStore extends EventEmitter {
         streamId,
         sequenceNumber: {
           $gte: fromVersion,
-          $lte: toVersion
-        }
+          $lte: toVersion,
+        },
       })
-      .sort({ sequenceNumber: 1 })
-      .lean()
-      .exec();
+        .sort({ sequenceNumber: 1 })
+        .lean()
+        .exec();
 
       logger.debug('Read events from stream', {
         streamId,
         fromVersion,
         toVersion,
-        eventCount: events.length
+        eventCount: events.length,
       });
 
       return events;
@@ -227,7 +233,7 @@ class EventStore extends EventEmitter {
         error: error.message,
         streamId,
         fromVersion,
-        toVersion
+        toVersion,
       });
       throw error;
     }
@@ -254,7 +260,7 @@ class EventStore extends EventEmitter {
             eventType: 'SnapshotRestored',
             eventData: snapshot.snapshot,
             sequenceNumber: snapshot.aggregateVersion,
-            metadata: snapshot.metadata
+            metadata: snapshot.metadata,
           });
         }
       }
@@ -263,11 +269,11 @@ class EventStore extends EventEmitter {
       const aggregateEvents = await Event.find({
         aggregateId,
         aggregateType,
-        sequenceNumber: { $gte: startVersion }
+        sequenceNumber: { $gte: startVersion },
       })
-      .sort({ sequenceNumber: 1 })
-      .lean()
-      .exec();
+        .sort({ sequenceNumber: 1 })
+        .lean()
+        .exec();
 
       events.push(...aggregateEvents);
 
@@ -276,7 +282,7 @@ class EventStore extends EventEmitter {
         aggregateType,
         fromVersion,
         eventCount: events.length,
-        hasSnapshot: startVersion > fromVersion
+        hasSnapshot: startVersion > fromVersion,
       });
 
       return events;
@@ -285,7 +291,7 @@ class EventStore extends EventEmitter {
         error: error.message,
         aggregateId,
         aggregateType,
-        fromVersion
+        fromVersion,
       });
       throw error;
     }
@@ -308,8 +314,8 @@ class EventStore extends EventEmitter {
           snapshot,
           metadata: {
             ...metadata,
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         },
         { upsert: true, new: true }
       );
@@ -318,14 +324,14 @@ class EventStore extends EventEmitter {
         aggregateId,
         aggregateType,
         version,
-        metadata
+        metadata,
       });
     } catch (error) {
       logger.error('Failed to create snapshot', {
         error: error.message,
         aggregateId,
         aggregateType,
-        version
+        version,
       });
       throw error;
     }
@@ -341,13 +347,15 @@ class EventStore extends EventEmitter {
     try {
       return await Snapshot.findOne({
         aggregateId,
-        aggregateType
-      }).lean().exec();
+        aggregateType,
+      })
+        .lean()
+        .exec();
     } catch (error) {
       logger.error('Failed to get snapshot', {
         error: error.message,
         aggregateId,
-        aggregateType
+        aggregateType,
       });
       return null;
     }
@@ -389,22 +397,24 @@ class EventStore extends EventEmitter {
             firstEvent: { $min: '$metadata.timestamp' },
             lastEvent: { $max: '$metadata.timestamp' },
             eventTypes: { $addToSet: '$eventType' },
-            maxSequence: { $max: '$sequenceNumber' }
-          }
-        }
+            maxSequence: { $max: '$sequenceNumber' },
+          },
+        },
       ]);
 
-      return stats[0] || {
-        eventCount: 0,
-        firstEvent: null,
-        lastEvent: null,
-        eventTypes: [],
-        maxSequence: 0
-      };
+      return (
+        stats[0] || {
+          eventCount: 0,
+          firstEvent: null,
+          lastEvent: null,
+          eventTypes: [],
+          maxSequence: 0,
+        }
+      );
     } catch (error) {
       logger.error('Failed to get stream statistics', {
         error: error.message,
-        streamId
+        streamId,
       });
       throw error;
     }
@@ -424,13 +434,13 @@ class EventStore extends EventEmitter {
 
       while (true) {
         const events = await Event.find({
-          'metadata.timestamp': { $gte: fromDate }
+          'metadata.timestamp': { $gte: fromDate },
         })
-        .sort({ 'metadata.timestamp': 1 })
-        .skip(skip)
-        .limit(batchSize)
-        .lean()
-        .exec();
+          .sort({ 'metadata.timestamp': 1 })
+          .skip(skip)
+          .limit(batchSize)
+          .lean()
+          .exec();
 
         if (events.length === 0) break;
 
@@ -444,14 +454,14 @@ class EventStore extends EventEmitter {
 
       logger.performance('Events replayed', {
         fromDate,
-        processedCount
+        processedCount,
       });
 
       return processedCount;
     } catch (error) {
       logger.error('Failed to replay events', {
         error: error.message,
-        fromDate
+        fromDate,
       });
       throw error;
     }
@@ -478,5 +488,5 @@ module.exports = {
   EventStore,
   Event,
   Snapshot,
-  ConcurrencyError
+  ConcurrencyError,
 };

@@ -6,7 +6,7 @@ const { EventStore } = require('../cqrs/events/EventStore');
 
 /**
  * STATE-OF-THE-ART REAL-TIME WEBSOCKET MANAGER
- * 
+ *
  * Enterprise-grade real-time communication:
  * - WebSocket server with authentication
  * - Real-time search suggestions
@@ -28,7 +28,7 @@ class WebSocketManager extends EventEmitter {
     this.messageQueue = new Map(); // clientId -> Array of messages
     this.heartbeatInterval = null;
     this.eventStore = new EventStore();
-    
+
     this.initialize();
   }
 
@@ -43,10 +43,10 @@ class WebSocketManager extends EventEmitter {
         path: '/ws',
         perMessageDeflate: {
           zlibDeflateOptions: {
-            level: 3
-          }
+            level: 3,
+          },
         },
-        maxPayload: 100 * 1024 * 1024 // 100MB max payload
+        maxPayload: 100 * 1024 * 1024, // 100MB max payload
       });
 
       // Setup connection handling
@@ -62,13 +62,12 @@ class WebSocketManager extends EventEmitter {
       logger.info('WebSocket Manager initialized', {
         path: '/ws',
         maxPayload: '100MB',
-        compression: true
+        compression: true,
       });
-
     } catch (error) {
       logger.error('Failed to initialize WebSocket Manager', {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
@@ -85,7 +84,7 @@ class WebSocketManager extends EventEmitter {
     logger.info('New WebSocket connection', {
       clientId,
       clientIp,
-      userAgent: userAgent?.substring(0, 100)
+      userAgent: userAgent?.substring(0, 100),
     });
 
     // Store client connection
@@ -98,7 +97,7 @@ class WebSocketManager extends EventEmitter {
       connectedAt: new Date(),
       lastHeartbeat: new Date(),
       subscriptions: new Set(),
-      metadata: {}
+      metadata: {},
     });
 
     // Setup client event handlers
@@ -118,9 +117,9 @@ class WebSocketManager extends EventEmitter {
           realTimeSearch: true,
           liveCollaboration: true,
           pushNotifications: true,
-          eventStreaming: true
-        }
-      }
+          eventStreaming: true,
+        },
+      },
     });
 
     this.emit('connection', { clientId, clientIp });
@@ -155,7 +154,7 @@ class WebSocketManager extends EventEmitter {
       logger.debug('WebSocket message received', {
         clientId,
         type: message.type,
-        hasPayload: !!message.payload
+        hasPayload: !!message.payload,
       });
 
       // Route message to appropriate handler
@@ -163,54 +162,53 @@ class WebSocketManager extends EventEmitter {
         case 'auth':
           await this.handleAuth(clientId, message.payload);
           break;
-        
+
         case 'subscribe':
           await this.handleSubscribe(clientId, message.payload);
           break;
-        
+
         case 'unsubscribe':
           await this.handleUnsubscribe(clientId, message.payload);
           break;
-        
+
         case 'search':
           await this.handleRealTimeSearch(clientId, message.payload);
           break;
-        
+
         case 'typing':
           await this.handleTyping(clientId, message.payload);
           break;
-        
+
         case 'heartbeat':
           await this.handleHeartbeat(clientId, message.payload);
           break;
-        
+
         case 'join_room':
           await this.handleJoinRoom(clientId, message.payload);
           break;
-        
+
         case 'leave_room':
           await this.handleLeaveRoom(clientId, message.payload);
           break;
-        
+
         case 'chat_message':
           await this.handleChatMessage(clientId, message.payload);
           break;
-        
+
         case 'entry_edit':
           await this.handleEntryEdit(clientId, message.payload);
           break;
-        
+
         default:
           this.sendError(clientId, 'UNKNOWN_MESSAGE_TYPE', `Unknown message type: ${message.type}`);
       }
-
     } catch (error) {
       logger.error('Error handling WebSocket message', {
         error: error.message,
         clientId,
-        data: data.toString().substring(0, 200)
+        data: data.toString().substring(0, 200),
       });
-      
+
       this.sendError(clientId, 'INTERNAL_ERROR', 'Internal server error');
     }
   }
@@ -221,7 +219,7 @@ class WebSocketManager extends EventEmitter {
   async handleAuth(clientId, payload) {
     try {
       const { token } = payload;
-      
+
       if (!token) {
         this.sendError(clientId, 'AUTH_TOKEN_REQUIRED', 'Authentication token is required');
         return;
@@ -237,7 +235,7 @@ class WebSocketManager extends EventEmitter {
         client.userId = decoded.userId;
         client.email = decoded.email;
         client.role = decoded.role;
-        
+
         // Track user sessions
         if (!this.userSessions.has(decoded.userId)) {
           this.userSessions.set(decoded.userId, new Set());
@@ -251,31 +249,30 @@ class WebSocketManager extends EventEmitter {
             userId: decoded.userId,
             email: decoded.email,
             role: decoded.role,
-            features: this.getFeaturesForRole(decoded.role)
-          }
+            features: this.getFeaturesForRole(decoded.role),
+          },
         });
 
         logger.info('Client authenticated', {
           clientId,
           userId: decoded.userId,
           email: decoded.email,
-          role: decoded.role
+          role: decoded.role,
         });
 
         this.emit('user_authenticated', {
           clientId,
           userId: decoded.userId,
           email: decoded.email,
-          role: decoded.role
+          role: decoded.role,
         });
       }
-
     } catch (error) {
       logger.warn('Authentication failed', {
         error: error.message,
-        clientId
+        clientId,
       });
-      
+
       this.sendError(clientId, 'AUTH_FAILED', 'Invalid authentication token');
     }
   }
@@ -285,7 +282,7 @@ class WebSocketManager extends EventEmitter {
    */
   async handleSubscribe(clientId, payload) {
     const { channels } = payload;
-    
+
     if (!Array.isArray(channels)) {
       this.sendError(clientId, 'INVALID_CHANNELS', 'Channels must be an array');
       return;
@@ -301,13 +298,13 @@ class WebSocketManager extends EventEmitter {
       if (allowedChannels.includes(channel)) {
         client.subscriptions.add(channel);
         subscriptions.push(channel);
-        
+
         // Subscribe to Event Store events for this channel
         if (channel.startsWith('entries:')) {
           this.eventStore.subscribeToStream(channel, (event) => {
             this.broadcastToSubscribers(channel, {
               type: 'event',
-              payload: event
+              payload: event,
             });
           });
         }
@@ -318,14 +315,14 @@ class WebSocketManager extends EventEmitter {
       type: 'subscribed',
       payload: {
         channels: subscriptions,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     logger.debug('Client subscribed to channels', {
       clientId,
       userId: client.userId,
-      channels: subscriptions
+      channels: subscriptions,
     });
   }
 
@@ -335,15 +332,15 @@ class WebSocketManager extends EventEmitter {
   async handleRealTimeSearch(clientId, payload) {
     try {
       const { query, options = {} } = payload;
-      
+
       if (!query || query.trim().length < 2) {
         this.sendToClient(clientId, {
           type: 'search_results',
           payload: {
             query,
             results: [],
-            suggestions: []
-          }
+            suggestions: [],
+          },
         });
         return;
       }
@@ -353,12 +350,12 @@ class WebSocketManager extends EventEmitter {
       const context = {
         userId: client?.userId,
         role: client?.role,
-        realTime: true
+        realTime: true,
       };
 
       // Perform intelligent search (would integrate with AI search service)
       const searchResults = await this.performRealTimeSearch(query, context, options);
-      
+
       // Get search suggestions
       const suggestions = await this.getSearchSuggestions(query, context);
 
@@ -371,24 +368,23 @@ class WebSocketManager extends EventEmitter {
           metadata: {
             totalResults: searchResults.length,
             processingTime: new Date().toISOString(),
-            realTime: true
-          }
-        }
+            realTime: true,
+          },
+        },
       });
 
       logger.debug('Real-time search performed', {
         clientId,
         query: query.substring(0, 50),
-        resultCount: searchResults.length
+        resultCount: searchResults.length,
       });
-
     } catch (error) {
       logger.error('Real-time search failed', {
         error: error.message,
         clientId,
-        query: payload.query?.substring(0, 50)
+        query: payload.query?.substring(0, 50),
       });
-      
+
       this.sendError(clientId, 'SEARCH_FAILED', 'Search request failed');
     }
   }
@@ -398,20 +394,24 @@ class WebSocketManager extends EventEmitter {
    */
   async handleTyping(clientId, payload) {
     const { room, isTyping } = payload;
-    
+
     const client = this.clients.get(clientId);
     if (!client || !client.userId) return;
 
     // Broadcast typing status to room members
-    this.broadcastToRoom(room, {
-      type: 'user_typing',
-      payload: {
-        userId: client.userId,
-        email: client.email,
-        isTyping,
-        timestamp: new Date().toISOString()
-      }
-    }, [clientId]); // Exclude sender
+    this.broadcastToRoom(
+      room,
+      {
+        type: 'user_typing',
+        payload: {
+          userId: client.userId,
+          email: client.email,
+          isTyping,
+          timestamp: new Date().toISOString(),
+        },
+      },
+      [clientId]
+    ); // Exclude sender
   }
 
   /**
@@ -420,7 +420,7 @@ class WebSocketManager extends EventEmitter {
   async handleEntryEdit(clientId, payload) {
     try {
       const { entryId, operation, data } = payload;
-      
+
       const client = this.clients.get(clientId);
       if (!client || !client.userId) {
         this.sendError(clientId, 'UNAUTHORIZED', 'Authentication required');
@@ -428,7 +428,8 @@ class WebSocketManager extends EventEmitter {
       }
 
       // Validate user permissions
-      if (client.role < 2) { // Need Editor+ role
+      if (client.role < 2) {
+        // Need Editor+ role
         this.sendError(clientId, 'INSUFFICIENT_PERMISSIONS', 'Editor role required');
         return;
       }
@@ -442,51 +443,49 @@ class WebSocketManager extends EventEmitter {
           operation,
           data,
           userId: client.userId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       };
 
       // Append to event store
-      await this.eventStore.appendToStream(
-        `entry-${entryId}`,
-        [editEvent],
-        -1,
-        {
-          userId: client.userId,
-          clientId: clientId,
-          source: 'websocket'
-        }
-      );
+      await this.eventStore.appendToStream(`entry-${entryId}`, [editEvent], -1, {
+        userId: client.userId,
+        clientId: clientId,
+        source: 'websocket',
+      });
 
       // Broadcast to all subscribers of this entry
-      this.broadcastToSubscribers(`entries:${entryId}`, {
-        type: 'entry_updated',
-        payload: {
-          entryId,
-          operation,
-          data,
-          user: {
-            userId: client.userId,
-            email: client.email
+      this.broadcastToSubscribers(
+        `entries:${entryId}`,
+        {
+          type: 'entry_updated',
+          payload: {
+            entryId,
+            operation,
+            data,
+            user: {
+              userId: client.userId,
+              email: client.email,
+            },
+            timestamp: new Date().toISOString(),
           },
-          timestamp: new Date().toISOString()
-        }
-      }, [clientId]); // Exclude sender
+        },
+        [clientId]
+      ); // Exclude sender
 
       logger.audit('Real-time entry edit', {
         entryId,
         operation,
         userId: client.userId,
-        clientId
+        clientId,
       });
-
     } catch (error) {
       logger.error('Entry edit failed', {
         error: error.message,
         clientId,
-        entryId: payload.entryId
+        entryId: payload.entryId,
       });
-      
+
       this.sendError(clientId, 'EDIT_FAILED', 'Failed to process entry edit');
     }
   }
@@ -496,7 +495,7 @@ class WebSocketManager extends EventEmitter {
    */
   async handleUnsubscribe(clientId, payload) {
     const { channels } = payload;
-    
+
     if (!Array.isArray(channels)) {
       this.sendError(clientId, 'INVALID_CHANNELS', 'Channels must be an array');
       return;
@@ -518,14 +517,14 @@ class WebSocketManager extends EventEmitter {
       type: 'unsubscribed',
       payload: {
         channels: unsubscribed,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     logger.debug('Client unsubscribed from channels', {
       clientId,
       userId: client.userId,
-      channels: unsubscribed
+      channels: unsubscribed,
     });
   }
 
@@ -534,26 +533,26 @@ class WebSocketManager extends EventEmitter {
    */
   async handleLeaveRoom(clientId, payload) {
     const { roomId } = payload;
-    
+
     const room = this.rooms.get(roomId);
     if (room && room.has(clientId)) {
       room.delete(clientId);
-      
+
       // Clean up empty room
       if (room.size === 0) {
         this.rooms.delete(roomId);
       }
     }
-    
+
     const client = this.clients.get(clientId);
-    
+
     this.sendToClient(clientId, {
       type: 'room_left',
       payload: {
         roomId,
         memberCount: room ? room.size : 0,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     // Notify other room members if room still exists
@@ -564,15 +563,15 @@ class WebSocketManager extends EventEmitter {
           userId: client?.userId,
           email: client?.email,
           roomId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     }
 
     logger.debug('Client left room', {
       clientId,
       roomId,
-      remainingMembers: room ? room.size : 0
+      remainingMembers: room ? room.size : 0,
     });
   }
 
@@ -582,31 +581,35 @@ class WebSocketManager extends EventEmitter {
   async handleChatMessage(clientId, payload) {
     const { roomId, message } = payload;
     const client = this.clients.get(clientId);
-    
+
     if (!client || !client.userId) {
       this.sendError(clientId, 'UNAUTHORIZED', 'Authentication required');
       return;
     }
 
     // Broadcast message to room
-    this.broadcastToRoom(roomId, {
-      type: 'chat_message',
-      payload: {
-        message,
-        user: {
-          userId: client.userId,
-          email: client.email
+    this.broadcastToRoom(
+      roomId,
+      {
+        type: 'chat_message',
+        payload: {
+          message,
+          user: {
+            userId: client.userId,
+            email: client.email,
+          },
+          roomId,
+          timestamp: new Date().toISOString(),
         },
-        roomId,
-        timestamp: new Date().toISOString()
-      }
-    }, [clientId]); // Exclude sender
+      },
+      [clientId]
+    ); // Exclude sender
 
     logger.debug('Chat message sent', {
       clientId,
       userId: client.userId,
       roomId,
-      messageLength: message?.length
+      messageLength: message?.length,
     });
   }
 
@@ -615,39 +618,43 @@ class WebSocketManager extends EventEmitter {
    */
   async handleJoinRoom(clientId, payload) {
     const { roomId } = payload;
-    
+
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, new Set());
     }
-    
+
     this.rooms.get(roomId).add(clientId);
-    
+
     const client = this.clients.get(clientId);
-    
+
     this.sendToClient(clientId, {
       type: 'room_joined',
       payload: {
         roomId,
         memberCount: this.rooms.get(roomId).size,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     // Notify other room members
-    this.broadcastToRoom(roomId, {
-      type: 'user_joined',
-      payload: {
-        userId: client?.userId,
-        email: client?.email,
-        roomId,
-        timestamp: new Date().toISOString()
-      }
-    }, [clientId]);
+    this.broadcastToRoom(
+      roomId,
+      {
+        type: 'user_joined',
+        payload: {
+          userId: client?.userId,
+          email: client?.email,
+          roomId,
+          timestamp: new Date().toISOString(),
+        },
+      },
+      [clientId]
+    );
 
     logger.debug('Client joined room', {
       clientId,
       roomId,
-      memberCount: this.rooms.get(roomId).size
+      memberCount: this.rooms.get(roomId).size,
     });
   }
 
@@ -656,7 +663,7 @@ class WebSocketManager extends EventEmitter {
    */
   sendToClient(clientId, message) {
     const client = this.clients.get(clientId);
-    
+
     if (!client || client.ws.readyState !== WebSocket.OPEN) {
       // Queue message for later delivery if client reconnects
       if (!this.messageQueue.has(clientId)) {
@@ -664,7 +671,7 @@ class WebSocketManager extends EventEmitter {
       }
       this.messageQueue.get(clientId).push({
         message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return false;
     }
@@ -676,7 +683,7 @@ class WebSocketManager extends EventEmitter {
       logger.error('Failed to send message to client', {
         error: error.message,
         clientId,
-        messageType: message.type
+        messageType: message.type,
       });
       return false;
     }
@@ -687,11 +694,11 @@ class WebSocketManager extends EventEmitter {
    */
   broadcastToSubscribers(channel, message, exclude = []) {
     let sentCount = 0;
-    
+
     for (const [clientId, client] of this.clients) {
       if (exclude.includes(clientId)) continue;
       if (!client.subscriptions.has(channel)) continue;
-      
+
       if (this.sendToClient(clientId, message)) {
         sentCount++;
       }
@@ -700,7 +707,7 @@ class WebSocketManager extends EventEmitter {
     logger.debug('Message broadcasted to subscribers', {
       channel,
       sentCount,
-      messageType: message.type
+      messageType: message.type,
     });
 
     return sentCount;
@@ -714,10 +721,10 @@ class WebSocketManager extends EventEmitter {
     if (!room) return 0;
 
     let sentCount = 0;
-    
+
     for (const clientId of room) {
       if (exclude.includes(clientId)) continue;
-      
+
       if (this.sendToClient(clientId, message)) {
         sentCount++;
       }
@@ -735,8 +742,8 @@ class WebSocketManager extends EventEmitter {
       payload: {
         code,
         message,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -745,7 +752,7 @@ class WebSocketManager extends EventEmitter {
    */
   handleDisconnection(clientId, code, reason) {
     const client = this.clients.get(clientId);
-    
+
     if (client) {
       // Remove from user sessions
       if (client.userId && this.userSessions.has(client.userId)) {
@@ -759,7 +766,7 @@ class WebSocketManager extends EventEmitter {
       for (const [roomId, room] of this.rooms) {
         if (room.has(clientId)) {
           room.delete(clientId);
-          
+
           // Notify room members
           this.broadcastToRoom(roomId, {
             type: 'user_left',
@@ -767,10 +774,10 @@ class WebSocketManager extends EventEmitter {
               userId: client.userId,
               email: client.email,
               roomId,
-              timestamp: new Date().toISOString()
-            }
+              timestamp: new Date().toISOString(),
+            },
           });
-          
+
           // Clean up empty rooms
           if (room.size === 0) {
             this.rooms.delete(roomId);
@@ -783,7 +790,7 @@ class WebSocketManager extends EventEmitter {
         userId: client.userId,
         code,
         reason: reason?.toString(),
-        connectedDuration: Date.now() - client.connectedAt.getTime()
+        connectedDuration: Date.now() - client.connectedAt.getTime(),
       });
     }
 
@@ -799,19 +806,20 @@ class WebSocketManager extends EventEmitter {
   startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       const now = new Date();
-      
+
       for (const [clientId, client] of this.clients) {
         if (client.ws.readyState === WebSocket.OPEN) {
           // Check if client is still responsive
           const timeSinceHeartbeat = now - client.lastHeartbeat;
-          
-          if (timeSinceHeartbeat > 60000) { // 60 seconds timeout
+
+          if (timeSinceHeartbeat > 60000) {
+            // 60 seconds timeout
             logger.warn('Client heartbeat timeout', {
               clientId,
               userId: client.userId,
-              timeSinceHeartbeat
+              timeSinceHeartbeat,
             });
-            
+
             client.ws.terminate();
           } else {
             // Send ping
@@ -831,7 +839,7 @@ class WebSocketManager extends EventEmitter {
       const channel = `events:${event.aggregateType}`;
       this.broadcastToSubscribers(channel, {
         type: 'domain_event',
-        payload: event
+        payload: event,
       });
     });
 
@@ -846,8 +854,11 @@ class WebSocketManager extends EventEmitter {
       totalConnections: this.clients.size,
       authenticatedUsers: this.userSessions.size,
       activeRooms: this.rooms.size,
-      queuedMessages: Array.from(this.messageQueue.values()).reduce((sum, queue) => sum + queue.length, 0),
-      uptime: process.uptime()
+      queuedMessages: Array.from(this.messageQueue.values()).reduce(
+        (sum, queue) => sum + queue.length,
+        0
+      ),
+      uptime: process.uptime(),
     };
   }
 
@@ -860,15 +871,17 @@ class WebSocketManager extends EventEmitter {
 
   getAllowedChannels(role) {
     const baseChannels = ['entries:public', 'search:suggestions'];
-    
-    if (role >= 2) { // Editor+
+
+    if (role >= 2) {
+      // Editor+
       baseChannels.push('entries:editing', 'collaboration:*');
     }
-    
-    if (role >= 3) { // Admin
+
+    if (role >= 3) {
+      // Admin
       baseChannels.push('admin:*', 'system:*');
     }
-    
+
     return baseChannels;
   }
 
@@ -877,7 +890,7 @@ class WebSocketManager extends EventEmitter {
       realTimeSearch: true,
       liveCollaboration: role >= 2,
       pushNotifications: true,
-      adminFeatures: role >= 3
+      adminFeatures: role >= 3,
     };
   }
 
@@ -897,14 +910,14 @@ class WebSocketManager extends EventEmitter {
   handleServerError(error) {
     logger.error('WebSocket server error', {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
   }
 
   handleClientError(clientId, error) {
     logger.error('WebSocket client error', {
       error: error.message,
-      clientId
+      clientId,
     });
   }
 
@@ -919,12 +932,12 @@ class WebSocketManager extends EventEmitter {
     const client = this.clients.get(clientId);
     if (client) {
       client.lastHeartbeat = new Date();
-      
+
       this.sendToClient(clientId, {
         type: 'heartbeat_ack',
         payload: {
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     }
   }

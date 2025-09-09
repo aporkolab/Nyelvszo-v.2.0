@@ -12,21 +12,21 @@ if (!fs.existsSync(logsDir)) {
 // Custom format for structured logging
 const customFormat = winston.format.combine(
   winston.format.timestamp({
-    format: 'YYYY-MM-DD HH:mm:ss.SSS'
+    format: 'YYYY-MM-DD HH:mm:ss.SSS',
   }),
   winston.format.errors({ stack: true }),
   winston.format.json(),
   winston.format.printf((info) => {
     const { timestamp, level, message, stack, ...meta } = info;
-    
+
     const logEntry = {
       timestamp,
       level: level.toUpperCase(),
       message,
       ...(stack && { stack }),
-      ...(Object.keys(meta).length > 0 && { meta })
+      ...(Object.keys(meta).length > 0 && { meta }),
     };
-    
+
     return JSON.stringify(logEntry, null, process.env.NODE_ENV === 'development' ? 2 : 0);
   })
 );
@@ -35,21 +35,21 @@ const customFormat = winston.format.combine(
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({
-    format: 'HH:mm:ss'
+    format: 'HH:mm:ss',
   }),
   winston.format.errors({ stack: true }),
   winston.format.printf((info) => {
     const { timestamp, level, message, stack, ...meta } = info;
     let output = `${timestamp} [${level}]: ${message}`;
-    
+
     if (Object.keys(meta).length > 0) {
       output += ` ${JSON.stringify(meta, null, 2)}`;
     }
-    
+
     if (stack) {
       output += `\n${stack}`;
     }
-    
+
     return output;
   })
 );
@@ -64,7 +64,7 @@ if (process.env.NODE_ENV !== 'production') {
       level: process.env.LOG_LEVEL || 'debug',
       format: consoleFormat,
       handleExceptions: true,
-      handleRejections: true
+      handleRejections: true,
     })
   );
 }
@@ -81,7 +81,7 @@ if (process.env.NODE_ENV !== 'test') {
       level: 'info',
       format: customFormat,
       handleExceptions: true,
-      handleRejections: true
+      handleRejections: true,
     })
   );
 
@@ -95,7 +95,7 @@ if (process.env.NODE_ENV !== 'test') {
       level: 'error',
       format: customFormat,
       handleExceptions: true,
-      handleRejections: true
+      handleRejections: true,
     })
   );
 
@@ -107,7 +107,7 @@ if (process.env.NODE_ENV !== 'test') {
       maxSize: '10m',
       maxFiles: '14d',
       level: 'http',
-      format: customFormat
+      format: customFormat,
     })
   );
 
@@ -119,7 +119,7 @@ if (process.env.NODE_ENV !== 'test') {
       maxSize: '10m',
       maxFiles: '90d',
       level: 'warn',
-      format: customFormat
+      format: customFormat,
     })
   );
 }
@@ -132,40 +132,40 @@ const logger = winston.createLogger({
     warn: 1,
     info: 2,
     http: 3,
-    debug: 4
+    debug: 4,
   },
   format: customFormat,
   transports,
-  exitOnError: false
+  exitOnError: false,
 });
 
 // Add custom logging methods
-logger.audit = function(message, meta = {}) {
+logger.audit = function (message, meta = {}) {
   this.log('warn', message, { type: 'audit', ...meta });
 };
 
-logger.security = function(message, meta = {}) {
+logger.security = function (message, meta = {}) {
   this.log('error', message, { type: 'security', ...meta });
 };
 
-logger.performance = function(message, meta = {}) {
+logger.performance = function (message, meta = {}) {
   this.log('info', message, { type: 'performance', ...meta });
 };
 
-logger.database = function(message, meta = {}) {
+logger.database = function (message, meta = {}) {
   this.log('debug', message, { type: 'database', ...meta });
 };
 
 // Stream for Morgan HTTP logging
 logger.stream = {
-  write: function(message) {
+  write: function (message) {
     // Remove trailing newline and log as http level
     logger.http(message.trim());
-  }
+  },
 };
 
 // Helper functions for structured logging
-logger.logRequest = function(req, res, responseTime) {
+logger.logRequest = function (req, res, responseTime) {
   const logData = {
     method: req.method,
     url: req.originalUrl || req.url,
@@ -174,9 +174,9 @@ logger.logRequest = function(req, res, responseTime) {
     responseTime: `${responseTime}ms`,
     userAgent: req.get('User-Agent'),
     ip: req.ip || req.connection.remoteAddress,
-    ...(req.user && { userId: req.user.userId, userEmail: req.user.email })
+    ...(req.user && { userId: req.user.userId, userEmail: req.user.email }),
   };
-  
+
   if (res.statusCode >= 400) {
     this.warn('HTTP Request Error', logData);
   } else {
@@ -184,14 +184,14 @@ logger.logRequest = function(req, res, responseTime) {
   }
 };
 
-logger.logError = function(error, context = {}) {
+logger.logError = function (error, context = {}) {
   const errorData = {
     message: error.message,
     stack: error.stack,
     name: error.name,
-    ...context
+    ...context,
   };
-  
+
   if (error.statusCode && error.statusCode < 500) {
     this.warn('Client Error', errorData);
   } else {
@@ -199,17 +199,17 @@ logger.logError = function(error, context = {}) {
   }
 };
 
-logger.logAuth = function(action, user, success, meta = {}) {
+logger.logAuth = function (action, user, success, meta = {}) {
   const authData = {
     action,
     success,
     ...(user && {
       userId: user._id || user.userId,
-      userEmail: user.email
+      userEmail: user.email,
     }),
-    ...meta
+    ...meta,
   };
-  
+
   if (success) {
     this.audit(`Authentication ${action} successful`, authData);
   } else {
@@ -217,10 +217,10 @@ logger.logAuth = function(action, user, success, meta = {}) {
   }
 };
 
-logger.logDatabase = function(operation, collection, meta = {}) {
+logger.logDatabase = function (operation, collection, meta = {}) {
   this.database(`Database ${operation}`, {
     collection,
-    ...meta
+    ...meta,
   });
 };
 
@@ -228,7 +228,7 @@ logger.logDatabase = function(operation, collection, meta = {}) {
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception', {
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
   process.exit(1);
 });
@@ -237,7 +237,7 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Promise Rejection', {
     reason: reason?.message || reason,
-    stack: reason?.stack
+    stack: reason?.stack,
   });
   process.exit(1);
 });

@@ -4,28 +4,28 @@ const logger = require('../logger/logger');
 // Create cache instances with different TTL settings
 const cache = {
   // Short-term cache for frequently accessed data (5 minutes)
-  short: new NodeCache({ 
+  short: new NodeCache({
     stdTTL: 300, // 5 minutes
     checkperiod: 60, // Check for expired keys every 60 seconds
     useClones: false, // Don't clone objects for better performance
-    maxKeys: 1000 // Maximum number of keys
+    maxKeys: 1000, // Maximum number of keys
   }),
-  
+
   // Medium-term cache for search results (15 minutes)
-  medium: new NodeCache({ 
+  medium: new NodeCache({
     stdTTL: 900, // 15 minutes
     checkperiod: 120,
     useClones: false,
-    maxKeys: 500
+    maxKeys: 500,
   }),
-  
+
   // Long-term cache for static data (1 hour)
-  long: new NodeCache({ 
+  long: new NodeCache({
     stdTTL: 3600, // 1 hour
     checkperiod: 300,
     useClones: false,
-    maxKeys: 100
-  })
+    maxKeys: 100,
+  }),
 };
 
 // Cache statistics
@@ -34,11 +34,11 @@ let cacheStats = {
   misses: 0,
   sets: 0,
   deletes: 0,
-  errors: 0
+  errors: 0,
 };
 
 // Event listeners for monitoring
-Object.values(cache).forEach(cacheInstance => {
+Object.values(cache).forEach((cacheInstance) => {
   cacheInstance.on('set', (key, value) => {
     cacheStats.sets++;
     logger.debug('Cache SET', { key, size: JSON.stringify(value).length });
@@ -64,16 +64,18 @@ Object.values(cache).forEach(cacheInstance => {
 const generateCacheKey = (req) => {
   const { method, originalUrl, query, user } = req;
   const userRole = user?.role || 'anonymous';
-  
+
   // Create a deterministic key from request parameters
   const keyData = {
     method,
     url: originalUrl,
-    query: Object.keys(query).sort().reduce((obj, key) => {
-      obj[key] = query[key];
-      return obj;
-    }, {}),
-    userRole
+    query: Object.keys(query)
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = query[key];
+        return obj;
+      }, {}),
+    userRole,
   };
 
   return Buffer.from(JSON.stringify(keyData)).toString('base64');
@@ -87,7 +89,7 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
     keyGenerator = generateCacheKey,
     condition = () => true,
     skipCache = false,
-    varyBy = []
+    varyBy = [],
   } = options;
 
   return (req, res, next) => {
@@ -109,7 +111,7 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
     try {
       // Generate cache key
       let cacheKey = keyGenerator(req);
-      
+
       // Add vary-by parameters to key
       if (varyBy.length > 0) {
         const varyData = varyBy.reduce((obj, key) => {
@@ -124,19 +126,19 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
 
       if (cachedData) {
         cacheStats.hits++;
-        
+
         // Set cache headers
         res.set({
           'X-Cache': 'HIT',
           'X-Cache-Key': cacheKey.substring(0, 16) + '...',
           'Cache-Control': `public, max-age=${cache[duration].options.stdTTL}`,
-          'ETag': cachedData.etag
+          ETag: cachedData.etag,
         });
 
         logger.performance('Cache HIT', {
           key: cacheKey.substring(0, 32),
           url: req.originalUrl,
-          method: req.method
+          method: req.method,
         });
 
         return res.status(cachedData.statusCode || 200).json(cachedData.data);
@@ -151,13 +153,13 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
       let statusCode = 200;
 
       // Override status method
-      res.status = function(code) {
+      res.status = function (code) {
         statusCode = code;
         return originalStatus.call(this, code);
       };
 
       // Override json method
-      res.json = function(data) {
+      res.json = function (data) {
         responseData = data;
 
         // Only cache successful responses
@@ -172,7 +174,7 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
               data,
               statusCode,
               etag,
-              cachedAt: new Date().toISOString()
+              cachedAt: new Date().toISOString(),
             };
 
             cache[duration].set(cacheKey, cacheData);
@@ -181,28 +183,27 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
               'X-Cache': 'MISS',
               'X-Cache-Key': cacheKey.substring(0, 16) + '...',
               'Cache-Control': `public, max-age=${cache[duration].options.stdTTL}`,
-              'ETag': etag
+              ETag: etag,
             });
 
             logger.performance('Cache MISS - Stored', {
               key: cacheKey.substring(0, 32),
               url: req.originalUrl,
               method: req.method,
-              statusCode
+              statusCode,
             });
-
           } catch (error) {
             cacheStats.errors++;
             logger.warn('Cache storage error', {
               error: error.message,
-              key: cacheKey.substring(0, 32)
+              key: cacheKey.substring(0, 32),
             });
           }
         } else {
           res.set('X-Cache', 'SKIP');
           logger.debug('Cache SKIP - Non-success status', {
             statusCode,
-            url: req.originalUrl
+            url: req.originalUrl,
           });
         }
 
@@ -210,15 +211,14 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
       };
 
       next();
-
     } catch (error) {
       cacheStats.errors++;
       logger.error('Cache middleware error', {
         error: error.message,
         stack: error.stack,
-        url: req.originalUrl
+        url: req.originalUrl,
       });
-      
+
       // Continue without caching on error
       next();
     }
@@ -231,18 +231,18 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
 const invalidateCache = {
   // Clear all caches
   all: () => {
-    Object.values(cache).forEach(c => c.flushAll());
+    Object.values(cache).forEach((c) => c.flushAll());
     logger.audit('All caches cleared');
   },
 
   // Clear cache by pattern
   byPattern: (pattern, cacheType = 'medium') => {
     const keys = cache[cacheType].keys();
-    const matchingKeys = keys.filter(key => 
+    const matchingKeys = keys.filter((key) =>
       Buffer.from(key, 'base64').toString().includes(pattern)
     );
-    
-    matchingKeys.forEach(key => cache[cacheType].del(key));
+
+    matchingKeys.forEach((key) => cache[cacheType].del(key));
     logger.audit('Cache cleared by pattern', { pattern, count: matchingKeys.length });
     return matchingKeys.length;
   },
@@ -264,7 +264,7 @@ const invalidateCache = {
     const cleared = invalidateCache.byPattern('/users');
     logger.audit('Users cache cleared', { count: cleared });
     return cleared;
-  }
+  },
 };
 
 /**
@@ -272,7 +272,7 @@ const invalidateCache = {
  */
 const getCacheStats = () => {
   const stats = { ...cacheStats };
-  
+
   // Add cache-specific stats
   Object.entries(cache).forEach(([name, cacheInstance]) => {
     stats[name] = {
@@ -280,7 +280,9 @@ const getCacheStats = () => {
       hits: cacheInstance.getStats().hits,
       misses: cacheInstance.getStats().misses,
       keys_count: cacheInstance.getStats().keys,
-      hits_ratio: cacheInstance.getStats().hits / (cacheInstance.getStats().hits + cacheInstance.getStats().misses) || 0
+      hits_ratio:
+        cacheInstance.getStats().hits /
+          (cacheInstance.getStats().hits + cacheInstance.getStats().misses) || 0,
     };
   });
 
@@ -294,10 +296,10 @@ const getCacheStats = () => {
 const warmupCache = async () => {
   try {
     logger.info('Starting cache warmup');
-    
+
     // This would be called on server startup
     // Add your most frequently accessed data here
-    
+
     logger.info('Cache warmup completed');
   } catch (error) {
     logger.error('Cache warmup failed', { error: error.message });
@@ -311,23 +313,23 @@ const presets = {
   // For search results that change frequently
   search: cacheMiddleware('short', {
     condition: (req) => req.query.search || req.query.q,
-    varyBy: ['accept-language']
+    varyBy: ['accept-language'],
   }),
 
   // For entry details that don't change often
   entries: cacheMiddleware('medium', {
-    condition: (req) => req.method === 'GET'
+    condition: (req) => req.method === 'GET',
   }),
 
   // For statistics and aggregated data
   statistics: cacheMiddleware('long', {
-    condition: (req) => req.url.includes('statistics') || req.url.includes('stats')
+    condition: (req) => req.url.includes('statistics') || req.url.includes('stats'),
   }),
 
   // For public data that rarely changes
   public: cacheMiddleware('long', {
-    condition: (req) => !req.user || req.user.role === 1
-  })
+    condition: (req) => !req.user || req.user.role === 1,
+  }),
 };
 
 module.exports = {
@@ -337,5 +339,5 @@ module.exports = {
   getCacheStats,
   warmupCache,
   presets,
-  generateCacheKey
+  generateCacheKey,
 };

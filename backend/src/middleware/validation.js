@@ -9,7 +9,7 @@ const createError = require('http-errors');
 const validate = (schema, source = 'body') => {
   return (req, res, next) => {
     const data = req[source];
-    
+
     if (!data) {
       return next(createError(400, `No ${source} data provided`));
     }
@@ -18,20 +18,22 @@ const validate = (schema, source = 'body') => {
       abortEarly: false, // Include all errors
       allowUnknown: false, // Disallow unknown fields
       stripUnknown: true, // Remove unknown fields
-      convert: true // Convert strings to numbers where possible
+      convert: true, // Convert strings to numbers where possible
     });
 
     if (error) {
-      const errorMessages = error.details.map(detail => ({
+      const errorMessages = error.details.map((detail) => ({
         field: detail.path.join('.'),
         message: detail.message,
-        value: detail.context?.value
+        value: detail.context?.value,
       }));
 
-      return next(createError(400, 'Validation Error', {
-        details: errorMessages,
-        type: 'ValidationError'
-      }));
+      return next(
+        createError(400, 'Validation Error', {
+          details: errorMessages,
+          type: 'ValidationError',
+        })
+      );
     }
 
     // Replace the original data with validated data
@@ -47,7 +49,7 @@ const validate = (schema, source = 'body') => {
  */
 const sanitizeString = (str) => {
   if (typeof str !== 'string') return str;
-  
+
   return str
     .replace(/[<>]/g, '') // Remove < and > characters
     .replace(/javascript:/gi, '') // Remove javascript: protocol
@@ -62,15 +64,15 @@ const sanitizeString = (str) => {
  */
 const sanitizeObject = (obj) => {
   if (obj === null || obj === undefined) return obj;
-  
+
   if (typeof obj === 'string') {
     return sanitizeString(obj);
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(sanitizeObject);
   }
-  
+
   if (typeof obj === 'object') {
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -78,7 +80,7 @@ const sanitizeObject = (obj) => {
     }
     return sanitized;
   }
-  
+
   return obj;
 };
 
@@ -100,5 +102,5 @@ module.exports = {
   validate,
   sanitize,
   sanitizeString,
-  sanitizeObject
+  sanitizeObject,
 };

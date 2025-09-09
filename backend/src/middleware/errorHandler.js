@@ -30,8 +30,8 @@ const sendErrorDev = (err, req, res) => {
     ...(err.details && { details: err.details }),
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
-      name: err.name
-    })
+      name: err.name,
+    }),
   };
 
   res.status(err.statusCode || 500).json(errorResponse);
@@ -48,7 +48,7 @@ const sendErrorProd = (err, req, res) => {
       statusCode: err.statusCode,
       timestamp: new Date().toISOString(),
       path: req.originalUrl || req.url,
-      ...(err.details && { details: err.details })
+      ...(err.details && { details: err.details }),
     };
 
     res.status(err.statusCode).json(errorResponse);
@@ -61,14 +61,14 @@ const sendErrorProd = (err, req, res) => {
       method: req.method,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
-      ...(req.user && { userId: req.user.userId })
+      ...(req.user && { userId: req.user.userId }),
     });
 
     res.status(500).json({
       error: 'Something went wrong!',
       statusCode: 500,
       timestamp: new Date().toISOString(),
-      path: req.originalUrl || req.url
+      path: req.originalUrl || req.url,
     });
   }
 };
@@ -90,10 +90,10 @@ const handleMongoError = (err) => {
   }
 
   if (err.name === 'ValidationError') {
-    const errors = Object.values(err.errors).map(val => ({
+    const errors = Object.values(err.errors).map((val) => ({
       field: val.path,
       message: val.message,
-      value: val.value
+      value: val.value,
     }));
 
     return new AppError('Validation failed', 400, 'ValidationError', { details: errors });
@@ -168,12 +168,13 @@ const errorHandler = (err, req, res, next) => {
     userAgent: req.get('User-Agent'),
     ...(req.user && {
       userId: req.user.userId,
-      userEmail: req.user.email
+      userEmail: req.user.email,
     }),
-    ...(req.body && Object.keys(req.body).length > 0 && {
-      requestBody: JSON.stringify(req.body)
-    }),
-    statusCode: err.statusCode
+    ...(req.body &&
+      Object.keys(req.body).length > 0 && {
+        requestBody: JSON.stringify(req.body),
+      }),
+    statusCode: err.statusCode,
   };
 
   logger.logError(err, logContext);
@@ -188,7 +189,11 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // JWT errors
-  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.name === 'NotBeforeError') {
+  if (
+    err.name === 'JsonWebTokenError' ||
+    err.name === 'TokenExpiredError' ||
+    err.name === 'NotBeforeError'
+  ) {
     error = handleJWTError(err);
   }
 
@@ -214,17 +219,13 @@ const errorHandler = (err, req, res, next) => {
  * Catch-all handler for unhandled routes
  */
 const notFoundHandler = (req, res, next) => {
-  const err = new AppError(
-    `Can't find ${req.originalUrl} on this server!`,
-    404,
-    'NotFoundError'
-  );
+  const err = new AppError(`Can't find ${req.originalUrl} on this server!`, 404, 'NotFoundError');
 
   logger.warn('Route not found', {
     url: req.originalUrl || req.url,
     method: req.method,
     ip: req.ip,
-    userAgent: req.get('User-Agent')
+    userAgent: req.get('User-Agent'),
   });
 
   next(err);
@@ -297,5 +298,5 @@ module.exports = {
   createForbiddenError,
   createNotFoundError,
   createConflictError,
-  createRateLimitError
+  createRateLimitError,
 };
