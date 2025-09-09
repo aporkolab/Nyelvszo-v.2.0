@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Angular frontend
 
 # Base stage
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
 LABEL version="2.2.0"
 LABEL description="NyelvSzó Frontend"
@@ -21,7 +21,7 @@ FROM base AS development
 ENV NODE_ENV=development
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Install Angular CLI globally
 RUN npm install -g @angular/cli@16
@@ -44,7 +44,7 @@ FROM base AS build
 ENV NODE_ENV=production
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Install Angular CLI
 RUN npm install -g @angular/cli@16
