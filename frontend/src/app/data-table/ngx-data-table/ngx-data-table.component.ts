@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common'; 
-import { RouterModule } from '@angular/router';      
-import { FormsModule } from '@angular/forms';          
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { IconModule } from '../../icon/icon.module';
 import { Router } from '@angular/router';
@@ -21,15 +21,18 @@ export interface INgxTableColumn {
   selector: 'ngx-data-table',
   standalone: true,
   imports: [
-    CommonModule, RouterModule, FormsModule, TranslateModule, IconModule,
-    FilterPipe, SorterPipe
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    TranslateModule,
+    IconModule,
+    FilterPipe,
+    SorterPipe,
   ],
   templateUrl: './ngx-data-table.component.html',
   styleUrls: ['./ngx-data-table.component.scss'],
 })
-export class NgxDataTableComponent<T extends { [x: string]: any }>
-implements OnInit
-{
+export class NgxDataTableComponent<T extends { [x: string]: any }> implements OnInit {
   [x: string]: any;
   @Input() list: T[] = [];
   @Input() columns: INgxTableColumn[] = [];
@@ -38,8 +41,7 @@ implements OnInit
   @Output() selectOne: EventEmitter<T> = new EventEmitter<T>();
   @Output() deleteOne: EventEmitter<T> = new EventEmitter<T>();
 
-  
-  keys: {[x:string]:string} = {};
+  keys: { [x: string]: string } = {};
   phrase: string = '';
   filterKey: string = 'Search in every column';
 
@@ -70,18 +72,19 @@ implements OnInit
     public auth: AuthService,
     public router: Router,
     public translate: TranslateService
-  ) {translate.addLangs(['en', 'hu']);
-  translate.setDefaultLang('hu');}
+  ) {
+    translate.addLangs(['en', 'hu']);
+    translate.setDefaultLang('hu');
+  }
 
   ngOnInit(): void {
     this.filteredList = this.list;
-    for(const column of this.columns) {
+    for (const column of this.columns) {
       this.keys[column.title] = column.key;
     }
 
-    this.flattenedList = this.list.map((item) => {
+    this.flattenedList = this.list.map(item => {
       for (const key in item) {
-
         if (typeof item[key] === 'boolean') {
           item[key] = item[key] ? ('igen' as any) : 'nem';
         }
@@ -105,11 +108,7 @@ implements OnInit
 
   onDelete(entity: T) {
     if (this.auth.user$ && this.auth.user$.value?.role === 3) {
-      if (
-        !confirm(
-          'Do you really want to delete this record? This process cannot be undone.'
-        )
-      ) {
+      if (!confirm('Do you really want to delete this record? This process cannot be undone.')) {
         return false;
       }
       return this.deleteOne.emit(entity);
@@ -130,7 +129,7 @@ implements OnInit
     );
   }
 
-    switchLanguage(lang: string){
+  switchLanguage(lang: string) {
     this.translate.use(lang);
   }
 }

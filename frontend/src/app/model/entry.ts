@@ -1,5 +1,5 @@
 export class Entry {
-	[k: string]: any;
+  [k: string]: any;
   _id: number | string = '';
   hungarian: string = '';
   fieldOfExpertise: string = '';

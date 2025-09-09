@@ -12,7 +12,7 @@ export interface IMenuItem {
 })
 export class ConfigService {
   sidebarMenu: IMenuItem[] = [
-    { link: '/', title:  'Dashboard', icon: 'home' },
+    { link: '/', title: 'Dashboard', icon: 'home' },
     { link: '/movies', title: 'Planned Films', icon: 'calendar' },
     { link: '/watched-movies', title: 'Watched Films', icon: 'Youtube' },
     { link: '/directors', title: 'Directors', icon: 'video' },
@@ -22,7 +22,7 @@ export class ConfigService {
 
   entriesTableColumns: INgxTableColumn[] = [
     { key: '_id', title: 'ID' },
-    { key: 'hungarian', title:  'Hungarian version' },
+    { key: 'hungarian', title: 'Hungarian version' },
     { key: 'fieldOfExpertise', title: 'Field Of Expertise' },
     { key: 'wordType', title: 'Word type' },
     { key: 'english', title: 'English version' },

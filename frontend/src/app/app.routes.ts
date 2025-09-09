@@ -12,15 +12,15 @@ import { VersionhistoryComponent } from './page/versionhistory/versionhistory.co
 import { ContactComponent } from './page/contact/contact.component';
 
 export const routes: Routes = [
-	{ path: '', component: HomeComponent },
-	{ path: 'login', component: LoginComponent },
-	{ path: 'forbidden', component: ForbiddenComponent },
-	{ path: 'entries', component: EntriesComponent },
-	{ path: 'entries/edit/:id', component: EntriesEditorComponent },
-	{ path: 'users', component: UsersComponent },
-	{ path: 'users/edit/:id', component: UsersEditorComponent },
-	{ path: 'preface', component: PrefaceComponent },
-	{ path: 'versionhistory', component: VersionhistoryComponent },
-	{ path: 'contact', component: ContactComponent },
-	{ path: '**', redirectTo: '' },
+  { path: '', component: HomeComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'forbidden', component: ForbiddenComponent },
+  { path: 'entries', component: EntriesComponent },
+  { path: 'entries/edit/:id', component: EntriesEditorComponent },
+  { path: 'users', component: UsersComponent },
+  { path: 'users/edit/:id', component: UsersEditorComponent },
+  { path: 'preface', component: PrefaceComponent },
+  { path: 'versionhistory', component: VersionhistoryComponent },
+  { path: 'contact', component: ContactComponent },
+  { path: '**', redirectTo: '' },
 ];

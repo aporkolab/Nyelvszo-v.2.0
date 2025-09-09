@@ -28,7 +28,7 @@ export class UsersEditorComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe({
-      next: (param) => {
+      next: param => {
         if (param['id'] == '0') {
           return of(new User());
         }
@@ -37,46 +37,36 @@ export class UsersEditorComponent implements OnInit {
       },
     });
     this.user$.subscribe({
-      next: (user) =>
-        (this.user = user ? user : this.user),
+      next: user => (this.user = user ? user : this.user),
     });
   }
 
   onUpdate(user: User) {
     this.userService.update(user).subscribe({
-      next: (category) => this.router.navigate(['/', 'users']),
-      error: (err) => this.showError(err),
+      next: category => this.router.navigate(['/', 'users']),
+      error: err => this.showError(err),
       complete: () => this.showSuccessEdit(),
     });
   }
 
   onCreate(user: User) {
     this.userService.create(user).subscribe({
-      next: (category) => this.router.navigate(['/', 'users']),
-      error: (err) => this.showError(err),
+      next: category => this.router.navigate(['/', 'users']),
+      error: err => this.showError(err),
       complete: () => this.showSuccessCreate(),
     });
   }
 
   showSuccessEdit() {
-    this.notifyService.showSuccess(
-      `${this.entity} edited successfully!`,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showSuccess(`${this.entity} edited successfully!`, 'NyelvSzó v.2.0.0');
   }
 
   showSuccessCreate() {
-    this.notifyService.showSuccess(
-      `${this.entity} created successfully!`,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showSuccess(`${this.entity} created successfully!`, 'NyelvSzó v.2.0.0');
   }
 
   showError(err: String) {
-    this.notifyService.showError(
-      'Something went wrong. Details:' + err,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showError('Something went wrong. Details:' + err, 'NyelvSzó v.2.0.0');
   }
 
   onSubmit(user: User) {
@@ -87,5 +77,4 @@ export class UsersEditorComponent implements OnInit {
       this.onCreate(user);
     }
   }
-
 }

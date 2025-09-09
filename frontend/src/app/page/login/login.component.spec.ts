@@ -16,8 +16,8 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        LoginComponent,             // standalone
-        FormsModule,                // template-driven forms
+        LoginComponent, // standalone
+        FormsModule, // template-driven forms
         HttpClientTestingModule,
         RouterTestingModule,
         IconModule,

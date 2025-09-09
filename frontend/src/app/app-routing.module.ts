@@ -13,84 +13,83 @@ import { PrefaceComponent } from './page/preface/preface.component';
 import { ContactComponent } from './page/contact/contact.component';
 import { EntriesEditorComponent } from './page/entries-editor/entries-editor.component';
 
-
-
-const routes: Routes = [  {
-  path: '',
-  component: EntriesComponent,
-},
-// {
-//   path: '**',
-//   component: HomeComponent,
-// },
-{
-  path: 'login',
-  component: LoginComponent,
-},
-{
-  path: 'versionhistory',
-  component: VersionhistoryComponent,
-},
-{
-  path: 'preface',
-  component: PrefaceComponent,
-},
-{
-  path: 'contact',
-  component:ContactComponent,
-},
-{
-  path: 'forbidden',
-  component: ForbiddenComponent,
-},
-{
-  path: 'entries',
-  component: EntriesComponent,
-},
-{
-  path: 'entries/edit/`0`',
-  component: EntriesEditorComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 3,
+const routes: Routes = [
+  {
+    path: '',
+    component: EntriesComponent,
   },
-},
-{
-  path: 'entries/edit/:id',
-  component: EntriesEditorComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 3,
+  // {
+  //   path: '**',
+  //   component: HomeComponent,
+  // },
+  {
+    path: 'login',
+    component: LoginComponent,
   },
-},
-{
-  path: 'users',
-  component: UsersComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 3,
+  {
+    path: 'versionhistory',
+    component: VersionhistoryComponent,
   },
-},
-{
-  path: 'users/edit/`0`',
-  component: UsersEditorComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 3,
+  {
+    path: 'preface',
+    component: PrefaceComponent,
   },
-},
-{
-  path: 'users/edit/:id',
-  component: UsersEditorComponent,
-  canActivate: [AuthGuardService, RoleGuardService],
-  data: {
-    expectedRole: 3,
+  {
+    path: 'contact',
+    component: ContactComponent,
   },
-},
+  {
+    path: 'forbidden',
+    component: ForbiddenComponent,
+  },
+  {
+    path: 'entries',
+    component: EntriesComponent,
+  },
+  {
+    path: 'entries/edit/`0`',
+    component: EntriesEditorComponent,
+    canActivate: [AuthGuardService, RoleGuardService],
+    data: {
+      expectedRole: 3,
+    },
+  },
+  {
+    path: 'entries/edit/:id',
+    component: EntriesEditorComponent,
+    canActivate: [AuthGuardService, RoleGuardService],
+    data: {
+      expectedRole: 3,
+    },
+  },
+  {
+    path: 'users',
+    component: UsersComponent,
+    canActivate: [AuthGuardService, RoleGuardService],
+    data: {
+      expectedRole: 3,
+    },
+  },
+  {
+    path: 'users/edit/`0`',
+    component: UsersEditorComponent,
+    canActivate: [AuthGuardService, RoleGuardService],
+    data: {
+      expectedRole: 3,
+    },
+  },
+  {
+    path: 'users/edit/:id',
+    component: UsersEditorComponent,
+    canActivate: [AuthGuardService, RoleGuardService],
+    data: {
+      expectedRole: 3,
+    },
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

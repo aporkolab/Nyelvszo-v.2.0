@@ -23,12 +23,14 @@ export class AuthService {
   apiUrl: string = environment.apiUrl;
   loginUrl: string = '';
 
-  user$: BehaviorSubject<User | null> =
-    new BehaviorSubject<User | null>(null);
+  user$: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
 
   access_token$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     this.loginUrl = `${this.apiUrl}/login`;
 
     const loginInfo = sessionStorage.getItem('login');
@@ -38,16 +40,16 @@ export class AuthService {
       this.user$.next(loginObject.user);
     }
 
-  //   this.user$.subscribe({
-  //     next: (user) => {
-  //         // this.router.navigate(['/']);
-  //         this.access_token$.next('');
-  //         sessionStorage.removeItem('login');
-  //       }
-  //     }
-  // )}
+    //   this.user$.subscribe({
+    //     next: (user) => {
+    //         // this.router.navigate(['/']);
+    //         this.access_token$.next('');
+    //         sessionStorage.removeItem('login');
+    //       }
+    //     }
+    // )}
     this.user$.subscribe({
-      next: (user) => {
+      next: user => {
         if (user) {
           this.router.navigate(['/']);
         } else {
@@ -58,7 +60,6 @@ export class AuthService {
       },
     });
   }
-  
 
   login(loginData: ILoginData): void {
     this.http.post<IAuthModel>(this.loginUrl, loginData).subscribe({
@@ -67,7 +68,7 @@ export class AuthService {
         this.access_token$.next(response.accessToken);
         sessionStorage.setItem('login', JSON.stringify(response));
       },
-      error: (err) => console.error(err),
+      error: err => console.error(err),
     });
   }
 

@@ -35,8 +35,8 @@ describe('UsersEditorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        UsersEditorComponent,       // standalone komponens
-        FormsModule,                // template-driven formokhoz
+        UsersEditorComponent, // standalone komponens
+        FormsModule, // template-driven formokhoz
         HttpClientTestingModule,
         RouterTestingModule,
         TranslateModule.forRoot(),

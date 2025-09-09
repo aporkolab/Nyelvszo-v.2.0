@@ -32,17 +32,11 @@ export class UsersComponent implements OnInit {
   ngOnInit(): void {}
 
   showSuccessDelete() {
-    this.notifyService.showSuccess(
-      `${this.entity} delete successfully!`,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showSuccess(`${this.entity} delete successfully!`, 'NyelvSzó v.2.0.0');
   }
 
   showError(err: String) {
-    this.notifyService.showError(
-      'Something went wrong. Details:' + err,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showError('Something went wrong. Details:' + err, 'NyelvSzó v.2.0.0');
   }
 
   onSelectOne(user: User): void {
@@ -52,7 +46,7 @@ export class UsersComponent implements OnInit {
   onDeleteOne(user: User): void {
     this.userService.delete(user).subscribe({
       next: () => (this.list$ = this.userService.getAll()),
-      error: (err) => this.showError(err),
+      error: err => this.showError(err),
       complete: () => this.showSuccessDelete(),
     });
   }

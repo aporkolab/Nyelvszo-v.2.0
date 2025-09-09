@@ -5,7 +5,7 @@ import { BaseService } from './base.service';
 import { ConfigService } from './config.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService extends BaseService<User> {
   constructor(http: HttpClient, config: ConfigService) {

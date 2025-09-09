@@ -8,9 +8,8 @@ describe('VersionhistoryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ VersionhistoryComponent ]
-    })
-    .compileComponents();
+      imports: [VersionhistoryComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(VersionhistoryComponent);
     component = fixture.componentInstance;

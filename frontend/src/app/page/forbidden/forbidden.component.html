@@ -1,22 +1,21 @@
 <body>
-	<!-- partial:index.partial.html -->
-	<div class="container _403">
-		<div class="component PC"></div>
-		<div class="component connection">
-			<div class="dot first num-four"></div>
-			<div class="dot second num-zero"></div>
-			<div class="dot third num-three"></div>
-		</div>
-		<div class="component server">
-			<div class="slot"></div>
-			<div class="slot"></div>
-			<div class="button"></div>
-			<div class="button"></div>
-		</div>
-		<button class="redirect visible" onclick="reconnect()" routerLink="/">{{'goBack'|translate}}</button>
-	</div>
-	<!-- partial -->
-
-
-
+  <!-- partial:index.partial.html -->
+  <div class="container _403">
+    <div class="component PC"></div>
+    <div class="component connection">
+      <div class="dot first num-four"></div>
+      <div class="dot second num-zero"></div>
+      <div class="dot third num-three"></div>
+    </div>
+    <div class="component server">
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="button"></div>
+      <div class="button"></div>
+    </div>
+    <button class="redirect visible" onclick="reconnect()" routerLink="/">
+      {{ 'goBack' | translate }}
+    </button>
+  </div>
+  <!-- partial -->
 </body>

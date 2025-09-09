@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
-import { CommonModule } from '@angular/common';  
-import { RouterModule } from '@angular/router';     
-import { TranslateModule } from '@ngx-translate/core'; 
-import { IconModule } from '../../icon/icon.module';  
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { IconModule } from '../../icon/icon.module';
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -43,12 +43,11 @@ export class NavbarComponent implements OnInit {
           'You may view all tables, and you may create, edit or delete any entities.');
       default:
         this.rights = '';
-        return (this.rights =
-          'Invalid role value. The role value can only be 1, 2 or 3.');
+        return (this.rights = 'Invalid role value. The role value can only be 1, 2 or 3.');
     }
   }
 
-    switchLanguage(lang: string){
+  switchLanguage(lang: string) {
     this.translate.use(lang);
   }
 }

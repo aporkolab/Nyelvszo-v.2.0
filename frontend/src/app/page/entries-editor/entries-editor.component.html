@@ -1,38 +1,45 @@
 <div class="row">
-	<div class="col-12 d-flex justify-content-center text-center">
-		<div class="card">
-			<div class="card-header card-header-primary">
-				<ng-container *ngIf="entry$ | async; else createTitle">
-					<h4 class="card-title">{{ 'editEntry' | translate }}</h4>
-				</ng-container>
-				<ng-template #createTitle>
-					<h4 class="card-title">{{ 'addNewEnty' | translate }}</h4>
-				</ng-template>
-			</div>
+  <div class="col-12 d-flex justify-content-center text-center">
+    <div class="card">
+      <div class="card-header card-header-primary">
+        <ng-container *ngIf="entry$ | async; else createTitle">
+          <h4 class="card-title">{{ 'editEntry' | translate }}</h4>
+        </ng-container>
+        <ng-template #createTitle>
+          <h4 class="card-title">{{ 'addNewEnty' | translate }}</h4>
+        </ng-template>
+      </div>
 
-			<div class="card-body">
-				<!-- Guard: csak akkor rendereljük, ha van entry objektum -->
-<form *ngIf="entry" #entryForm="ngForm" (ngSubmit)="onSubmit(entry)" novalidate>
-	<!-- …a mezők változatlanok… -->
+      <div class="card-body">
+        <!-- Guard: csak akkor rendereljük, ha van entry objektum -->
+        <form *ngIf="entry" #entryForm="ngForm" (ngSubmit)="onSubmit(entry)" novalidate>
+          <!-- …a mezők változatlanok… -->
 
-	<button *ngIf="entry$ | async" [disabled]="entryForm?.invalid" type="submit"
-		class="btn btn-primary pull-right me-md-3">
-		{{ 'updateEntry' | translate }}
-	</button>
+          <button
+            *ngIf="entry$ | async"
+            [disabled]="entryForm?.invalid"
+            type="submit"
+            class="btn btn-primary pull-right me-md-3"
+          >
+            {{ 'updateEntry' | translate }}
+          </button>
 
-	<button *ngIf="!(entry$ | async)" [disabled]="entryForm?.invalid" type="submit"
-		class="btn btn-primary pull-right me-md-3">
-		{{ 'createEntry' | translate }}
-	</button>
+          <button
+            *ngIf="!(entry$ | async)"
+            [disabled]="entryForm?.invalid"
+            type="submit"
+            class="btn btn-primary pull-right me-md-3"
+          >
+            {{ 'createEntry' | translate }}
+          </button>
 
-	<button routerLink="/entries" type="button" class="btn btn-danger pull-left">
-		{{ 'cancelEdit' | translate }}
-	</button>
-</form>
+          <button routerLink="/entries" type="button" class="btn btn-danger pull-left">
+            {{ 'cancelEdit' | translate }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
 
-			</div>
-		</div>
-	</div>
-
-	<div class="col-md-4"></div>
+  <div class="col-md-4"></div>
 </div>

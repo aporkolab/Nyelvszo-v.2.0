@@ -23,13 +23,13 @@ beforeAll(() => {
 
     // metódusok
     if (typeof window.location.assign === 'function') {
-      spyOn(window.location, 'assign').and.callFake(() => { });
+      spyOn(window.location, 'assign').and.callFake(() => {});
     }
     if (typeof window.location.replace === 'function') {
-      spyOn(window.location, 'replace').and.callFake(() => { });
+      spyOn(window.location, 'replace').and.callFake(() => {});
     }
     if (typeof window.location.reload === 'function') {
-      spyOn(window.location, 'reload').and.callFake(() => { });
+      spyOn(window.location, 'reload').and.callFake(() => {});
     }
   } catch {
     // ignore ha már spy-olva van
@@ -37,8 +37,6 @@ beforeAll(() => {
 });
 
 // ---- Angular tesztkörnyezet inicializálás ----
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
-  { teardown: { destroyAfterEach: true } as any }
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting(), {
+  teardown: { destroyAfterEach: true } as any,
+});

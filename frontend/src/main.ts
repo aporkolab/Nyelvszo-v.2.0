@@ -53,6 +53,6 @@ bootstrapApplication(AppComponent, {
     ),
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
-    ConfigService
+    ConfigService,
   ],
 }).catch(err => console.error(err));

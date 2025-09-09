@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'sorter'
+  name: 'sorter',
 })
 export class SorterPipe implements PipeTransform {
   transform(value: any[] | null, key: string, dir: number = 1): any[] | null {
@@ -20,11 +20,7 @@ export class SorterPipe implements PipeTransform {
           second = Object.values(second).join('');
         }
 
-        return (
-          ('' + first)
-            .toLowerCase()
-            .localeCompare(('' + second).toLowerCase()) * dir
-        );
+        return ('' + first).toLowerCase().localeCompare(('' + second).toLowerCase()) * dir;
       }
     });
   }

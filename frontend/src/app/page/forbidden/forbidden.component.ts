@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './forbidden.component.html',
 })
 export class ForbiddenComponent implements OnInit {
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {

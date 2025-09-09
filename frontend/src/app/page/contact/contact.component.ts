@@ -9,10 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './contact.component.html',
 })
 export class ContactComponent implements OnInit {
+  constructor() {}
 
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
+  ngOnInit(): void {}
 }

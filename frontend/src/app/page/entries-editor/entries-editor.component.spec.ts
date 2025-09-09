@@ -1,6 +1,6 @@
 // entries-editor.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';         // <<< EZ KELL
+import { ReactiveFormsModule } from '@angular/forms'; // <<< EZ KELL
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
@@ -17,8 +17,8 @@ describe('EntriesEditorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        EntriesEditorComponent,     // standalone
-        ReactiveFormsModule,        // <<< FormsModule helyett EZ
+        EntriesEditorComponent, // standalone
+        ReactiveFormsModule, // <<< FormsModule helyett EZ
         HttpClientTestingModule,
         RouterTestingModule,
         TranslateModule.forRoot(),

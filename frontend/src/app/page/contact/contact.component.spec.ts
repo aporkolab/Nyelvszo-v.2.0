@@ -10,11 +10,7 @@ describe('ContactComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        ContactComponent,
-        HttpClientTestingModule,
-        TranslateModule.forRoot(),
-      ],
+      imports: [ContactComponent, HttpClientTestingModule, TranslateModule.forRoot()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ContactComponent);

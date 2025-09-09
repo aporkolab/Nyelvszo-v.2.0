@@ -3,7 +3,7 @@
   top: 50%;
   left: 50%;
   min-width: 500px;
-  background: #CCC;
+  background: #ccc;
   transform: translate(-50%, -50%);
   padding: 160px;
   border-radius: 5px;
@@ -13,7 +13,7 @@
   content: 'Access forbidden!';
   width: auto;
   height: 20px;
-  color: #D32F2F;
+  color: #d32f2f;
   font: 1.5em Arial;
   display: block;
   position: absolute;
@@ -37,7 +37,6 @@
     transform: translate(-50%) scale(1);
   }
 }
-
 
 .component {
   float: left;
@@ -82,7 +81,7 @@
 .PC .flare {
   width: 50px;
   height: 1px;
-  background: #AAA;
+  background: #aaa;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -99,7 +98,6 @@
   top: -5px;
   left: 50%;
   transform: translate(-50%, -50%);
-
 }
 
 .PC .flare:after {
@@ -141,21 +139,20 @@
 
 @keyframes blink {
   from {
-    opacity: 0
+    opacity: 0;
   }
 
   to {
-    opacity: 1
+    opacity: 1;
   }
 }
-
 
 .server {
   width: 12%;
   height: 130px;
   border: 5px solid #333;
   border-radius: 5px;
-  position: relative
+  position: relative;
 }
 
 .server .slot {
@@ -186,14 +183,13 @@
   right: 5%;
 }
 
-
 .connection .num-four {
   width: 30px;
   border-radius: 0px;
   height: 3px;
   margin-left: -10px;
-  background: #D32F2F;
-  animation: turn-four .3s ease-in;
+  background: #d32f2f;
+  animation: turn-four 0.3s ease-in;
 }
 
 .connection .num-four:before {
@@ -203,12 +199,12 @@
   height: 3px;
   transform: rotate(-60deg);
   transform-origin: left top;
-  background: #D32F2F;
+  background: #d32f2f;
   display: block;
   position: absolute;
   left: 0px;
   bottom: 0px;
-  animation: fade-in .5s ease-in;
+  animation: fade-in 0.5s ease-in;
 }
 
 .connection .num-four:after {
@@ -219,8 +215,8 @@
   position: absolute;
   right: 5px;
   bottom: -10px;
-  background: #D32F2F;
-  animation: fade-in-late .5s ease-in;
+  background: #d32f2f;
+  animation: fade-in-late 0.5s ease-in;
 }
 
 @keyframes turn-four {
@@ -238,60 +234,57 @@
 
   80% {
     width: 10px;
-    height: 3px
+    height: 3px;
   }
 
   100% {
     width: 30px;
-    height: 3px
+    height: 3px;
   }
 }
 
 @keyframes fade-in {
   0% {
     opacity: 0;
-    color: #444
+    color: #444;
   }
 
   60% {
     opacity: 0;
-    color: #444
+    color: #444;
   }
 
   100% {
     opacity: 1;
-    color: #D32F2F
+    color: #d32f2f;
   }
 }
 
 @keyframes fade-in-late {
   0% {
     opacity: 0;
-    color: #444
+    color: #444;
   }
 
   80% {
     opacity: 0;
-    color: #444
+    color: #444;
   }
 
   100% {
     opacity: 1;
-    color: #D32F2F
+    color: #d32f2f;
   }
 }
-
 
 .connection .num-zero {
   width: 17px;
   border-radius: 35px;
   height: 30px;
   background: none;
-  border: 3px solid #D32F2F;
-  ;
-  animation: turn-zero .8s ease-in;
+  border: 3px solid #d32f2f;
+  animation: turn-zero 0.8s ease-in;
 }
-
 
 @keyframes turn-zero {
   0% {
@@ -315,7 +308,7 @@
     height: 10px;
     width: 10px;
     border: 3px solid #444;
-    opacity: 1
+    opacity: 1;
   }
 
   95% {
@@ -326,7 +319,7 @@
 
   100% {
     width: 17px;
-    border: 3px solid #D32F2F
+    border: 3px solid #d32f2f;
   }
 }
 
@@ -339,7 +332,7 @@
   background: none;
   border-top: 3px solid #444;
   animation: turn-three 1.4s ease-in;
-  border-color: #D32F2F;
+  border-color: #d32f2f;
 }
 
 .connection .num-three:before {
@@ -349,7 +342,7 @@
   height: 25px;
   transform: rotate(45deg);
   transform-origin: right top;
-  background: #D32F2F;
+  background: #d32f2f;
   display: block;
   position: absolute;
   right: 0px;
@@ -367,7 +360,7 @@
   right: 0px;
   padding: 0px;
   font-size: 40px;
-  color: #D32F2F;
+  color: #d32f2f;
   transform: rotate(180deg);
   animation: fade-in-late 1.9s ease;
 }
@@ -404,16 +397,15 @@
     width: 30px;
     height: 3px;
     top: 18%;
-    color: #444
+    color: #444;
   }
 
   100% {
     width: 30px;
     height: 3px;
-    color: #D32F2F
+    color: #d32f2f;
   }
 }
-
 
 .redirect {
   display: block;

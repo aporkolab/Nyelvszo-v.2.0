@@ -23,9 +23,6 @@ import { FilterPipe } from '../pipe/filter.pipe';
     SorterPipe,
     FilterPipe,
   ],
-  exports: [
-    NgxDataTableComponent,
-    TranslateModule,
-  ],
+  exports: [NgxDataTableComponent, TranslateModule],
 })
-export class DataTableModule { }
+export class DataTableModule {}
