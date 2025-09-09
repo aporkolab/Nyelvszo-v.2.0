@@ -102,7 +102,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./backend
-        run: npm ci
+        run: npm i
 
       - name: Run unit tests
         working-directory: ./backend
