@@ -24,7 +24,7 @@ ENV NODE_ENV=development
 RUN npm install
 
 # Install Angular CLI globally
-RUN npm install -g @angular/cli@16
+RUN npm install -g @angular/cli@20
 
 # Copy source code
 COPY . .
@@ -47,7 +47,7 @@ ENV NODE_ENV=production
 RUN npm install --include=dev
 
 # Install Angular CLI
-RUN npm install -g @angular/cli@16
+RUN npm install -g @angular/cli@20
 
 # Copy source code
 COPY . .
