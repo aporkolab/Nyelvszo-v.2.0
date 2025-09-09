@@ -74,11 +74,13 @@ RUN adduser -S nginx_user -u 1001
 
 # Set permissions
 RUN chown -R nginx_user:nginx_user /usr/share/nginx/html
-RUN chown -R nginx_user:nginx_user /var/cache/nginx
-RUN chown -R nginx_user:nginx_user /var/log/nginx
-RUN chown -R nginx_user:nginx_user /etc/nginx/conf.d
-RUN touch /var/run/nginx.pid
-RUN chown -R nginx_user:nginx_user /var/run/nginx.pid
+RUN mkdir -p /var/cache/nginx/client_temp \
+    && mkdir -p /var/log/nginx \
+    && chown -R nginx_user:nginx_user /var/cache/nginx \
+    && chown -R nginx_user:nginx_user /var/log/nginx \
+    && chown -R nginx_user:nginx_user /etc/nginx/conf.d \
+    && touch /var/run/nginx.pid \
+    && chown -R nginx_user:nginx_user /var/run/nginx.pid
 
 # Switch to non-root user
 USER nginx_user
