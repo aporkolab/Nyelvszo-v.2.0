@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: APorkolab/Nyelvszo-v.2.0
 
@@ -29,11 +29,11 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: ./backend
-        run: npm ci
+        run: npm i
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm i
 
       - name: Run ESLint (Backend)
         working-directory: ./backend
@@ -166,7 +166,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm i
 
       - name: Run unit tests
         working-directory: ./frontend
