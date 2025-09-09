@@ -9,7 +9,7 @@ on:
 env:
   NODE_VERSION: '18'
   DOCKER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: APorkolab/Nyelvszo-v.2.0
 
 jobs:
   # Code quality and security checks
@@ -26,7 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install backend dependencies
         working-directory: ./backend
@@ -44,10 +43,13 @@ jobs:
         working-directory: ./frontend
         run: npm run lint || true
 
-      - name: Run Prettier check
-        run: |
-          npx prettier --check "backend/src/**/*.js"
-          npx prettier --check "frontend/src/**/*.{ts,html,scss}"
+      - name: Run Prettier check (Backend)
+        working-directory: ./backend
+        run: npx prettier --check "src/**/*.js"
+        
+      - name: Run Prettier check (Frontend)
+        working-directory: ./frontend
+        run: npx prettier --check "src/**/*.{ts,html,scss}"
 
       - name: Security audit (Backend)
         working-directory: ./backend

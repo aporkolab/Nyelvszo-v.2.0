@@ -10,11 +10,16 @@ module.exports = {
   ],
 
   // Files to ignore
-  testIgnore: [
+  testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
     '/coverage/',
     '/logs/'
+  ],
+
+  // Transform ignore patterns for ES modules in node_modules
+  transformIgnorePatterns: [
+    '/node_modules/(?!(mongodb|mongodb-memory-server|mongodb-memory-server-core)/)',
   ],
 
   // Coverage configuration

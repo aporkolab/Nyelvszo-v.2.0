@@ -188,10 +188,6 @@ class WebSocketManager extends EventEmitter {
           await this.handleJoinRoom(clientId, message.payload);
           break;
         
-        case 'unsubscribe':
-          await this.handleUnsubscribe(clientId, message.payload);
-          break;
-        
         case 'leave_room':
           await this.handleLeaveRoom(clientId, message.payload);
           break;
