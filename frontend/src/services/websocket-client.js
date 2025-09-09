@@ -1,9 +1,9 @@
 /**
  * REAL-TIME WEBSOCKET CLIENT
- * 
+ *
  * Frontend utility for WebSocket communication:
  * - Automatic reconnection
- * - Authentication handling  
+ * - Authentication handling
  * - Event subscription management
  * - Message queuing during disconnections
  * - Type-safe event handling
@@ -20,33 +20,33 @@ class WebSocketClient {
     this.maxReconnectAttempts = 5;
     this.reconnectInterval = 1000; // Start with 1 second
     this.maxReconnectInterval = 30000; // Max 30 seconds
-    
+
     // Event handlers
     this.eventHandlers = new Map();
     this.messageQueue = [];
     this.subscriptions = new Set();
-    
+
     // Authentication
     this.authToken = null;
     this.userId = null;
-    
+
     // Feature flags
     this.features = {
       realTimeSearch: false,
       liveCollaboration: false,
       pushNotifications: false,
-      eventStreaming: false
+      eventStreaming: false,
     };
-    
+
     // Statistics
     this.stats = {
       messagesReceived: 0,
       messagesSent: 0,
       reconnections: 0,
       lastConnected: null,
-      connectionDuration: 0
+      connectionDuration: 0,
     };
-    
+
     this.initialize();
   }
 
@@ -61,10 +61,10 @@ class WebSocketClient {
     }
 
     console.log('🔌 Initializing WebSocket client', { url: this.url });
-    
+
     // Load saved auth token
     this.loadAuthToken();
-    
+
     // Start connection
     this.connect();
   }
@@ -85,20 +85,22 @@ class WebSocketClient {
    * Connect to WebSocket server
    */
   connect() {
-    if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)
+    ) {
       return;
     }
 
     try {
       console.log(`🔄 Connecting to WebSocket: ${this.url}`);
-      
+
       this.ws = new WebSocket(this.url);
-      
+
       this.ws.onopen = this.handleOpen.bind(this);
       this.ws.onmessage = this.handleMessage.bind(this);
       this.ws.onclose = this.handleClose.bind(this);
       this.ws.onerror = this.handleError.bind(this);
-
     } catch (error) {
       console.error('❌ WebSocket connection failed:', error);
       this.scheduleReconnect();
@@ -110,21 +112,21 @@ class WebSocketClient {
    */
   handleOpen(event) {
     console.log('✅ WebSocket connected');
-    
+
     this.isConnected = true;
     this.reconnectAttempts = 0;
     this.reconnectInterval = 1000;
     this.stats.lastConnected = new Date();
     this.stats.reconnections += this.stats.lastConnected ? 1 : 0;
-    
+
     // Authenticate if token available
     if (this.authToken) {
       this.authenticate(this.authToken);
     }
-    
-    this.emit('connected', { 
+
+    this.emit('connected', {
       url: this.url,
-      reconnection: this.stats.reconnections > 0 
+      reconnection: this.stats.reconnections > 0,
     });
   }
 
@@ -135,40 +137,39 @@ class WebSocketClient {
     try {
       const message = JSON.parse(event.data);
       this.stats.messagesReceived++;
-      
+
       console.log('📨 WebSocket message received:', message.type, message.payload);
-      
+
       // Handle system messages
       switch (message.type) {
         case 'connection':
           this.handleConnectionMessage(message.payload);
           break;
-          
+
         case 'auth_success':
           this.handleAuthSuccess(message.payload);
           break;
-          
+
         case 'auth_failed':
           this.handleAuthFailed(message.payload);
           break;
-          
+
         case 'subscribed':
           this.handleSubscribed(message.payload);
           break;
-          
+
         case 'error':
           this.handleServerError(message.payload);
           break;
-          
+
         case 'heartbeat_ack':
           // Heartbeat acknowledgment
           break;
-          
+
         default:
           // Emit to custom handlers
           this.emit(message.type, message.payload);
       }
-
     } catch (error) {
       console.error('❌ Error parsing WebSocket message:', error, event.data);
     }
@@ -179,20 +180,20 @@ class WebSocketClient {
    */
   handleClose(event) {
     console.log('🔌 WebSocket disconnected:', event.code, event.reason);
-    
+
     this.isConnected = false;
     this.isAuthenticated = false;
-    
+
     if (this.stats.lastConnected) {
       this.stats.connectionDuration += Date.now() - this.stats.lastConnected.getTime();
     }
-    
-    this.emit('disconnected', { 
-      code: event.code, 
+
+    this.emit('disconnected', {
+      code: event.code,
       reason: event.reason,
-      wasClean: event.wasClean 
+      wasClean: event.wasClean,
     });
-    
+
     // Attempt reconnection if not a clean close
     if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
       this.scheduleReconnect();
@@ -212,14 +213,16 @@ class WebSocketClient {
    */
   scheduleReconnect() {
     this.reconnectAttempts++;
-    
+
     const delay = Math.min(
       this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1),
       this.maxReconnectInterval
     );
-    
-    console.log(`🔄 Scheduling reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
-    
+
+    console.log(
+      `🔄 Scheduling reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`
+    );
+
     setTimeout(() => {
       if (!this.isConnected) {
         this.connect();
@@ -238,10 +241,10 @@ class WebSocketClient {
 
     this.authToken = token;
     this.saveAuthToken(token);
-    
+
     this.send({
       type: 'auth',
-      payload: { token }
+      payload: { token },
     });
   }
 
@@ -252,15 +255,15 @@ class WebSocketClient {
     if (!Array.isArray(channels)) {
       channels = [channels];
     }
-    
+
     // Add to local subscriptions
     channels.forEach(channel => this.subscriptions.add(channel));
-    
+
     this.send({
       type: 'subscribe',
-      payload: { channels }
+      payload: { channels },
     });
-    
+
     console.log('📡 Subscribing to channels:', channels);
   }
 
@@ -271,15 +274,15 @@ class WebSocketClient {
     if (!Array.isArray(channels)) {
       channels = [channels];
     }
-    
+
     // Remove from local subscriptions
     channels.forEach(channel => this.subscriptions.delete(channel));
-    
+
     this.send({
       type: 'unsubscribe',
-      payload: { channels }
+      payload: { channels },
     });
-    
+
     console.log('🔇 Unsubscribing from channels:', channels);
   }
 
@@ -289,7 +292,7 @@ class WebSocketClient {
   search(query, options = {}) {
     this.send({
       type: 'search',
-      payload: { query, options }
+      payload: { query, options },
     });
   }
 
@@ -299,7 +302,7 @@ class WebSocketClient {
   joinRoom(roomId) {
     this.send({
       type: 'join_room',
-      payload: { roomId }
+      payload: { roomId },
     });
   }
 
@@ -309,7 +312,7 @@ class WebSocketClient {
   leaveRoom(roomId) {
     this.send({
       type: 'leave_room',
-      payload: { roomId }
+      payload: { roomId },
     });
   }
 
@@ -319,7 +322,7 @@ class WebSocketClient {
   typing(room, isTyping = true) {
     this.send({
       type: 'typing',
-      payload: { room, isTyping }
+      payload: { room, isTyping },
     });
   }
 
@@ -329,7 +332,7 @@ class WebSocketClient {
   editEntry(entryId, operation, data) {
     this.send({
       type: 'entry_edit',
-      payload: { entryId, operation, data }
+      payload: { entryId, operation, data },
     });
   }
 
@@ -359,11 +362,11 @@ class WebSocketClient {
    */
   disconnect() {
     console.log('🔌 Disconnecting WebSocket');
-    
+
     if (this.ws) {
       this.ws.close(1000, 'Client disconnect');
     }
-    
+
     this.isConnected = false;
     this.isAuthenticated = false;
   }
@@ -420,15 +423,15 @@ class WebSocketClient {
     this.isAuthenticated = true;
     this.userId = payload.userId;
     this.features = payload.features || this.features;
-    
+
     // Send queued messages
     this.processMessageQueue();
-    
+
     // Restore subscriptions
     if (this.subscriptions.size > 0) {
       this.subscribe(Array.from(this.subscriptions));
     }
-    
+
     this.emit('authenticated', payload);
   }
 
@@ -455,12 +458,12 @@ class WebSocketClient {
    */
   processMessageQueue() {
     if (this.messageQueue.length === 0) return;
-    
+
     console.log(`📤 Processing ${this.messageQueue.length} queued messages`);
-    
+
     const messages = [...this.messageQueue];
     this.messageQueue = [];
-    
+
     messages.forEach(message => this.send(message));
   }
 
@@ -497,7 +500,7 @@ class WebSocketClient {
       queuedMessages: this.messageQueue.length,
       features: this.features,
       url: this.url,
-      userId: this.userId
+      userId: this.userId,
     };
   }
 }
