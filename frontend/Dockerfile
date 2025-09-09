@@ -99,8 +99,22 @@ CMD ["nginx", "-g", "daemon off;"]
 FROM development AS testing
 ENV NODE_ENV=test
 
+# Install Chrome for testing
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set Chrome path for Puppeteer
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV CHROME_BIN=/usr/bin/chromium-browser
+
 # Run tests
-RUN ng test --watch=false --browsers=ChromeHeadless
+RUN ng test --watch=false --browsers=ChromeHeadless --code-coverage
 
 # Run e2e tests
 # RUN ng e2e
