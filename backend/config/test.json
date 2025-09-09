@@ -1,0 +1,28 @@
+{
+  "database": {
+    "host": "localhost",
+    "user": "test",
+    "pass": "test", 
+    "name": "test_nyelvszo"
+  },
+  "jwt": {
+    "secret": "test-jwt-secret-for-testing-only",
+    "expiresIn": "1h",
+    "refreshExpiresIn": "7d"
+  },
+  "server": {
+    "port": 3001,
+    "env": "test"
+  },
+  "logging": {
+    "level": "error"
+  },
+  "cache": {
+    "ttl": 300,
+    "checkperiod": 320
+  },
+  "rateLimiting": {
+    "windowMs": 900000,
+    "max": 100
+  }
+}
