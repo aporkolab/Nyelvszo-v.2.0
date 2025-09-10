@@ -42,6 +42,7 @@ CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
 # Build stage
 FROM base AS build
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm install --include=dev
@@ -52,8 +53,8 @@ RUN npm install -g @angular/cli@20
 # Copy source code
 COPY . .
 
-# Build the application
-RUN ng build --configuration=production
+# Build the application with optimizations
+RUN ng build --configuration=production --build-optimizer=false --aot=false --source-map=false
 
 # Production stage with Nginx
 FROM nginx:alpine AS production

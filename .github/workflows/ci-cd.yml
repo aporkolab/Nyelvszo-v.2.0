@@ -9,7 +9,7 @@ on:
 env:
   NODE_VERSION: '20'
   DOCKER_REGISTRY: ghcr.io
-  IMAGE_NAME: APorkolab/Nyelvszo-v.2.0
+  IMAGE_NAME: aporkolab/nyelvszo-v.2.0
 
 jobs:
   # Code quality and security checks
