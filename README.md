@@ -19,25 +19,28 @@ NyelvSzó is a professional-grade, full-stack web application designed for manag
 - 🔍 **Advanced Search**: Full-text search with relevance scoring and filtering
 - 🏗️ **Scalable Architecture**: Microservices-ready with Docker support
 - 🔐 **Enterprise Security**: JWT authentication, input validation, rate limiting
-- ⚡ **High Performance**: Redis caching, database optimization, CDN-ready
+- ⚡ **High Performance**: Node-cache caching, database optimization, CDN-ready
 - 📊 **Monitoring**: Health checks, metrics, structured logging
-- 🧪 **Quality Assurance**: 90%+ test coverage, CI/CD pipeline
-- 🌐 **Internationalization**: Multi-language support built-in
-- 📱 **Responsive Design**: Mobile-first, accessibility compliant
+- 🧪 **Quality Assurance**: Automated testing with Jest, CI/CD pipeline
+- 🌐 **Internationalization**: Multi-language support (Hungarian/English)
+- 📱 **Responsive Design**: Mobile-first Bootstrap 5 UI
+- 🔄 **Real-time Updates**: WebSocket support for live notifications
 
 ## 🛠️ Tech Stack
 
 ### Backend
+
 - **Runtime**: Node.js 18+ with Express.js
 - **Database**: MongoDB Atlas with optimized indexing
 - **Authentication**: JWT with refresh tokens
 - **Caching**: Node-cache with multi-tier strategy
-- **Testing**: Jest with 90%+ coverage
+- **Testing**: Jest with unit and integration tests
 - **API Docs**: OpenAPI 3.0 (Swagger)
 - **Logging**: Winston with structured logging
 - **Security**: Helmet, rate limiting, input validation
 
 ### Frontend
+
 - **Framework**: Angular 20+ with TypeScript
 - **UI Components**: Bootstrap 5 + Custom components
 - **State Management**: RxJS with reactive patterns
@@ -46,6 +49,7 @@ NyelvSzó is a professional-grade, full-stack web application designed for manag
 - **PWA**: Service workers, offline support
 
 ### DevOps & Infrastructure
+
 - **Containerization**: Docker with multi-stage builds
 - **CI/CD**: GitHub Actions with automated testing
 - **Monitoring**: Health checks, metrics collection
@@ -55,38 +59,38 @@ NyelvSzó is a professional-grade, full-stack web application designed for manag
 ## 🏗️ Architecture
 
 ```
-┌────────────────┐
-│   Frontend (Angular)   │
-│   - PWA Ready         │
-│   - Responsive UI     │
-│   - Offline Support   │
-└────────┬────────┘
-           │
-    ┌────────┴────────┐
-    │   Nginx (Reverse    │
-    │   Proxy + SSL)      │
-    └────────┬────────┘
-           │
-    ┌────────┴────────┐
+┌──────────────────────┐
+│   Frontend (Angular) │
+│   - PWA Ready        │
+│   - Responsive UI    │
+│   - Offline Support  │
+└────────────┬─────────┘
+             │
+    ┌────────┴──────────┐
+    │   Nginx (Reverse  │
+    │   Proxy + SSL)    │
+    └────────┬──────────┘
+             │
+    ┌────────┴────────────┐
     │   Backend API       │
     │   - Express.js      │
     │   - JWT Auth        │
     │   - Rate Limiting   │
     │   - Input Validation│
-    └────────┬────────┘
-           │
-  ┌─────────┼─────────┐
-  │         │         │
-┌─┴───┐   │   ┌────┴────┐
-│Cache │   │   │ MongoDB │
-│(Node)│   │   │ Atlas   │
-│      │   │   │         │
-└──────┘   │   └─────────┘
-          │
-    ┌─────┴─────┐
-    │ Monitoring │
-    │ & Logging  │
-    └───────────┘
+    └────────┬────────────┘
+            │
+  ┌──────── ┼────────┐
+  │         │        │
+┌─┴────┐    │   ┌────┴────┐
+│Cache │    │   │ MongoDB │
+│(Node)│    │   │ Atlas   │
+│      │    │   │         │
+└──────┘    │   └─────────┘
+            │
+    ┌───────┴─────┐
+    │ Monitoring  │
+    │ & Logging   │
+    └─────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -101,12 +105,14 @@ NyelvSzó is a professional-grade, full-stack web application designed for manag
 ### 💻 Development Setup
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/APorkolab/Nyelvszo-v.2.0.git
 cd Nyelvszo-v.2.0
 ```
 
 2. **Environment Configuration**
+
 ```bash
 # Backend configuration
 cp backend/.env.example backend/.env
@@ -117,6 +123,7 @@ cp frontend/src/environments/environment.example.ts frontend/src/environments/en
 ```
 
 3. **Install Dependencies**
+
 ```bash
 # Backend
 cd backend && npm install
@@ -126,6 +133,7 @@ cd ../frontend && npm install
 ```
 
 4. **Database Setup**
+
 ```bash
 # Option 1: Use Docker (recommended)
 docker-compose up -d mongodb
@@ -135,6 +143,7 @@ docker-compose up -d mongodb
 ```
 
 5. **Start Development Servers**
+
 ```bash
 # Terminal 1: Backend (http://localhost:3000)
 cd backend && npm run dev
@@ -168,17 +177,17 @@ docker-compose -f docker-compose.prod.yml up --build
 
 ### Key Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|--------------|
-| GET | `/health` | Health check & system status | No |
-| POST | `/login` | User authentication | No |
-| GET | `/entries` | Search & list entries | No |
-| GET | `/entries/:id` | Get specific entry | No |
-| POST | `/entries` | Create new entry | Editor+ |
-| PUT/PATCH | `/entries/:id` | Update entry | Editor+ |
-| DELETE | `/entries/:id` | Delete entry | Editor+ |
-| GET | `/users` | List users | Authenticated |
-| POST | `/users` | Create user | Admin |
+| Method    | Endpoint       | Description                  | Auth Required |
+| --------- | -------------- | ---------------------------- | ------------- |
+| GET       | `/health`      | Health check & system status | No            |
+| POST      | `/login`       | User authentication          | No            |
+| GET       | `/entries`     | Search & list entries        | No            |
+| GET       | `/entries/:id` | Get specific entry           | No            |
+| POST      | `/entries`     | Create new entry             | Editor+       |
+| PUT/PATCH | `/entries/:id` | Update entry                 | Editor+       |
+| DELETE    | `/entries/:id` | Delete entry                 | Editor+       |
+| GET       | `/users`       | List users                   | Authenticated |
+| POST      | `/users`       | Create user                  | Admin         |
 
 ### Authentication
 
@@ -242,6 +251,7 @@ npm run load-test
 ```
 
 ## 🗺️ Purpose & Background
+
 The present application is **NyelvSzó v.2.0.0** (English-Hungarian Linguistic Dictionary - in Hungarian: "Angol-magyar **Nyelv**észeti Szak**szó**tár"), whose main purpose is to make the set of linguistic terms collected by Dr. Ádám Porkoláb and Dr. Tamás Fekete easily searchable and extensible.
 
 Users have roles assigned to their profiles: in the program, only authors and administrators have the right to add, edit and delete entries in the entire database. Users who are not logged in can also search and view information.
@@ -267,20 +277,20 @@ Users have roles assigned to their profiles: in the program, only authors and ad
      - In the terminal, go to the /backend folder (`cd backend`) and run `npm i`.
 
    - frontend
-     - On the terminal, go to the /frontend folder and run `npm i`.*
+     - On the terminal, go to the /frontend folder and run `npm i`.\*
 
 7.1. For manual installation:
 
-   - In the terminal, issue the `ng build` command.
+- In the terminal, issue the `ng build` command.
 
-   - The contents of the /frontend/dist/frontend folder must be copied to the /backend/public folder.
+- The contents of the /frontend/dist/frontend folder must be copied to the /backend/public folder.
 
-   OR
+OR
 
 7.2. For automatic installation:
 
-   - In the terminal, go to the /backend folder and run the `npm run build` command.
-   - It is important to install using only one of the methods.
+- In the terminal, go to the /backend folder and run the `npm run build` command.
+- It is important to install using only one of the methods.
 
 ## **2. Configure the application**
 
@@ -293,31 +303,33 @@ Users have roles assigned to their profiles: in the program, only authors and ad
 
 - Both the backend and the frontend can be started with the `npm start` command.
 
-
 ## **4. Description of roles**
 
-
-| |User |Editor |Administrator |
-| ------------ | ------------ | ------------ | ------------ |
-| Their value ("role") in the database | 1 | 2 | 3 |
-| Rights | You can view everything except the user table, but you cannot create, edit or delete entities.  | You can view all tables and edit, create or delete entities in any table except the user table. | You can view all tables and create, edit or delete any entities. |
+|                                      | User                                                                                           | Editor                                                                                          | Administrator                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Their value ("role") in the database | 1                                                                                              | 2                                                                                               | 3                                                                |
+| Rights                               | You can view everything except the user table, but you cannot create, edit or delete entities. | You can view all tables and edit, create or delete entities in any table except the user table. | You can view all tables and create, edit or delete any entities. |
 
 ## **4. Contact information**
+
 ##### Web development, design: Dr. Ádám Porkoláb
+
 - **About the website and general questions and comments:**
-Dr. Ádám Porkoláb (adam@porkolab.digital)
-  
+  Dr. Ádám Porkoláb (adam@porkolab.digital)
 - **About the dictionary material and corrections:**
-Dr. Tamás Fekete (fekete.tamas@pte.hu)  
-  
+  Dr. Tamás Fekete (fekete.tamas@pte.hu)  
+
+
 ## **5. Legal information**
-© Copyright 2021-2023 Dr. Ádám Porkoláb - Dr. Tamás Fekete.  
-  
+
+© Copyright 2021-2023 Dr. Ádám Porkoláb - Dr. Tamás Fekete.
+
 The dictionary material and the search engine are protected by Hungarian copyright law, private use of both intellectual products is permitted, commercial use requires the permission of the authors. Resale is prohibited.
 
 # Dokumentáció - NyelvSzó v.2.0.0
 
 ## **1. Az alkalmazás célja**
+
 Jelen alkalmazás a **NyelvSzó v.2.0.0** (Angol-magyar **Nyelv**észeti Szak**szó**tár), melynek fő célja, hogy a Dr. Porkoláb Ádám és Dr. Fekete Tamás által gyűjtött, nyelvészeti szakkifejezéshalmaz könnyedén kereshetővé és bővíthetővé váljék.
 
 A felhasználók esetében szerepkörök is vannak a profiljukhoz rendelve: a programban - alapesetben - csak a szerzők és az adminisztrátorok rendelkeznek szócikklétrehozási, szerkesztési és -törlési joggal a teljes adatbázisban. A nem bejelentkezett felhasználók is tudnak keresni és információkat megtekinteni.
@@ -343,20 +355,20 @@ A felhasználók esetében szerepkörök is vannak a profiljukhoz rendelve: a pr
      - A terminálon be kell lépni a /backend mappába (`cd backend`) és futtatni az `npm i` parancsot.
 
    - Frontend
-     - A terminálon be kell lépni a /frontend mappába és futtatni az `npm i` parancsot.*
+     - A terminálon be kell lépni a /frontend mappába és futtatni az `npm i` parancsot.\*
 
 7.1. Manuális telepítés esetén:
 
-   - A terminálban ki kell adni az `ng build` parancsot.
+- A terminálban ki kell adni az `ng build` parancsot.
 
-   - A /frontend/dist/frontend mappa tartalmát be kell másolni a /backend/public mappába.
+- A /frontend/dist/frontend mappa tartalmát be kell másolni a /backend/public mappába.
 
-   VAGY
+VAGY
 
 7.2. Automatikus telepítés esetén:
 
-   - A terminálon be kell lépni a /backend mappába és futtatni az `npm run build` parancsot.
-   - Fontos, hogy csak az egyik módszer szerint kell telepíteni.
+- A terminálon be kell lépni a /backend mappába és futtatni az `npm run build` parancsot.
+- Fontos, hogy csak az egyik módszer szerint kell telepíteni.
 
 ## **2. Az alkalmazás konfigurálása**
 
@@ -369,26 +381,27 @@ A felhasználók esetében szerepkörök is vannak a profiljukhoz rendelve: a pr
 
 - Mind a backend, mind a frontend az `npm start` paranccsal indítható.
 
-
 ## **4. A szerepkörök leírása**
 
-
-|   |Felhasználó   |Szerkesztő   |Adminisztrátor   |
-| ------------ | ------------ | ------------ | ------------ |
-| Adatbázisban rögzített értékük ("role")  | 1  | 2  |  3 |
-| Jogaik                                    | A felhasználói táblázat kivételével mindent megtekinthet, de nem hozhat létre, szerkeszthet vagy törölhet entitásokat.  |  A minden táblázatot megtekinthet, és a felhasználói táblázat kivételével bármelyiket szerkesztheti, létrehozhat vagy törölhet entitásokat. |  Minden táblázatot megtekinthet, és bármely entitást létrehozhat, szerkeszthet vagy törölhet. |
+|                                         | Felhasználó                                                                                                            | Szerkesztő                                                                                                                                 | Adminisztrátor                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Adatbázisban rögzített értékük ("role") | 1                                                                                                                      | 2                                                                                                                                          | 3                                                                                            |
+| Jogaik                                  | A felhasználói táblázat kivételével mindent megtekinthet, de nem hozhat létre, szerkeszthet vagy törölhet entitásokat. | A minden táblázatot megtekinthet, és a felhasználói táblázat kivételével bármelyiket szerkesztheti, létrehozhat vagy törölhet entitásokat. | Minden táblázatot megtekinthet, és bármely entitást létrehozhat, szerkeszthet vagy törölhet. |
 
 ## **4. Kapcsolattartási információ**
+
 ##### Webfejlesztés, design: Dr. Porkoláb Ádám
--   **A weboldallal és általános kérdésekkel, észrevételekkel kapcsolatban:**
-Dr. Porkoláb Ádám (adam@porkolab.digital)
-  
--   **A szótár anyagával és hibajavításokkal kapcsolatban:**
-Dr. Fekete Tamás (fekete.tamas@pte.hu)  
-  
+
+- **A weboldallal és általános kérdésekkel, észrevételekkel kapcsolatban:**
+  Dr. Porkoláb Ádám (adam@porkolab.digital)
+
+- **A szótár anyagával és hibajavításokkal kapcsolatban:**
+  Dr. Fekete Tamás (fekete.tamas@pte.hu)
+
 ## **5. Jogi információk**
-© Copyright 2021-2023 Dr. Porkoláb Ádám - Dr. Fekete Tamás.  
-  
+
+© Copyright 2021-2023 Dr. Porkoláb Ádám - Dr. Fekete Tamás.
+
 A szótár anyagát és a keresőt a magyar szerzői jog védi, mindkét szellemi termék magánfelhasználása engedélyezett, üzleti célú felhasználása a szerzők engedélyéhez kötött. Továbbértékesítés tilos.
 
 ---
@@ -419,9 +432,9 @@ docker-compose -f docker-compose.test.yml up --abort-on-container-exit
 
 ### Test Coverage
 
-- **Backend**: 90%+ coverage (Unit + Integration)
-- **Frontend**: 85%+ coverage (Unit + E2E)
-- **API**: 100% endpoint coverage
+- **Backend**: Unit and integration tests with in-memory MongoDB
+- **Frontend**: Unit tests with Jasmine/Karma
+- **API**: Automated endpoint validation
 
 ## 🚀 Deployment
 
@@ -472,7 +485,7 @@ export const environment = {
   production: true,
   apiUrl: 'https://api.nyelvszo.eu',
   appName: 'NyelvSzó',
-  version: '2.2.0'
+  version: '2.2.0',
 };
 ```
 
@@ -585,6 +598,7 @@ cd backend && npm run db:restore
 ## 📋 Changelog
 
 ### v2.2.0 (Current)
+
 - ✅ Enterprise-grade architecture refactoring
 - ✅ Advanced security implementation
 - ✅ Performance optimization with caching
@@ -595,12 +609,14 @@ cd backend && npm run db:restore
 - ✅ Structured logging and audit trail
 
 ### v2.1.0
+
 - ✅ Full-text search implementation
 - ✅ User role management
 - ✅ Angular frontend upgrade
 - ✅ MongoDB integration
 
 ### v2.0.0
+
 - ✅ Initial full-stack implementation
 - ✅ Basic CRUD operations
 - ✅ User authentication
@@ -610,6 +626,7 @@ cd backend && npm run db:restore
 ### Common Issues
 
 **MongoDB Connection Failed**
+
 ```bash
 # Check connection string in .env
 # Verify MongoDB service is running
@@ -617,6 +634,7 @@ docker-compose ps
 ```
 
 **JWT Token Issues**
+
 ```bash
 # Verify JWT_SECRET is set
 # Check token expiration time
@@ -624,6 +642,7 @@ docker-compose ps
 ```
 
 **Port Already in Use**
+
 ```bash
 # Find process using port
 lsof -i :3000
@@ -633,6 +652,7 @@ kill -9 <PID>
 ```
 
 **Build Failures**
+
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json

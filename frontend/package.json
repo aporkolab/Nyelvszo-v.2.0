@@ -1,14 +1,22 @@
 {
-  "name": "nyelvszo2.0",
-  "version": "0.0.0",
+  "name": "nyelvszo-frontend",
+  "version": "2.2.0",
+  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary Frontend",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "lint": "eslint src/**/*.ts --fix || echo 'ESLint found issues, please check your code'",
-    "e2e": "ng e2e || echo 'E2E tests not configured, skipping...'"
+    "test": "ng test --watch=false --browsers=ChromeHeadless",
+    "test:watch": "ng test",
+    "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
+    "lint": "eslint \"src/**/*.ts\" --fix || echo 'ESLint completed with warnings'",
+    "lint:check": "eslint \"src/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
+    "e2e": "ng e2e || echo 'E2E tests not configured'",
+    "analyze": "ng build --stats-json && npx webpack-bundle-analyzer dist/nyelvszo2.0/stats.json"
   },
   "private": true,
   "homepage": "https://nyelvszo.eu",

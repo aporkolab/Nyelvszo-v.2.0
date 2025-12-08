@@ -1,41 +1,56 @@
-import { INgxTableColumn } from './../data-table/ngx-data-table/ngx-data-table.component';
 import { Injectable } from '@angular/core';
+
+export interface TableColumn {
+  title: string;
+  key: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  width?: string;
+}
 
 export interface IMenuItem {
   link: string;
   title: string;
   icon?: string;
+  roles?: number[];
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConfigService {
-  sidebarMenu: IMenuItem[] = [
-    { link: '/', title: 'Dashboard', icon: 'home' },
-    { link: '/movies', title: 'Planned Films', icon: 'calendar' },
-    { link: '/watched-movies', title: 'Watched Films', icon: 'Youtube' },
-    { link: '/directors', title: 'Directors', icon: 'video' },
-    { link: '/main-actors', title: 'Main Actors', icon: 'film' },
-    { link: '/family-members', title: 'Family Members', icon: 'users' },
+  readonly sidebarMenu: IMenuItem[] = [
+    { link: '/', title: 'menu.home', icon: 'home' },
+    { link: '/entries', title: 'menu.entries', icon: 'book' },
+    { link: '/preface', title: 'menu.preface', icon: 'info' },
+    { link: '/versionhistory', title: 'menu.versionHistory', icon: 'clock' },
+    { link: '/contact', title: 'menu.contact', icon: 'mail' },
   ];
 
-  entriesTableColumns: INgxTableColumn[] = [
-    { key: '_id', title: 'ID' },
-    { key: 'hungarian', title: 'Hungarian version' },
-    { key: 'fieldOfExpertise', title: 'Field Of Expertise' },
-    { key: 'wordType', title: 'Word type' },
-    { key: 'english', title: 'English version' },
+  readonly adminMenu: IMenuItem[] = [
+    { link: '/users', title: 'menu.users', icon: 'users', roles: [3] },
   ];
 
-  usersTableColumn: INgxTableColumn[] = [
-    { key: '_id', title: 'ID' },
-    { key: 'firstName', title: 'First Name' },
-    { key: 'lastName', title: 'Last Name' },
-    { key: 'email', title: 'E-mail' },
-    { key: 'role', title: 'Role' },
-    { key: 'password', title: 'Encrypted password' },
+  readonly entriesTableColumns: TableColumn[] = [
+    { key: '_id', title: 'table.id', sortable: true },
+    { key: 'hungarian', title: 'table.hungarian', sortable: true, filterable: true },
+    { key: 'fieldOfExpertise', title: 'table.fieldOfExpertise', sortable: true, filterable: true },
+    { key: 'wordType', title: 'table.wordType', sortable: true, filterable: true },
+    { key: 'english', title: 'table.english', sortable: true, filterable: true },
   ];
 
-  constructor() {}
+  readonly usersTableColumn: TableColumn[] = [
+    { key: '_id', title: 'table.id', sortable: true },
+    { key: 'firstName', title: 'table.firstName', sortable: true, filterable: true },
+    { key: 'lastName', title: 'table.lastName', sortable: true, filterable: true },
+    { key: 'email', title: 'table.email', sortable: true, filterable: true },
+    { key: 'role', title: 'table.role', sortable: true },
+  ];
+
+  readonly apiConfig = {
+    pageSize: 25,
+    maxPageSize: 100,
+    defaultSortField: 'createdAt',
+    defaultSortOrder: 'desc' as const,
+  };
 }
