@@ -20,7 +20,7 @@ export class EntriesComponent implements OnInit, OnDestroy {
   columns: TableColumn[];
   list$: Observable<Entry[]>;
   readonly entity = 'Entry';
-  
+
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -47,18 +47,12 @@ export class EntriesComponent implements OnInit, OnDestroy {
   }
 
   private showSuccessDelete(): void {
-    this.notifyService.showSuccess(
-      `${this.entity} deleted successfully!`,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showSuccess(`${this.entity} deleted successfully!`, 'NyelvSzó v.2.0.0');
   }
 
   private showError(err: Error | string): void {
     const message = err instanceof Error ? err.message : err;
-    this.notifyService.showError(
-      `Something went wrong. Details: ${message}`,
-      'NyelvSzó v.2.0.0'
-    );
+    this.notifyService.showError(`Something went wrong. Details: ${message}`, 'NyelvSzó v.2.0.0');
   }
 
   onSelectOne(entry: Entry): void {

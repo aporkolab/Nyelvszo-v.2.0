@@ -1,5 +1,25 @@
 {
   "Home": "Home",
+  "menu": {
+    "home": "Home",
+    "entries": "Entries",
+    "preface": "Preface",
+    "versionHistory": "Version History",
+    "contact": "Contact",
+    "users": "Users"
+  },
+  "table": {
+    "id": "ID",
+    "hungarian": "Hungarian",
+    "fieldOfExpertise": "Field of Expertise",
+    "wordType": "Word Type",
+    "english": "English",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "E-mail",
+    "role": "Role",
+    "searchAll": "Search in all columns"
+  },
   "Search": "Search",
   "Preface": "Preface",
   "Version history": "Version history",
@@ -13,7 +33,7 @@
   "WHAT ARE YOU LOOKING FOR?": "WHAT ARE YOU LOOKING FOR?",
   "Search in every column": "Search in every column",
   "placeholder": "Put your fingers to the keyboard to start...",
-  "Add a new": "Add a new",
+  "Add a new": "Add new",
   "Edit": "Edit",
   "Are you sure to delete this item?": "Are you sure to delete this item?",
   "Delete": "Delete",

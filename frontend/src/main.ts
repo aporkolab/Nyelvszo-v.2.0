@@ -55,4 +55,9 @@ bootstrapApplication(AppComponent, {
     AuthService,
     ConfigService,
   ],
-}).catch(err => console.error(err));
+}).catch((err: Error) => {
+  const errorDiv = document.createElement('div');
+  errorDiv.textContent = `Application failed to start: ${err.message}`;
+  errorDiv.style.cssText = 'color:red;padding:20px;font-family:monospace';
+  document.body.appendChild(errorDiv);
+});

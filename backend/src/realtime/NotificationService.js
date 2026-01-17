@@ -240,7 +240,7 @@ class NotificationService extends EventEmitter {
         const tasksToProcess = [];
 
         // Find tasks ready for processing
-        for (const [notificationId, tasks] of this.deliveryQueue) {
+        for (const [, tasks] of this.deliveryQueue) {
           for (const task of tasks) {
             if (task.status === 'pending' && (!task.scheduleAt || now >= task.scheduleAt)) {
               tasksToProcess.push(task);
@@ -716,7 +716,8 @@ class NotificationService extends EventEmitter {
     return require('uuid').v4();
   }
 
-  async getEntrySubscribers(entryId) {
+  // eslint-disable-next-line no-unused-vars
+  async getEntrySubscribers(_entryId) {
     // Mock implementation - would query database
     return [];
   }
@@ -747,7 +748,8 @@ class WebSocketChannel {
     this.webSocketManager = webSocketManager;
   }
 
-  async send(recipient, message, context) {
+  // eslint-disable-next-line no-unused-vars
+  async send(recipient, message, _context) {
     try {
       const notification = message.websocket;
       if (!notification) {
@@ -770,7 +772,8 @@ class WebSocketChannel {
  * Email notification channel
  */
 class EmailChannel {
-  async send(recipient, message, context) {
+  // eslint-disable-next-line no-unused-vars
+  async send(recipient, message, _context) {
     try {
       const emailConfig = message.email;
       if (!emailConfig) {
@@ -795,7 +798,8 @@ class EmailChannel {
  * SMS notification channel
  */
 class SMSChannel {
-  async send(recipient, message, context) {
+  // eslint-disable-next-line no-unused-vars
+  async send(recipient, message, _context) {
     try {
       const smsConfig = message.sms;
       if (!smsConfig) {

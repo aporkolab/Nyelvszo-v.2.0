@@ -1,4 +1,3 @@
-
 export const environment = {
   production: true,
   apiUrl: 'https://api.nyelvszo.eu',
@@ -11,7 +10,7 @@ export const environment = {
     analytics: true,
   },
   cache: {
-    ttl: 900000, 
+    ttl: 900000,
     maxSize: 500,
   },
 };

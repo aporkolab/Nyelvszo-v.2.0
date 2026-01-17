@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const SALT_WORK_FACTOR = 10;
 
 const UserSchema = mongoose.Schema(
   {

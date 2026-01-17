@@ -1,6 +1,3 @@
-
-
-
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
@@ -13,7 +10,7 @@ export const environment = {
     analytics: false,
   },
   cache: {
-    ttl: 300000, 
+    ttl: 300000,
     maxSize: 100,
   },
 };

@@ -39,22 +39,18 @@ export class AuthService {
     this.restoreSession();
   }
 
-  
   get token(): string {
     return this.accessToken$.value;
   }
 
-  
   get isAuthenticated(): boolean {
     return !!this.user$.value && !!this.accessToken$.value;
   }
 
-  
   get currentUser(): User | null {
     return this.user$.value;
   }
 
-  
   login(loginData: ILoginData): Observable<IAuthModel> {
     this.isLoading$.next(true);
     this.error$.next(null);
@@ -64,7 +60,7 @@ export class AuthService {
         this.handleLoginSuccess(response);
         this.isLoading$.next(false);
       }),
-      catchError((error) => {
+      catchError(error => {
         this.isLoading$.next(false);
         const message = error.error?.message || 'Login failed. Please try again.';
         this.error$.next(message);
@@ -73,24 +69,20 @@ export class AuthService {
     );
   }
 
-  
   logout(): void {
     this.clearSession();
     this.router.navigate(['/login']);
   }
 
-  
   hasRole(role: number): boolean {
     const user = this.user$.value;
     return user ? user.role >= role : false;
   }
 
-  
   get isEditor(): boolean {
     return this.hasRole(2);
   }
 
-  
   get isAdmin(): boolean {
     return this.hasRole(3);
   }
@@ -106,8 +98,8 @@ export class AuthService {
   private saveSession(authData: IAuthModel): void {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
-    } catch (error) {
-      console.warn('Failed to save session to storage:', error);
+    } catch {
+      // Storage might be unavailable in private browsing mode
     }
   }
 
@@ -121,8 +113,7 @@ export class AuthService {
           this.user$.next(new User(authData.user));
         }
       }
-    } catch (error) {
-      console.warn('Failed to restore session:', error);
+    } catch {
       this.clearSession();
     }
   }
@@ -132,8 +123,8 @@ export class AuthService {
     this.accessToken$.next('');
     try {
       sessionStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.warn('Failed to clear session storage:', error);
+    } catch {
+      // Storage might be unavailable
     }
   }
 }

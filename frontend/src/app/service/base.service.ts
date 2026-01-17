@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { ConfigService } from './config.service';
 
@@ -32,7 +32,7 @@ export interface QueryOptions {
 export class BaseService<T extends BaseEntity> {
   protected readonly apiUrl: string = environment.apiUrl;
   protected entity: string = '';
-  
+
   readonly list$ = new BehaviorSubject<T[]>([]);
   readonly loading$ = new BehaviorSubject<boolean>(false);
   readonly error$ = new BehaviorSubject<string | null>(null);
@@ -51,7 +51,7 @@ export class BaseService<T extends BaseEntity> {
     this.error$.next(null);
 
     let params = new HttpParams();
-    
+
     if (options?.page) {
       params = params.set('page', options.page.toString());
     }
@@ -74,11 +74,11 @@ export class BaseService<T extends BaseEntity> {
     }
 
     return this.http.get<T[]>(this.endpoint, { params }).pipe(
-      tap((data) => {
+      tap(data => {
         this.list$.next(data);
         this.loading$.next(false);
       }),
-      catchError((error) => {
+      catchError(error => {
         this.loading$.next(false);
         this.error$.next(error.message || 'An error occurred');
         return throwError(() => error);
@@ -92,7 +92,7 @@ export class BaseService<T extends BaseEntity> {
 
     return this.http.get<T>(`${this.endpoint}/${id}`).pipe(
       tap(() => this.loading$.next(false)),
-      catchError((error) => {
+      catchError(error => {
         this.loading$.next(false);
         this.error$.next(error.message || 'An error occurred');
         return throwError(() => error);
@@ -107,12 +107,12 @@ export class BaseService<T extends BaseEntity> {
     const payload = { ...entity, _id: undefined };
 
     return this.http.post<T>(this.endpoint, payload).pipe(
-      tap((created) => {
+      tap(created => {
         const currentList = this.list$.value;
         this.list$.next([...currentList, created]);
         this.loading$.next(false);
       }),
-      catchError((error) => {
+      catchError(error => {
         this.loading$.next(false);
         this.error$.next(error.message || 'An error occurred');
         return throwError(() => error);
@@ -125,16 +125,16 @@ export class BaseService<T extends BaseEntity> {
     this.error$.next(null);
 
     return this.http.patch<T>(`${this.endpoint}/${entity._id}`, entity).pipe(
-      tap((updated) => {
+      tap(updated => {
         const currentList = this.list$.value;
-        const index = currentList.findIndex((item) => item._id === entity._id);
+        const index = currentList.findIndex(item => item._id === entity._id);
         if (index !== -1) {
           currentList[index] = updated;
           this.list$.next([...currentList]);
         }
         this.loading$.next(false);
       }),
-      catchError((error) => {
+      catchError(error => {
         this.loading$.next(false);
         this.error$.next(error.message || 'An error occurred');
         return throwError(() => error);
@@ -149,10 +149,10 @@ export class BaseService<T extends BaseEntity> {
     return this.http.delete<T>(`${this.endpoint}/${entity._id}`).pipe(
       tap(() => {
         const currentList = this.list$.value;
-        this.list$.next(currentList.filter((item) => item._id !== entity._id));
+        this.list$.next(currentList.filter(item => item._id !== entity._id));
         this.loading$.next(false);
       }),
-      catchError((error) => {
+      catchError(error => {
         this.loading$.next(false);
         this.error$.next(error.message || 'An error occurred');
         return throwError(() => error);

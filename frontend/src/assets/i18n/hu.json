@@ -1,5 +1,25 @@
 {
   "Home": "Kezdőlap",
+  "menu": {
+    "home": "Kezdőlap",
+    "entries": "Szócikkek",
+    "preface": "Előszó",
+    "versionHistory": "Verziótörténet",
+    "contact": "Kapcsolat",
+    "users": "Felhasználók"
+  },
+  "table": {
+    "id": "ID",
+    "hungarian": "Magyar",
+    "fieldOfExpertise": "Szakterület",
+    "wordType": "Szófaj",
+    "english": "Angol",
+    "firstName": "Keresztnév",
+    "lastName": "Vezetéknév",
+    "email": "E-mail",
+    "role": "Szerepkör",
+    "searchAll": "Keresés minden oszlopban"
+  },
   "Search": "Keresés",
   "Preface": "Előszó",
   "Version history": "Verziótörténet",
@@ -13,7 +33,7 @@
   "WHAT ARE YOU LOOKING FOR?": "MIT SZERETNE KERESNI?",
   "Search in every column": "Az összes oszlopban keres",
   "placeholder": "Kezdjen el írni a kereséshez...",
-  "Add a new": "Hozzáadni egy újat ebből:",
+  "Add a new": "Új hozzáadása:",
   "Edit": "Szerkesztés",
   "Are you sure to delete this item?": "Biztos, hogy törölni szeretné ezt az elemet?",
   "Delete": "Törlés",

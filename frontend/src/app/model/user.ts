@@ -1,7 +1,7 @@
 export enum UserRole {
   User = 1,
   Editor = 2,
-  Admin = 3
+  Admin = 3,
 }
 
 export interface IUser {
@@ -52,7 +52,7 @@ export class User implements IUser {
   }
 
   toJson(): Omit<IUser, 'password'> {
-    const { password, ...rest } = this;
+    const { password: _password, ...rest } = this;
     return rest as Omit<IUser, 'password'>;
   }
 }

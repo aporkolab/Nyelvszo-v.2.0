@@ -44,12 +44,12 @@ Object.values(cache).forEach((cacheInstance) => {
     logger.debug('Cache SET', { key, size: JSON.stringify(value).length });
   });
 
-  cacheInstance.on('del', (key, value) => {
+  cacheInstance.on('del', key => {
     cacheStats.deletes++;
     logger.debug('Cache DELETE', { key });
   });
 
-  cacheInstance.on('expired', (key, value) => {
+  cacheInstance.on('expired', key => {
     logger.debug('Cache EXPIRED', { key });
   });
 
@@ -149,7 +149,6 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
       // Intercept response
       const originalJson = res.json;
       const originalStatus = res.status;
-      let responseData;
       let statusCode = 200;
 
       // Override status method
@@ -160,8 +159,6 @@ const cacheMiddleware = (duration = 'medium', options = {}) => {
 
       // Override json method
       res.json = function (data) {
-        responseData = data;
-
         // Only cache successful responses
         if (statusCode >= 200 && statusCode < 300) {
           try {

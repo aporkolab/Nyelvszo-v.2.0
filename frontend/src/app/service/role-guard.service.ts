@@ -7,16 +7,16 @@ import { AuthService } from './auth.service';
 })
 export class RoleGuardService implements CanActivate {
   constructor(
-    public auth: AuthService,
-    public router: Router
+    private readonly auth: AuthService,
+    private readonly router: Router
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    const exptectedRole = route.data['expectedRole'];
-    const userRole = this.auth.user$.value?.role || 1;
+    const expectedRole = route.data['expectedRole'];
+    const userRole = this.auth.user$.value?.role ?? 1;
 
-    if (userRole < exptectedRole) {
-      this.router.navigate(['forbidden']);
+    if (userRole < expectedRole) {
+      this.router.navigate(['/forbidden']);
       return false;
     }
     return true;

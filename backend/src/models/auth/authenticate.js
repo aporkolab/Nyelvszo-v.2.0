@@ -35,6 +35,7 @@ const authenticate = (req, res, next) => {
 
     // Attach user info to request object
     req.user = {
+      userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
       iat: decoded.iat,

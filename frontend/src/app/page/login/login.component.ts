@@ -30,20 +30,16 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    
     this.auth.isLoading$
       .pipe(takeUntil(this.destroy$))
-      .subscribe((loading) => (this.isLoading = loading));
+      .subscribe(loading => (this.isLoading = loading));
 
-    
-    this.auth.error$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((error) => {
-        this.errorMessage = error;
-        if (error) {
-          this.notifyService.showError(error, 'Login Error');
-        }
-      });
+    this.auth.error$.pipe(takeUntil(this.destroy$)).subscribe(error => {
+      this.errorMessage = error;
+      if (error) {
+        this.notifyService.showError(error, 'Login Error');
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -58,15 +54,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
 
     this.errorMessage = null;
-    this.auth.login(this.loginData)
+    this.auth
+      .login(this.loginData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.notifyService.showSuccess('Login successful!', 'Welcome');
         },
-        error: () => {
-          
-        },
+        error: () => {},
       });
   }
 }

@@ -2,11 +2,11 @@
   <div class="col-12 d-flex justify-content-center text-center">
     <div class="card">
       <div class="card-header card-header-primary">
-        <ng-container *ngIf="entry$ | async; else createTitle">
+        <ng-container *ngIf="entry?._id; else createTitle">
           <h4 class="card-title">{{ 'editEntry' | translate }}</h4>
         </ng-container>
         <ng-template #createTitle>
-          <h4 class="card-title">{{ 'addNewEnty' | translate }}</h4>
+          <h4 class="card-title">{{ 'addNewEntry' | translate }}</h4>
         </ng-template>
       </div>
 
@@ -16,7 +16,7 @@
           <!-- …a mezők változatlanok… -->
 
           <button
-            *ngIf="entry$ | async"
+            *ngIf="entry?._id"
             [disabled]="entryForm?.invalid"
             type="submit"
             class="btn btn-primary pull-right me-md-3"
@@ -25,7 +25,7 @@
           </button>
 
           <button
-            *ngIf="!(entry$ | async)"
+            *ngIf="!entry?._id"
             [disabled]="entryForm?.invalid"
             type="submit"
             class="btn btn-primary pull-right me-md-3"

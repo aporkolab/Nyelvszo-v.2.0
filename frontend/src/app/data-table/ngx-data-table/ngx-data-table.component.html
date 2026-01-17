@@ -4,20 +4,22 @@
     <legend>{{ 'WHAT ARE YOU LOOKING FOR?' | translate }}</legend>
     <div class="tableData inner-form">
       <div class="col-12 select_container input-field">
-        <select [(ngModel)]="filterKey" id="tableSearch" class="form-control">
-          <option>{{ 'Search in every column' | translate }}</option>
-          <option
-            *ngFor="let key of columns"
-            [selected]="key.title === filterKey"
-            [value]="key.title"
-          >
-            {{ key.title }}
+        <select
+          [(ngModel)]="filterKey"
+          (ngModelChange)="onSearchChange()"
+          id="tableSearch"
+          class="form-control"
+        >
+          <option value="">{{ 'table.searchAll' | translate }}</option>
+          <option *ngFor="let col of columns" [value]="col.key">
+            {{ col.title | translate }}
           </option>
         </select>
       </div>
       <div class="mb-3 input_container">
         <input
           [(ngModel)]="phrase"
+          (ngModelChange)="onSearchChange()"
           type="text"
           class="form-control"
           id="choices-text-preset-values"
@@ -29,79 +31,65 @@
 </div>
 
 <div class="col-12 scroll tableData">
-  <tr *ngIf="!list || list.length == 0">
-    <td colspan="3">
-      <div class="preloader">
-        <div class="lds-ripple">
-          <div class="lds-pos"></div>
-          <div class="lds-pos"></div>
-        </div>
+  <div *ngIf="!list || list.length === 0" class="preloader-container">
+    <div class="preloader">
+      <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
       </div>
-    </td>
-  </tr>
+    </div>
+  </div>
+
   <div>
     <button
-      *ngIf="this.auth.user$.value?.role === 3"
+      *ngIf="auth.user$.value?.role === 3"
       [routerLink]="'edit/0'"
       class="btn btn-success col-12"
     >
-      {{
-        'Add a
-			new' | translate
-      }}
-      {{ entity }} <i-feather name="user-plus"> </i-feather>
+      {{ 'Add a new' | translate }} {{ entity }}
+      <i-feather name="user-plus"></i-feather>
     </button>
   </div>
 
-  <div class="row table-responsive" *ngIf="phrase || this.auth.user$.value?.role === 3">
+  <div class="row table-responsive" *ngIf="phrase || auth.user$.value?.role === 3">
     <table class="table table-striped table-hover table-dark">
       <thead>
         <tr>
           <th *ngFor="let col of columns" scope="col" class="table-light">
-            {{ col.title }}
+            {{ col.title | translate }}
             <i-feather
               (click)="onColumnSelect(col.key)"
               name="Shuffle"
               (mouseover)="showInfoAboutSorting()"
-            >
-            </i-feather>
+            ></i-feather>
           </th>
           <th class="table-light"></th>
         </tr>
       </thead>
-      <tbody *ngIf="list | filter: phrase : keys[filterKey] as li">
+      <tbody>
         <tr
-          filteredList="li"
           *ngFor="
-            let row of li
-              | slice: startSlice : endSlice
-              | filter: '' : ''
-              | sorter: columnKey : sortDir
+            let row of filteredList | slice: startSlice : endSlice | sorter: columnKey : sortDir
           "
         >
           <td *ngFor="let col of columns">{{ row[col.key] }}</td>
           <td>
-            <!-- <td *ngIf="this.auth.user$.value.role===3 && row['_id']">
-								</td> -->
-          </td>
-
-          <td>
             <div class="btn-group">
               <button
-                *ngIf="this.auth.user$.value?.role === 3"
+                *ngIf="auth.user$.value?.role === 3"
                 (click)="onSelect(row)"
                 class="btn btn-warning"
               >
-                <i-feather name="Settings">{{ 'Edit' | translate }} </i-feather>
+                <i-feather name="Settings"></i-feather>
+                {{ 'Edit' | translate }}
               </button>
               <button
-                *ngIf="this.auth.user$.value?.role === 3"
+                *ngIf="auth.user$.value?.role === 3"
                 (click)="onDelete(row)"
                 class="btn btn-danger"
               >
-                <i-feather name="file-minus" data-confirm="Are you sure to delete this item?">
-                  {{ 'Delete' | translate }}
-                </i-feather>
+                <i-feather name="file-minus"></i-feather>
+                {{ 'Delete' | translate }}
               </button>
             </div>
           </td>
@@ -110,7 +98,7 @@
     </table>
   </div>
 
-  <nav aria-label="paginator" *ngIf="pageList.length >= 10 && this.auth.user$.value?.role === 3">
+  <nav aria-label="paginator" *ngIf="pageList.length >= 10 && auth.user$.value?.role === 3">
     <ul class="pagination pagination-lg mt-4 nav justify-content-center">
       <li [className]="page === 1 ? 'page-item disabled' : 'page-item'">
         <button class="page-link" (click)="jumpToPage(page - 1)" [disabled]="page === 1">

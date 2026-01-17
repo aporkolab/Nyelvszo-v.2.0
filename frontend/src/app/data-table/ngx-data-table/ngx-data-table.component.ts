@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from 'src/app/service/auth.service';
 import { NotificationService } from 'src/app/service/notification.service';
 
-import { FilterPipe } from '../../pipe/filter.pipe';
 import { SorterPipe } from '../../pipe/sorter.pipe';
 
 export interface INgxTableColumn {
@@ -20,19 +27,11 @@ export interface INgxTableColumn {
 @Component({
   selector: 'ngx-data-table',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    TranslateModule,
-    IconModule,
-    FilterPipe,
-    SorterPipe,
-  ],
+  imports: [CommonModule, RouterModule, FormsModule, TranslateModule, IconModule, SorterPipe],
   templateUrl: './ngx-data-table.component.html',
   styleUrls: ['./ngx-data-table.component.scss'],
 })
-export class NgxDataTableComponent<T extends { [x: string]: any }> implements OnInit {
+export class NgxDataTableComponent<T extends { [x: string]: any }> implements OnInit, OnChanges {
   [x: string]: any;
   @Input() list: T[] = [];
   @Input() columns: INgxTableColumn[] = [];
@@ -41,11 +40,9 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   @Output() selectOne: EventEmitter<T> = new EventEmitter<T>();
   @Output() deleteOne: EventEmitter<T> = new EventEmitter<T>();
 
-  keys: { [x: string]: string } = {};
   phrase: string = '';
-  filterKey: string = 'Search in every column';
+  filterKey: string = 'hungarian';
 
-  filteredList!: T[];
   flattenedList: T[] = [];
   changeText = true;
   pageSize: number = 25;
@@ -54,9 +51,49 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   endSlice: number = 25;
   page: number = 1;
 
+  get filteredList(): T[] {
+    if (!this.list?.length) {
+      return [];
+    }
+    if (!this.phrase) {
+      return this.list;
+    }
+    const phrase = this.phrase.toLowerCase();
+    const searchableKeys = [
+      'hungarian',
+      'english',
+      'fieldOfExpertise',
+      'wordType',
+      'firstName',
+      'lastName',
+      'email',
+    ];
+
+    if (!this.filterKey) {
+      return this.list.filter(item => {
+        const values: string[] = [];
+        for (const key of searchableKeys) {
+          if (key in item && item[key] != null) {
+            values.push(String(item[key]));
+          }
+        }
+        return values.join(' ').toLowerCase().includes(phrase);
+      });
+    }
+
+    return this.list.filter(item => {
+      return String(item[this.filterKey] ?? '')
+        .toLowerCase()
+        .includes(phrase);
+    });
+  }
+
   get pageList(): number[] {
-    const pageSize = Math.ceil(this.filteredList.length / this.pageSize);
-    return new Array(pageSize).fill(1).map((x, i) => i + 1);
+    if (!this.filteredList?.length) {
+      return [];
+    }
+    const totalPages = Math.ceil(this.filteredList.length / this.pageSize);
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
   columnKey: string = '';
@@ -77,12 +114,20 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
     translate.setDefaultLang('hu');
   }
 
-  ngOnInit(): void {
-    this.filteredList = this.list;
-    for (const column of this.columns) {
-      this.keys[column.title] = column.key;
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['list'] && this.list) {
+      this.prepareList();
+      this.page = 1;
+      this.startSlice = 0;
+      this.endSlice = this.pageSize;
     }
+  }
 
+  ngOnInit(): void {
+    // filteredList is now a computed getter
+  }
+
+  private prepareList(): void {
     this.flattenedList = this.list.map(item => {
       for (const key in item) {
         if (typeof item[key] === 'boolean') {
@@ -120,6 +165,12 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
     this.page = pageNum;
     this.startSlice = this.pageSize * (pageNum - 1);
     this.endSlice = this.startSlice + this.pageSize;
+  }
+
+  onSearchChange(): void {
+    this.page = 1;
+    this.startSlice = 0;
+    this.endSlice = this.pageSize;
   }
 
   showInfoAboutSorting() {

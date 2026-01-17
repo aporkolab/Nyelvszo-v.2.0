@@ -1,20 +1,16 @@
-
-
-
-
 export const environment = {
-  production: false, 
-  apiUrl: 'http://localhost:3000', 
+  production: false,
+  apiUrl: 'http://localhost:3000',
   appName: 'NyelvSzó',
   version: '2.2.0',
-  websocketUrl: 'ws://localhost:3000/ws', 
+  websocketUrl: 'ws://localhost:3000/ws',
   features: {
-    realTimeSearch: true, 
-    websocket: true, 
-    analytics: false, 
+    realTimeSearch: true,
+    websocket: true,
+    analytics: false,
   },
   cache: {
-    ttl: 300000, 
-    maxSize: 100, 
+    ttl: 300000,
+    maxSize: 100,
   },
 };

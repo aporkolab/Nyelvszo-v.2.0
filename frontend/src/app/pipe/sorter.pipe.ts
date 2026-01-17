@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
   name: 'sorter',
+  standalone: true,
 })
 export class SorterPipe implements PipeTransform {
   transform(value: any[] | null, key: string, dir: number = 1): any[] | null {

@@ -5,18 +5,16 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
-  constructor(private auth: AuthService) {}
+  constructor(private readonly auth: AuthService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const accessToken = this.auth.access_token$.getValue();
+    const accessToken = this.auth.token;
     if (accessToken) {
       const newRequest = request.clone({
         headers: request.headers.set('Authorization', `Bearer ${accessToken}`),
       });
-
       return next.handle(newRequest);
     }
-
     return next.handle(request);
   }
 }

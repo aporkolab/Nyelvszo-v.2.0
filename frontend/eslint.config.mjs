@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import typescript from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
+import globals from 'globals';
 
 export default [
   {
@@ -8,7 +9,8 @@ export default [
       'node_modules/**',
       'dist/**',
       'coverage/**',
-      '**/*.spec.ts'
+      '**/*.spec.ts',
+      '**/test.ts'
     ]
   },
   js.configs.recommended,
@@ -18,9 +20,9 @@ export default [
       ecmaVersion: 2021,
       sourceType: 'module',
       globals: {
-        browser: true,
-        node: true,
-        es2021: true
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021
       }
     }
   },
@@ -39,7 +41,10 @@ export default [
     rules: {
       'no-console': 'warn',
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn'
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_'
+      }]
     }
   }
 ];

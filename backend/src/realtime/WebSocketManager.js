@@ -902,7 +902,8 @@ class WebSocketManager extends EventEmitter {
     return await searchQuery;
   }
 
-  async getSearchSuggestions(query, context) {
+  // eslint-disable-next-line no-unused-vars
+  async getSearchSuggestions(_query, _context) {
     // Implementation for real-time search suggestions
     return [];
   }
@@ -928,7 +929,8 @@ class WebSocketManager extends EventEmitter {
     }
   }
 
-  handleHeartbeat(clientId, payload) {
+  // eslint-disable-next-line no-unused-vars
+  handleHeartbeat(clientId, _payload) {
     const client = this.clients.get(clientId);
     if (client) {
       client.lastHeartbeat = new Date();

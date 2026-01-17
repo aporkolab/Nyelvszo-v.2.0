@@ -1,4 +1,3 @@
-const createError = require('http-errors');
 const logger = require('../logger/logger');
 
 /**
@@ -155,7 +154,8 @@ const handleRateLimitError = (err) => {
 /**
  * Error handling middleware
  */
-const errorHandler = (err, req, res, next) => {
+// eslint-disable-next-line no-unused-vars
+const errorHandler = (err, req, res, _next) => {
   // Set default error properties
   err.statusCode = err.statusCode || err.status || 500;
   err.status = err.status || 'error';
