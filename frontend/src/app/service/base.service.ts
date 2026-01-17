@@ -1,12 +1,28 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { ConfigService } from './config.service';
 
 export interface BaseEntity {
   _id: string;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  meta?: {
+    message?: string;
+    timestamp?: string;
+  };
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -73,7 +89,14 @@ export class BaseService<T extends BaseEntity> {
       });
     }
 
-    return this.http.get<T[]>(this.endpoint, { params }).pipe(
+    return this.http.get<ApiResponse<T[]> | T[]>(this.endpoint, { params }).pipe(
+      map(response => {
+        // Handle both {data: [...]} and [...] response formats
+        if (response && typeof response === 'object' && 'data' in response) {
+          return (response as ApiResponse<T[]>).data;
+        }
+        return response as T[];
+      }),
       tap(data => {
         this.list$.next(data);
         this.loading$.next(false);
@@ -90,7 +113,14 @@ export class BaseService<T extends BaseEntity> {
     this.loading$.next(true);
     this.error$.next(null);
 
-    return this.http.get<T>(`${this.endpoint}/${id}`).pipe(
+    return this.http.get<ApiResponse<T> | T>(`${this.endpoint}/${id}`).pipe(
+      map(response => {
+        // Handle both {data: entity} and entity response formats
+        if (response && typeof response === 'object' && 'data' in response) {
+          return (response as ApiResponse<T>).data;
+        }
+        return response as T;
+      }),
       tap(() => this.loading$.next(false)),
       catchError(error => {
         this.loading$.next(false);
@@ -106,7 +136,13 @@ export class BaseService<T extends BaseEntity> {
 
     const payload = { ...entity, _id: undefined };
 
-    return this.http.post<T>(this.endpoint, payload).pipe(
+    return this.http.post<ApiResponse<T> | T>(this.endpoint, payload).pipe(
+      map(response => {
+        if (response && typeof response === 'object' && 'data' in response) {
+          return (response as ApiResponse<T>).data;
+        }
+        return response as T;
+      }),
       tap(created => {
         const currentList = this.list$.value;
         this.list$.next([...currentList, created]);
@@ -124,7 +160,13 @@ export class BaseService<T extends BaseEntity> {
     this.loading$.next(true);
     this.error$.next(null);
 
-    return this.http.patch<T>(`${this.endpoint}/${entity._id}`, entity).pipe(
+    return this.http.patch<ApiResponse<T> | T>(`${this.endpoint}/${entity._id}`, entity).pipe(
+      map(response => {
+        if (response && typeof response === 'object' && 'data' in response) {
+          return (response as ApiResponse<T>).data;
+        }
+        return response as T;
+      }),
       tap(updated => {
         const currentList = this.list$.value;
         const index = currentList.findIndex(item => item._id === entity._id);
