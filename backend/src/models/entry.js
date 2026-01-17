@@ -118,15 +118,17 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
   const { page = 1, limit = 20, fieldOfExpertise, wordType, sortBy = 'relevance' } = options;
 
   const query = { isActive: true };
-  const searchQuery = {};
 
-  // Text search
-  if (searchTerm) {
-    searchQuery.$text = {
-      $search: searchTerm,
-      $language: 'none', // Disable language-specific stemming
-    };
-    searchQuery.score = { $meta: 'textScore' };
+  // Partial text search using regex for dictionary-style search
+  if (searchTerm && searchTerm.trim()) {
+    const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escapedTerm, 'i');
+    query.$or = [
+      { hungarian: searchRegex },
+      { english: searchRegex },
+      { fieldOfExpertise: searchRegex },
+      { wordType: searchRegex },
+    ];
   }
 
   // Filters
@@ -138,15 +140,10 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
     query.wordType = new RegExp(wordType, 'i');
   }
 
-  // Combine search and filter queries
-  const finalQuery = { ...query, ...searchQuery };
-
   // Sorting
   let sort = {};
   switch (sortBy) {
     case 'relevance':
-      sort = searchTerm ? { score: { $meta: 'textScore' } } : { createdAt: -1 };
-      break;
     case 'alphabetical':
       sort = { hungarian: 1 };
       break;
@@ -160,19 +157,19 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
       sort = { views: -1 };
       break;
     default:
-      sort = { createdAt: -1 };
+      sort = { hungarian: 1 };
   }
 
   const skip = (page - 1) * limit;
 
   return {
-    query: this.find(finalQuery)
+    query: this.find(query)
       .select('hungarian english fieldOfExpertise wordType views createdAt updatedAt')
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .lean(), // Use lean() for better performance when we don't need mongoose methods
-    countQuery: this.countDocuments(finalQuery),
+      .lean(),
+    countQuery: this.countDocuments(query),
   };
 };
 

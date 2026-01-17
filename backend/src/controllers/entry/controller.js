@@ -26,9 +26,8 @@ const getAllEntries = catchAsync(async (req, res) => {
   } = req.query;
 
   // Validate pagination parameters
-  // Allow high limits for dictionary applications that need all entries
   const pageNum = Math.max(1, parseInt(page));
-  const limitNum = Math.min(10000, Math.max(1, parseInt(limit)));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
 
   // Build search options
   const searchOptions = {

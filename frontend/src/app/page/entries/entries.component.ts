@@ -1,40 +1,46 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Entry } from 'src/app/model/entry';
 import { ConfigService, TableColumn } from 'src/app/service/config.service';
-import { EntryService } from 'src/app/service/entry.service';
+import { EntryService, SearchOptions } from 'src/app/service/entry.service';
 import { NotificationService } from 'src/app/service/notification.service';
 import { NgxDataTableComponent } from '../../data-table/ngx-data-table/ngx-data-table.component';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   standalone: true,
   selector: 'app-entries',
-  imports: [CommonModule, NgxDataTableComponent, TranslateModule],
+  imports: [CommonModule, NgxDataTableComponent, TranslateModule, FormsModule],
   templateUrl: './entries.component.html',
 })
 export class EntriesComponent implements OnInit, OnDestroy {
   columns: TableColumn[];
-  list$: Observable<Entry[]>;
   readonly entity = 'Entry';
 
+  // Search state
+  searchTerm = '';
+  currentPage = 1;
+  pageSize = 25;
+
+  // Reactive streams
+  private readonly searchTerm$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly config: ConfigService,
-    private readonly entryService: EntryService,
+    readonly entryService: EntryService,
     private readonly router: Router,
     private readonly notifyService: NotificationService
   ) {
     this.columns = this.config.entriesTableColumns;
-    this.list$ = this.entryService.list$;
   }
 
   ngOnInit(): void {
-    this.loadEntries();
+    this.setupSearch();
   }
 
   ngOnDestroy(): void {
@@ -42,9 +48,39 @@ export class EntriesComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadEntries(): void {
-    // Request all entries with high page size for dictionary search
-    this.entryService.getAll({ pageSize: 10000 }).pipe(takeUntil(this.destroy$)).subscribe();
+  private setupSearch(): void {
+    // Debounced search - waits 300ms after user stops typing
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.currentPage = 1;
+        this.performSearch();
+      });
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm = term;
+    this.searchTerm$.next(term);
+  }
+
+  performSearch(): void {
+    const options: SearchOptions = {
+      search: this.searchTerm || undefined,
+      page: this.currentPage,
+      limit: this.pageSize,
+      sortBy: 'alphabetical',
+    };
+
+    this.entryService.search(options).pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.performSearch();
   }
 
   private showSuccessDelete(): void {
@@ -65,7 +101,7 @@ export class EntriesComponent implements OnInit, OnDestroy {
       .delete(entry)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => this.loadEntries(),
+        next: () => this.performSearch(),
         error: (err: Error) => this.showError(err),
         complete: () => this.showSuccessDelete(),
       });

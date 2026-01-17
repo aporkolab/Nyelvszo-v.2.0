@@ -24,6 +24,15 @@ export interface INgxTableColumn {
   key: string;
 }
 
+export interface ServerPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 @Component({
   selector: 'ngx-data-table',
   standalone: true,
@@ -32,32 +41,51 @@ export interface INgxTableColumn {
   styleUrls: ['./ngx-data-table.component.scss'],
 })
 export class NgxDataTableComponent<T extends { [x: string]: any }> implements OnInit, OnChanges {
-  [x: string]: any;
   @Input() list: T[] = [];
   @Input() columns: INgxTableColumn[] = [];
   @Input() entity: string = '';
+  @Input() serverSideSearch = false;
+  @Input() pagination: ServerPagination | null = null;
 
   @Output() selectOne: EventEmitter<T> = new EventEmitter<T>();
   @Output() deleteOne: EventEmitter<T> = new EventEmitter<T>();
+  @Output() pageChange: EventEmitter<number> = new EventEmitter<number>();
 
+  // Client-side search (only used when serverSideSearch=false)
   phrase: string = '';
-  filterKey: string = 'hungarian';
+  filterKey: string = '';
 
   flattenedList: T[] = [];
-  changeText = true;
-  pageSize: number = 25;
+  columnKey: string = '';
+  sortDir: number = 1;
 
-  startSlice: number = 0;
-  endSlice: number = 25;
-  page: number = 1;
+  constructor(
+    private notifyService: NotificationService,
+    public auth: AuthService,
+    public router: Router,
+    public translate: TranslateService
+  ) {
+    translate.addLangs(['en', 'hu']);
+    translate.setDefaultLang('hu');
+  }
 
-  get filteredList(): T[] {
+  // For server-side mode, just return the list as-is
+  // For client-side mode, apply filtering
+  get displayList(): T[] {
     if (!Array.isArray(this.list) || !this.list.length) {
       return [];
     }
+
+    // Server-side search: data is already filtered
+    if (this.serverSideSearch) {
+      return this.list;
+    }
+
+    // Client-side filtering
     if (!this.phrase) {
       return this.list;
     }
+
     const phrase = this.phrase.toLowerCase();
     const searchableKeys = [
       'hungarian',
@@ -89,43 +117,23 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   }
 
   get pageList(): number[] {
-    if (!this.filteredList?.length) {
-      return [];
+    if (this.serverSideSearch && this.pagination) {
+      return Array.from({ length: this.pagination.totalPages }, (_, i) => i + 1);
     }
-    const totalPages = Math.ceil(this.filteredList.length / this.pageSize);
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+    return [];
   }
 
-  columnKey: string = '';
-  sortDir: number = -1;
-
-  onColumnSelect(key: string): void {
-    this.columnKey = key;
-    this.sortDir = this.sortDir * -1;
-  }
-
-  constructor(
-    private notifyService: NotificationService,
-    public auth: AuthService,
-    public router: Router,
-    public translate: TranslateService
-  ) {
-    translate.addLangs(['en', 'hu']);
-    translate.setDefaultLang('hu');
+  get currentPage(): number {
+    return this.pagination?.currentPage || 1;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['list'] && Array.isArray(this.list)) {
       this.prepareList();
-      this.page = 1;
-      this.startSlice = 0;
-      this.endSlice = this.pageSize;
     }
   }
 
-  ngOnInit(): void {
-    // filteredList is now a computed getter
-  }
+  ngOnInit(): void {}
 
   private prepareList(): void {
     // Create copies to avoid mutating original data
@@ -148,6 +156,11 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
     });
   }
 
+  onColumnSelect(key: string): void {
+    this.columnKey = key;
+    this.sortDir = this.sortDir * -1;
+  }
+
   onSelect(entity: T): void {
     this.selectOne.emit(entity);
   }
@@ -163,15 +176,9 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   }
 
   jumpToPage(pageNum: number): void {
-    this.page = pageNum;
-    this.startSlice = this.pageSize * (pageNum - 1);
-    this.endSlice = this.startSlice + this.pageSize;
-  }
-
-  onSearchChange(): void {
-    this.page = 1;
-    this.startSlice = 0;
-    this.endSlice = this.pageSize;
+    if (this.serverSideSearch) {
+      this.pageChange.emit(pageNum);
+    }
   }
 
   showInfoAboutSorting() {

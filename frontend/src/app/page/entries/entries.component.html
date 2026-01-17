@@ -1,8 +1,47 @@
+<!-- Search Section -->
+<div class="s004">
+  <div class="form-group">
+    <img src="../../../assets/img/logo.png" alt="NyelvSzo logo" id="logo" />
+    <legend>{{ 'WHAT ARE YOU LOOKING FOR?' | translate }}</legend>
+    <div class="tableData inner-form">
+      <div class="mb-3 input_container">
+        <input
+          [ngModel]="searchTerm"
+          (ngModelChange)="onSearchChange($event)"
+          type="text"
+          class="form-control"
+          id="search-input"
+          placeholder="{{ 'placeholder' | translate }}"
+        />
+      </div>
+    </div>
+    <div class="search-info text-muted" *ngIf="entryService.pagination$ | async as pagination">
+      <small>
+        {{ 'Found' | translate }}: {{ pagination.totalItems }} {{ 'entries' | translate }}
+        <span *ngIf="pagination.totalPages > 1">
+          ({{ 'page' | translate }} {{ pagination.currentPage }}/{{ pagination.totalPages }})
+        </span>
+      </small>
+    </div>
+  </div>
+</div>
+
+<!-- Loading indicator -->
+<div *ngIf="entryService.searching$ | async" class="text-center my-4">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">{{ 'Loading...' | translate }}</span>
+  </div>
+</div>
+
+<!-- Results Table -->
 <ngx-data-table
-  *ngIf="list$ | async as list"
+  *ngIf="!(entryService.searching$ | async)"
   [columns]="columns"
   [entity]="entity"
-  [list]="list"
+  [list]="(entryService.searchResults$ | async) || []"
+  [serverSideSearch]="true"
+  [pagination]="entryService.pagination$ | async"
   (selectOne)="onSelectOne($event)"
   (deleteOne)="onDeleteOne($event)"
+  (pageChange)="onPageChange($event)"
 ></ngx-data-table>
