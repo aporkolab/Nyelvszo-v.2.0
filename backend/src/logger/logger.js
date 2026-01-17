@@ -224,17 +224,21 @@ logger.logDatabase = function (operation, collection, meta = {}) {
   });
 };
 
-// Uncaught exception handler
+// Uncaught exception handler - use console directly to avoid circular issues
 process.on('uncaughtException', (error) => {
+  // eslint-disable-next-line no-console
   console.error('Uncaught Exception:', error.message);
+  // eslint-disable-next-line no-console
   console.error(error.stack);
   // Give time for logs to flush before exiting
   setTimeout(() => process.exit(1), 1000);
 });
 
-// Unhandled rejection handler
+// Unhandled rejection handler - use console directly to avoid circular issues
 process.on('unhandledRejection', (reason) => {
+  // eslint-disable-next-line no-console
   console.error('Unhandled Promise Rejection:', reason?.message || reason);
+  // eslint-disable-next-line no-console
   if (reason?.stack) console.error(reason.stack);
   // Don't exit on unhandled rejection in development
   if (process.env.NODE_ENV === 'production') {
