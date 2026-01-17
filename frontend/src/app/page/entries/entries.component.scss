@@ -1,5 +1,433 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
 
 html {
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
   font-family: 'Poppins', sans-serif;
+}
+
+.table {
+  margin: auto;
+  width: 60% !important;
+}
+
+body {
+  margin: 0;
+}
+
+article,
+aside,
+footer,
+header,
+nav,
+section {
+  display: block;
+}
+
+h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+figcaption,
+figure,
+main {
+  display: block;
+}
+
+figure {
+  margin: 1em 40px;
+}
+
+hr {
+  box-sizing: content-box;
+  height: 0;
+  overflow: visible;
+}
+
+pre {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+
+a {
+  background-color: transparent;
+  -webkit-text-decoration-skip: objects;
+}
+
+abbr[title] {
+  border-bottom: none;
+  text-decoration: underline;
+  text-decoration: underline dotted;
+}
+
+b,
+strong {
+  font-weight: inherit;
+}
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+code,
+kbd,
+samp {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+
+dfn {
+  font-style: italic;
+}
+
+mark {
+  background-color: #ff0;
+  color: #000;
+}
+
+small {
+  font-size: 80%;
+}
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+audio,
+video {
+  display: inline-block;
+}
+
+audio:not([controls]) {
+  display: none;
+  height: 0;
+}
+
+img {
+  border-style: none;
+}
+
+svg:not(:root) {
+  overflow: hidden;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: sans-serif;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+}
+
+button,
+input {
+  overflow: visible;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+html [type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+}
+
+button::-moz-focus-inner,
+[type='button']::-moz-focus-inner,
+[type='reset']::-moz-focus-inner,
+[type='submit']::-moz-focus-inner {
+  border-style: none;
+  padding: 0;
+}
+
+button:-moz-focusring,
+[type='button']:-moz-focusring,
+[type='reset']:-moz-focusring,
+[type='submit']:-moz-focusring {
+  outline: 1px dotted ButtonText;
+}
+
+fieldset {
+  padding: 0.35em 0.75em 0.625em;
+  margin: 0;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+  -webkit-padding-before: 0;
+  -webkit-padding-start: 0;
+  -webkit-padding-end: 0;
+  -webkit-padding-after: 0;
+  border: 0;
+}
+
+legend {
+  color: whitesmoke;
+  font-size: 3rem;
+  margin: 0;
+  padding: 0;
+  display: block;
+  -webkit-padding-start: 0;
+  -webkit-padding-end: 0;
+}
+
+progress {
+  vertical-align: baseline;
+}
+
+textarea {
+  overflow: auto;
+}
+
+[type='checkbox'],
+[type='radio'] {
+  box-sizing: border-box;
+  padding: 0;
+}
+
+[type='number']::-webkit-inner-spin-button,
+[type='number']::-webkit-outer-spin-button {
+  height: auto;
+}
+
+[type='search'] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+[type='search']::-webkit-search-cancel-button,
+[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
+}
+
+details,
+menu {
+  display: block;
+}
+
+summary {
+  display: list-item;
+}
+
+canvas {
+  display: inline-block;
+}
+
+template {
+  display: none;
+}
+
+[hidden] {
+  display: none;
+}
+
+html {
+  height: 100%;
+}
+
+#logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+  border-radius: 20%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.s004 {
+  min-height: 70vh;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-align: center;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+  background-image: url('/assets/img/Searchs_004.png');
+  background-size: cover;
+  background-position: center center;
+  padding: 15px;
+  background-repeat: no-repeat;
+}
+
+.s004 .form-group {
+  width: 100%;
+  max-width: 790px;
+}
+
+.s004 .form-group legend {
+  font-size: 36px;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.s004 .form-group .inner-form {
+  width: 100%;
+  margin-bottom: 17px;
+}
+
+.s004 .form-group .inner-form .input-field {
+  width: 100%;
+  position: relative;
+}
+
+.s004 .form-group .inner-form .input-field .form-control {
+  min-height: 50px;
+  width: 100%;
+  background: #fff;
+  display: block;
+  padding: 10px 32px;
+  font-size: 18px;
+  color: #666;
+  border-radius: 34px;
+  border: 0;
+  margin-bottom: 10px;
+}
+
+.s004 .form-group .inner-form .input-field .form-control:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+}
+
+.s004 .form-group .inner-form .input_container {
+  width: 100%;
+  position: relative;
+}
+
+.s004 .form-group .inner-form .input_container .form-control {
+  min-height: 70px;
+  width: 100%;
+  background: #fff;
+  display: block;
+  padding: 10px 32px;
+  font-size: 18px;
+  color: #666;
+  border-radius: 34px;
+  border: 0;
+}
+
+.s004 .form-group .inner-form .input_container .form-control:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+}
+
+.s004 .form-group .inner-form .select_container {
+  width: 100%;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.s004 .form-group .inner-form .select_container .form-control {
+  min-height: 50px;
+  width: 100%;
+  background: #fff;
+  display: block;
+  padding: 10px 32px;
+  font-size: 18px;
+  color: #666;
+  border-radius: 34px;
+  border: 0;
+  cursor: pointer;
+}
+
+.s004 .form-group .inner-form .select_container .form-control:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+}
+
+.search-info {
+  color: #fff !important;
+}
+
+.search-info small {
+  color: #fff !important;
+}
+
+.text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Table section styling */
+.tableData {
+  padding: 20px;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  margin: auto;
+  width: 80% !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.075);
+}
+
+/* Pagination styling */
+.pagination {
+  justify-content: center;
+}
+
+.page-link {
+  cursor: pointer;
+}
+
+.page-item.disabled .page-link {
+  cursor: not-allowed;
+}
+
+/* Button styling */
+.btn-group {
+  display: flex;
+  gap: 5px;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Admin button */
+.btn-success {
+  margin-bottom: 20px;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import { SorterPipe } from 'src/app/pipe/sorter.pipe';
   imports: [CommonModule, RouterModule, TranslateModule, FormsModule, IconModule, SorterPipe],
   templateUrl: './entries.component.html',
   styleUrls: ['./entries.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 export class EntriesComponent implements OnInit, OnDestroy {
   columns: TableColumn[];
