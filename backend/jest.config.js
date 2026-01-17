@@ -58,7 +58,8 @@ module.exports = {
 
   // Transform files
   transform: {
-    '^.+\\.js$': 'babel-jest'
+    '^.+\\.js$': 'babel-jest',
+    '^.+\\.ts$': 'ts-jest'
   },
 
   // Global variables
