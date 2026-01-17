@@ -119,69 +119,55 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
 
   const query = { isActive: true };
 
-  // Partial text search using regex for dictionary-style search
-  if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
+  // Helper function to create safe regex
+  const createRegex = (term) => {
+    if (!term || typeof term !== 'string' || !term.trim()) return null;
     try {
-      const escapedTerm = searchTerm.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const searchRegex = new RegExp(escapedTerm, 'i');
+      const escaped = term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(escaped, 'i');
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // Check if any column-specific filter is provided
+  const hasColumnFilter = hungarian || english || fieldOfExpertise || wordType;
+
+  if (hasColumnFilter) {
+    // Column-specific filtering (like the original filter pipe with key)
+    if (hungarian) {
+      const regex = createRegex(hungarian);
+      if (regex) query.hungarian = regex;
+    }
+    if (english) {
+      const regex = createRegex(english);
+      if (regex) query.english = regex;
+    }
+    if (fieldOfExpertise) {
+      const regex = createRegex(fieldOfExpertise);
+      if (regex) query.fieldOfExpertise = regex;
+    }
+    if (wordType) {
+      const regex = createRegex(wordType);
+      if (regex) query.wordType = regex;
+    }
+  } else if (searchTerm) {
+    // General search across all columns (like the original filter pipe without key)
+    const regex = createRegex(searchTerm);
+    if (regex) {
       query.$or = [
-        { hungarian: searchRegex },
-        { english: searchRegex },
-        { fieldOfExpertise: searchRegex },
-        { wordType: searchRegex },
+        { hungarian: regex },
+        { english: regex },
+        { fieldOfExpertise: regex },
+        { wordType: regex },
       ];
-    } catch (regexError) {
-      // If regex fails, skip search filter
-      console.error('Invalid search term for regex:', searchTerm, regexError);
     }
   }
 
-  // Column-specific filters (only apply if no general $or search)
-  if (!query.$or) {
-    if (hungarian && typeof hungarian === 'string') {
-      try {
-        const escaped = hungarian.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        query.hungarian = new RegExp(escaped, 'i');
-      } catch (e) {
-        // ignore invalid regex
-      }
-    }
-
-    if (english && typeof english === 'string') {
-      try {
-        const escaped = english.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        query.english = new RegExp(escaped, 'i');
-      } catch (e) {
-        // ignore invalid regex
-      }
-    }
-
-    if (fieldOfExpertise && typeof fieldOfExpertise === 'string') {
-      try {
-        const escaped = fieldOfExpertise.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        query.fieldOfExpertise = new RegExp(escaped, 'i');
-      } catch (e) {
-        // ignore invalid regex
-      }
-    }
-
-    if (wordType && typeof wordType === 'string') {
-      try {
-        const escaped = wordType.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        query.wordType = new RegExp(escaped, 'i');
-      } catch (e) {
-        // ignore invalid regex
-      }
-    }
-  }
-
-  // Debug: Log the constructed query
-  console.log('=== MODEL QUERY DEBUG ===');
-  console.log('searchTerm:', searchTerm);
-  console.log('options.hungarian:', hungarian);
-  console.log('query.$or:', query.$or);
-  console.log('Final query:', JSON.stringify(query, (key, value) => value instanceof RegExp ? value.toString() : value));
-  console.log('=========================');
+  console.log('=== SEARCH QUERY ===');
+  console.log('hasColumnFilter:', hasColumnFilter, '| hungarian:', hungarian, '| searchTerm:', searchTerm);
+  console.log('query:', JSON.stringify(query, (k, v) => v instanceof RegExp ? v.toString() : v));
+  console.log('====================');
 
   // Sorting
   let sort = {};
