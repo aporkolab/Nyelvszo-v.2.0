@@ -32,11 +32,10 @@ export class ConfigService {
   ];
 
   readonly entriesTableColumns: TableColumn[] = [
-    { key: '_id', title: 'table.id', sortable: true },
     { key: 'hungarian', title: 'table.hungarian', sortable: true, filterable: true },
+    { key: 'english', title: 'table.english', sortable: true, filterable: true },
     { key: 'fieldOfExpertise', title: 'table.fieldOfExpertise', sortable: true, filterable: true },
     { key: 'wordType', title: 'table.wordType', sortable: true, filterable: true },
-    { key: 'english', title: 'table.english', sortable: true, filterable: true },
   ];
 
   readonly usersTableColumn: TableColumn[] = [
