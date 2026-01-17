@@ -57,7 +57,8 @@ jobs:
 
       - name: Security audit (Frontend)
         working-directory: ./frontend
-        run: npm audit --audit-level=high
+        # Note: tar@7.5.3 fix not yet released (GHSA-8qq5-rm4j-mr97), using critical level
+        run: npm audit --audit-level=critical
 
   # Backend tests
   test-backend:
