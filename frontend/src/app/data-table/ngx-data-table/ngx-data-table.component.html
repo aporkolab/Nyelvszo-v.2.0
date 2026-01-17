@@ -98,10 +98,7 @@
   </div>
 
   <!-- Server-side pagination -->
-  <nav
-    aria-label="paginator"
-    *ngIf="serverSideSearch && pagination && pagination.totalPages > 1"
-  >
+  <nav aria-label="paginator" *ngIf="serverSideSearch && pagination && pagination.totalPages > 1">
     <ul class="pagination pagination-lg mt-4 nav justify-content-center">
       <li [class.disabled]="!pagination.hasPrevPage" class="page-item">
         <button

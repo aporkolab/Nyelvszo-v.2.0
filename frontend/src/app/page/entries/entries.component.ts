@@ -68,11 +68,7 @@ export class EntriesComponent implements OnInit, OnDestroy {
 
   private setupSearch(): void {
     this.searchTerm$
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         if (this.searchTerm.trim().length >= 2) {
           this.currentPage = 1;
@@ -131,17 +127,20 @@ export class EntriesComponent implements OnInit, OnDestroy {
         break;
     }
 
-    this.entryService.search(options).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.results = response.data;
-        this.hasSearched = true;
-      },
-      error: (err) => {
-        this.showError(err);
-        this.results = [];
-        this.hasSearched = true;
-      }
-    });
+    this.entryService
+      .search(options)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: response => {
+          this.results = response.data;
+          this.hasSearched = true;
+        },
+        error: err => {
+          this.showError(err);
+          this.results = [];
+          this.hasSearched = true;
+        },
+      });
   }
 
   onPageChange(page: number): void {
@@ -187,8 +186,13 @@ export class EntriesComponent implements OnInit, OnDestroy {
       message = err;
     } else if (err && typeof err === 'object') {
       // Handle HttpErrorResponse
-      const httpErr = err as { error?: { message?: string }; message?: string; statusText?: string };
-      message = httpErr.error?.message || httpErr.message || httpErr.statusText || JSON.stringify(err);
+      const httpErr = err as {
+        error?: { message?: string };
+        message?: string;
+        statusText?: string;
+      };
+      message =
+        httpErr.error?.message || httpErr.message || httpErr.statusText || JSON.stringify(err);
     }
     this.notifyService.showError(`Something went wrong. Details: ${message}`, 'NyelvSzó v.2.0.0');
   }

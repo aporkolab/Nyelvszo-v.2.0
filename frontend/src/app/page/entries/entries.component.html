@@ -52,7 +52,6 @@
 
 <!-- Results Section -->
 <div class="col-12 scroll tableData" *ngIf="!(entryService.searching$ | async)">
-
   <!-- Add new button (admin only) -->
   <div>
     <button
@@ -80,7 +79,7 @@
             <i-feather
               (click)="onColumnSelect(col.key)"
               name="Shuffle"
-              style="cursor: pointer;"
+              style="cursor: pointer"
             ></i-feather>
           </th>
           <th class="table-light" *ngIf="auth.user$.value?.role === 3"></th>
@@ -107,7 +106,11 @@
   </div>
 
   <!-- Pagination -->
-  <nav aria-label="paginator" class="pagination-nav" *ngIf="pagination && pagination.totalPages > 1">
+  <nav
+    aria-label="paginator"
+    class="pagination-nav"
+    *ngIf="pagination && pagination.totalPages > 1"
+  >
     <ul class="pagination justify-content-center flex-wrap gap-1">
       <!-- Previous button -->
       <li class="page-item" [class.disabled]="!pagination.hasPrevPage">
