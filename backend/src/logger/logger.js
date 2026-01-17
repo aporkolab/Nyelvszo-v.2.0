@@ -226,33 +226,20 @@ logger.logDatabase = function (operation, collection, meta = {}) {
 
 // Uncaught exception handler
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception', {
-    error: error.message,
-    stack: error.stack,
-  });
-  process.exit(1);
+  console.error('Uncaught Exception:', error.message);
+  console.error(error.stack);
+  // Give time for logs to flush before exiting
+  setTimeout(() => process.exit(1), 1000);
 });
 
 // Unhandled rejection handler
-process.on('unhandledRejection', reason => {
-  logger.error('Unhandled Promise Rejection', {
-    reason: reason?.message || reason,
-    stack: reason?.stack,
-  });
-  process.exit(1);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('Received SIGTERM signal, shutting down gracefully');
-  // Close logger transports
-  logger.end();
-});
-
-process.on('SIGINT', () => {
-  logger.info('Received SIGINT signal, shutting down gracefully');
-  // Close logger transports
-  logger.end();
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Promise Rejection:', reason?.message || reason);
+  if (reason?.stack) console.error(reason.stack);
+  // Don't exit on unhandled rejection in development
+  if (process.env.NODE_ENV === 'production') {
+    setTimeout(() => process.exit(1), 1000);
+  }
 });
 
 module.exports = logger;
