@@ -70,6 +70,7 @@ COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 # Copy application code
 COPY --chown=nodejs:nodejs src ./src
 COPY --chown=nodejs:nodejs docs ./docs
+COPY --chown=nodejs:nodejs config ./config
 COPY --chown=nodejs:nodejs package*.json ./
 
 # Create logs directory and set permissions
