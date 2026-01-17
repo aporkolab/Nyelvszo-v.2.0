@@ -43,6 +43,15 @@ const getAllEntries = catchAsync(async (req, res) => {
   };
 
   // Log search request for analytics
+  console.log('=== SEARCH DEBUG ===');
+  console.log('search:', search);
+  console.log('hungarian:', hungarian);
+  console.log('english:', english);
+  console.log('fieldOfExpertise:', fieldOfExpertise);
+  console.log('wordType:', wordType);
+  console.log('searchOptions:', searchOptions);
+  console.log('====================');
+
   logger.performance('Entry search request', {
     search: search || 'none',
     filters: { hungarian, english, fieldOfExpertise, wordType },

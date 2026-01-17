@@ -175,6 +175,14 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
     }
   }
 
+  // Debug: Log the constructed query
+  console.log('=== MODEL QUERY DEBUG ===');
+  console.log('searchTerm:', searchTerm);
+  console.log('options.hungarian:', hungarian);
+  console.log('query.$or:', query.$or);
+  console.log('Final query:', JSON.stringify(query, (key, value) => value instanceof RegExp ? value.toString() : value));
+  console.log('=========================');
+
   // Sorting
   let sort = {};
   switch (sortBy) {
