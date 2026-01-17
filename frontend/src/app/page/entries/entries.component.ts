@@ -6,16 +6,20 @@ import { Entry } from 'src/app/model/entry';
 import { ConfigService, TableColumn } from 'src/app/service/config.service';
 import { EntryService, SearchOptions } from 'src/app/service/entry.service';
 import { NotificationService } from 'src/app/service/notification.service';
-import { NgxDataTableComponent } from '../../data-table/ngx-data-table/ngx-data-table.component';
+import { AuthService } from 'src/app/service/auth.service';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { RouterModule } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
+import { IconModule } from 'src/app/icon/icon.module';
+import { SorterPipe } from 'src/app/pipe/sorter.pipe';
 
 @Component({
   standalone: true,
   selector: 'app-entries',
-  imports: [CommonModule, NgxDataTableComponent, TranslateModule, FormsModule],
+  imports: [CommonModule, RouterModule, TranslateModule, FormsModule, IconModule, SorterPipe],
   templateUrl: './entries.component.html',
+  styleUrls: ['./entries.component.scss'],
 })
 export class EntriesComponent implements OnInit, OnDestroy {
   columns: TableColumn[];
@@ -23,8 +27,17 @@ export class EntriesComponent implements OnInit, OnDestroy {
 
   // Search state
   searchTerm = '';
+  filterKey = ''; // Empty = search all columns
   currentPage = 1;
   pageSize = 25;
+
+  // Sort state
+  columnKey = '';
+  sortDir = 1;
+
+  // Results
+  results: Entry[] = [];
+  hasSearched = false;
 
   // Reactive streams
   private readonly searchTerm$ = new Subject<string>();
@@ -33,16 +46,18 @@ export class EntriesComponent implements OnInit, OnDestroy {
   constructor(
     private readonly config: ConfigService,
     readonly entryService: EntryService,
+    public readonly auth: AuthService,
     private readonly router: Router,
-    private readonly notifyService: NotificationService
+    private readonly notifyService: NotificationService,
+    public readonly translate: TranslateService
   ) {
     this.columns = this.config.entriesTableColumns;
+    translate.addLangs(['en', 'hu']);
+    translate.setDefaultLang('hu');
   }
 
   ngOnInit(): void {
     this.setupSearch();
-    // Load initial data
-    this.performSearch();
   }
 
   ngOnDestroy(): void {
@@ -51,7 +66,6 @@ export class EntriesComponent implements OnInit, OnDestroy {
   }
 
   private setupSearch(): void {
-    // Debounced search - waits 300ms after user stops typing
     this.searchTerm$
       .pipe(
         debounceTime(300),
@@ -59,30 +73,105 @@ export class EntriesComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.currentPage = 1;
-        this.performSearch();
+        if (this.searchTerm.trim().length >= 2) {
+          this.currentPage = 1;
+          this.performSearch();
+        } else {
+          this.results = [];
+          this.hasSearched = false;
+        }
       });
   }
 
-  onSearchChange(term: string): void {
-    this.searchTerm = term;
-    this.searchTerm$.next(term);
+  onSearchChange(): void {
+    this.searchTerm$.next(this.searchTerm);
+  }
+
+  onFilterKeyChange(): void {
+    if (this.searchTerm.trim().length >= 2) {
+      this.currentPage = 1;
+      this.performSearch();
+    }
   }
 
   performSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.results = [];
+      this.hasSearched = false;
+      return;
+    }
+
     const options: SearchOptions = {
-      search: this.searchTerm || undefined,
       page: this.currentPage,
       limit: this.pageSize,
       sortBy: 'alphabetical',
     };
 
-    this.entryService.search(options).pipe(takeUntil(this.destroy$)).subscribe();
+    const term = this.searchTerm.trim();
+
+    // If filtering by specific column, use that filter
+    // Otherwise search across all text fields
+    switch (this.filterKey) {
+      case 'hungarian':
+        options.hungarian = term;
+        break;
+      case 'english':
+        options.english = term;
+        break;
+      case 'fieldOfExpertise':
+        options.fieldOfExpertise = term;
+        break;
+      case 'wordType':
+        options.wordType = term;
+        break;
+      default:
+        // Search all columns (hungarian, english, fieldOfExpertise, wordType)
+        options.search = term;
+        break;
+    }
+
+    this.entryService.search(options).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.results = response.data;
+        this.hasSearched = true;
+      },
+      error: (err) => {
+        this.showError(err);
+        this.results = [];
+        this.hasSearched = true;
+      }
+    });
   }
 
   onPageChange(page: number): void {
     this.currentPage = page;
     this.performSearch();
+  }
+
+  onColumnSelect(key: string): void {
+    this.columnKey = key;
+    this.sortDir = this.sortDir * -1;
+  }
+
+  onSelectOne(entry: Entry): void {
+    this.router.navigate(['/', 'entries', 'edit', entry._id]);
+  }
+
+  onDeleteOne(entry: Entry): void {
+    if (!confirm('Do you really want to delete this record? This process cannot be undone.')) {
+      return;
+    }
+
+    this.entryService
+      .delete(entry)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.performSearch();
+          this.showSuccessDelete();
+        },
+        error: (err: Error) => this.showError(err),
+      });
   }
 
   private showSuccessDelete(): void {
@@ -94,18 +183,15 @@ export class EntriesComponent implements OnInit, OnDestroy {
     this.notifyService.showError(`Something went wrong. Details: ${message}`, 'NyelvSzó v.2.0.0');
   }
 
-  onSelectOne(entry: Entry): void {
-    this.router.navigate(['/', 'entries', 'edit', entry._id]);
+  get pageList(): number[] {
+    const pagination = this.entryService.pagination$.value;
+    if (!pagination || pagination.totalPages <= 1) {
+      return [];
+    }
+    return Array.from({ length: pagination.totalPages }, (_, i) => i + 1);
   }
 
-  onDeleteOne(entry: Entry): void {
-    this.entryService
-      .delete(entry)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => this.performSearch(),
-        error: (err: Error) => this.showError(err),
-        complete: () => this.showSuccessDelete(),
-      });
+  get pagination() {
+    return this.entryService.pagination$.value;
   }
 }

@@ -4,24 +4,41 @@
     <img src="../../../assets/img/logo.png" alt="NyelvSzo logo" id="logo" />
     <legend>{{ 'WHAT ARE YOU LOOKING FOR?' | translate }}</legend>
     <div class="tableData inner-form">
+      <div class="col-12 select_container input-field">
+        <select
+          [(ngModel)]="filterKey"
+          (ngModelChange)="onFilterKeyChange()"
+          id="tableSearch"
+          class="form-control"
+        >
+          <option value="">{{ 'table.searchAll' | translate }}</option>
+          <option *ngFor="let col of columns" [value]="col.key">
+            {{ col.title | translate }}
+          </option>
+        </select>
+      </div>
       <div class="mb-3 input_container">
         <input
-          [ngModel]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
           type="text"
           class="form-control"
-          id="search-input"
+          id="choices-text-preset-values"
           placeholder="{{ 'placeholder' | translate }}"
         />
       </div>
     </div>
-    <div class="search-info text-muted" *ngIf="entryService.pagination$ | async as pagination">
+    <!-- Search info -->
+    <div class="search-info text-muted text-center mt-2" *ngIf="pagination && hasSearched">
       <small>
         {{ 'Found' | translate }}: {{ pagination.totalItems }} {{ 'entries' | translate }}
         <span *ngIf="pagination.totalPages > 1">
           ({{ 'page' | translate }} {{ pagination.currentPage }}/{{ pagination.totalPages }})
         </span>
       </small>
+    </div>
+    <div class="text-muted text-center mt-2" *ngIf="!hasSearched">
+      <small>{{ 'Enter at least 2 characters to search' | translate }}</small>
     </div>
   </div>
 </div>
@@ -33,15 +50,92 @@
   </div>
 </div>
 
-<!-- Results Table -->
-<ngx-data-table
-  *ngIf="!(entryService.searching$ | async)"
-  [columns]="columns"
-  [entity]="entity"
-  [list]="(entryService.searchResults$ | async) || []"
-  [serverSideSearch]="true"
-  [pagination]="entryService.pagination$ | async"
-  (selectOne)="onSelectOne($event)"
-  (deleteOne)="onDeleteOne($event)"
-  (pageChange)="onPageChange($event)"
-></ngx-data-table>
+<!-- Results Section -->
+<div class="col-12 scroll tableData" *ngIf="!(entryService.searching$ | async)">
+
+  <!-- Add new button (admin only) -->
+  <div>
+    <button
+      *ngIf="auth.user$.value?.role === 3"
+      [routerLink]="['edit', '0']"
+      class="btn btn-success col-12"
+    >
+      {{ 'Add a new' | translate }} {{ entity }}
+      <i-feather name="user-plus"></i-feather>
+    </button>
+  </div>
+
+  <!-- No results message -->
+  <div *ngIf="hasSearched && results.length === 0" class="text-center my-4">
+    <p class="text-muted">{{ 'No entries found' | translate }}</p>
+  </div>
+
+  <!-- Results table -->
+  <div class="row table-responsive" *ngIf="results.length > 0">
+    <table class="table table-striped table-hover table-dark">
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns" scope="col" class="table-light">
+            {{ col.title | translate }}
+            <i-feather
+              (click)="onColumnSelect(col.key)"
+              name="Shuffle"
+              style="cursor: pointer;"
+            ></i-feather>
+          </th>
+          <th class="table-light" *ngIf="auth.user$.value?.role === 3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of results | sorter: columnKey : sortDir">
+          <td *ngFor="let col of columns">{{ row[col.key] }}</td>
+          <td *ngIf="auth.user$.value?.role === 3">
+            <div class="btn-group">
+              <button (click)="onSelectOne(row)" class="btn btn-warning">
+                <i-feather name="Settings"></i-feather>
+                {{ 'Edit' | translate }}
+              </button>
+              <button (click)="onDeleteOne(row)" class="btn btn-danger">
+                <i-feather name="file-minus"></i-feather>
+                {{ 'Delete' | translate }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav aria-label="paginator" *ngIf="pagination && pagination.totalPages > 1">
+    <ul class="pagination pagination-lg mt-4 nav justify-content-center">
+      <li [class.disabled]="!pagination.hasPrevPage" class="page-item">
+        <button
+          class="page-link"
+          (click)="onPageChange(currentPage - 1)"
+          [disabled]="!pagination.hasPrevPage"
+        >
+          {{ 'Previous' | translate }}<i-feather name="corner-down-left"></i-feather>
+        </button>
+      </li>
+      <li *ngFor="let pageNum of pageList" class="page-item">
+        <button
+          [class.active]="currentPage === pageNum"
+          class="page-link"
+          (click)="onPageChange(pageNum)"
+        >
+          {{ pageNum }}
+        </button>
+      </li>
+      <li [class.disabled]="!pagination.hasNextPage" class="page-item">
+        <button
+          class="page-link"
+          (click)="onPageChange(currentPage + 1)"
+          [disabled]="!pagination.hasNextPage"
+        >
+          {{ 'Next' | translate }}<i-feather name="corner-down-right"></i-feather>
+        </button>
+      </li>
+    </ul>
+  </nav>
+</div>

@@ -19,6 +19,8 @@ const getAllEntries = catchAsync(async (req, res) => {
     page = 1,
     limit = 20,
     search,
+    hungarian,
+    english,
     fieldOfExpertise,
     wordType,
     sortBy = 'relevance',
@@ -33,6 +35,8 @@ const getAllEntries = catchAsync(async (req, res) => {
   const searchOptions = {
     page: pageNum,
     limit: limitNum,
+    hungarian,
+    english,
     fieldOfExpertise,
     wordType,
     sortBy,
@@ -41,7 +45,7 @@ const getAllEntries = catchAsync(async (req, res) => {
   // Log search request for analytics
   logger.performance('Entry search request', {
     search: search || 'none',
-    filters: { fieldOfExpertise, wordType },
+    filters: { hungarian, english, fieldOfExpertise, wordType },
     sortBy,
     pagination: { page: pageNum, limit: limitNum },
     userRole: req.user?.role || 'anonymous',

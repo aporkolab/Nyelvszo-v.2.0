@@ -115,29 +115,64 @@ EntrySchema.methods.toSearchResult = function () {
 
 // Static methods for optimized queries
 EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
-  const { page = 1, limit = 20, fieldOfExpertise, wordType, sortBy = 'relevance' } = options;
+  const { page = 1, limit = 20, hungarian, english, fieldOfExpertise, wordType, sortBy = 'relevance' } = options;
 
   const query = { isActive: true };
 
   // Partial text search using regex for dictionary-style search
-  if (searchTerm && searchTerm.trim()) {
-    const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const searchRegex = new RegExp(escapedTerm, 'i');
-    query.$or = [
-      { hungarian: searchRegex },
-      { english: searchRegex },
-      { fieldOfExpertise: searchRegex },
-      { wordType: searchRegex },
-    ];
+  if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
+    try {
+      const escapedTerm = searchTerm.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedTerm, 'i');
+      query.$or = [
+        { hungarian: searchRegex },
+        { english: searchRegex },
+        { fieldOfExpertise: searchRegex },
+        { wordType: searchRegex },
+      ];
+    } catch (regexError) {
+      // If regex fails, skip search filter
+      console.error('Invalid search term for regex:', searchTerm, regexError);
+    }
   }
 
-  // Filters
-  if (fieldOfExpertise) {
-    query.fieldOfExpertise = new RegExp(fieldOfExpertise, 'i');
-  }
+  // Column-specific filters (only apply if no general $or search)
+  if (!query.$or) {
+    if (hungarian && typeof hungarian === 'string') {
+      try {
+        const escaped = hungarian.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        query.hungarian = new RegExp(escaped, 'i');
+      } catch (e) {
+        // ignore invalid regex
+      }
+    }
 
-  if (wordType) {
-    query.wordType = new RegExp(wordType, 'i');
+    if (english && typeof english === 'string') {
+      try {
+        const escaped = english.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        query.english = new RegExp(escaped, 'i');
+      } catch (e) {
+        // ignore invalid regex
+      }
+    }
+
+    if (fieldOfExpertise && typeof fieldOfExpertise === 'string') {
+      try {
+        const escaped = fieldOfExpertise.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        query.fieldOfExpertise = new RegExp(escaped, 'i');
+      } catch (e) {
+        // ignore invalid regex
+      }
+    }
+
+    if (wordType && typeof wordType === 'string') {
+      try {
+        const escaped = wordType.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        query.wordType = new RegExp(escaped, 'i');
+      } catch (e) {
+        // ignore invalid regex
+      }
+    }
   }
 
   // Sorting
@@ -160,14 +195,16 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
       sort = { hungarian: 1 };
   }
 
-  const skip = (page - 1) * limit;
+  const pageNum = parseInt(page, 10) || 1;
+  const limitNum = parseInt(limit, 10) || 20;
+  const skip = (pageNum - 1) * limitNum;
 
   return {
     query: this.find(query)
       .select('hungarian english fieldOfExpertise wordType views createdAt updatedAt')
       .sort(sort)
       .skip(skip)
-      .limit(limit)
+      .limit(limitNum)
       .lean(),
     countQuery: this.countDocuments(query),
   };

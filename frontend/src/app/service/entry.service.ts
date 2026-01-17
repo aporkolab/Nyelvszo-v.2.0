@@ -23,6 +23,8 @@ export interface SearchOptions {
   page?: number;
   limit?: number;
   sortBy?: 'relevance' | 'alphabetical' | 'newest' | 'oldest' | 'popular';
+  hungarian?: string;
+  english?: string;
   fieldOfExpertise?: string;
   wordType?: string;
 }
@@ -57,6 +59,12 @@ export class EntryService extends BaseService<Entry> {
     }
     if (options.sortBy) {
       params = params.set('sortBy', options.sortBy);
+    }
+    if (options.hungarian) {
+      params = params.set('hungarian', options.hungarian);
+    }
+    if (options.english) {
+      params = params.set('english', options.english);
     }
     if (options.fieldOfExpertise) {
       params = params.set('fieldOfExpertise', options.fieldOfExpertise);
