@@ -26,14 +26,19 @@
 </div>
 
 <div class="col-12 scroll tableData">
-  <!-- Loading state -->
-  <div *ngIf="!list || list.length === 0" class="preloader-container">
+  <!-- Loading state (only for client-side mode) -->
+  <div *ngIf="!serverSideSearch && (!list || list.length === 0)" class="preloader-container">
     <div class="preloader">
       <div class="lds-ripple">
         <div class="lds-pos"></div>
         <div class="lds-pos"></div>
       </div>
     </div>
+  </div>
+
+  <!-- No results message (server-side mode) -->
+  <div *ngIf="serverSideSearch && list.length === 0" class="text-center my-4">
+    <p class="text-muted">{{ 'No entries found' | translate }}</p>
   </div>
 
   <!-- Add new button -->
@@ -49,7 +54,7 @@
   </div>
 
   <!-- Results table -->
-  <div class="row table-responsive" *ngIf="displayList.length > 0 || auth.user$.value?.role === 3">
+  <div class="row table-responsive" *ngIf="displayList.length > 0">
     <table class="table table-striped table-hover table-dark">
       <thead>
         <tr>

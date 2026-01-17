@@ -41,6 +41,8 @@ export class EntriesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupSearch();
+    // Load initial data
+    this.performSearch();
   }
 
   ngOnDestroy(): void {
