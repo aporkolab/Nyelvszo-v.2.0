@@ -76,9 +76,10 @@ let mongoUri = process.env.MONGODB_URI;
 
 if (!mongoUri) {
   const { host, user, pass, name = 'nyelvszo', protocol = 'mongodb+srv' } = config.get('database');
-  mongoUri = user && pass
-    ? `${protocol}://${user}:${pass}@${host}/${name}`
-    : `${protocol}://${host}/${name}`;
+  mongoUri =
+    user && pass
+      ? `${protocol}://${user}:${pass}@${host}/${name}`
+      : `${protocol}://${host}/${name}`;
 }
 
 const isAtlas = mongoUri.startsWith('mongodb+srv://');

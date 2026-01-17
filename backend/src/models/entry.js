@@ -115,7 +115,15 @@ EntrySchema.methods.toSearchResult = function () {
 
 // Static methods for optimized queries
 EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
-  const { page = 1, limit = 20, hungarian, english, fieldOfExpertise, wordType, sortBy = 'relevance' } = options;
+  const {
+    page = 1,
+    limit = 20,
+    hungarian,
+    english,
+    fieldOfExpertise,
+    wordType,
+    sortBy = 'relevance',
+  } = options;
 
   const query = { isActive: true };
 

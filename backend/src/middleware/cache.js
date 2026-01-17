@@ -44,12 +44,12 @@ Object.values(cache).forEach((cacheInstance) => {
     logger.debug('Cache SET', { key, size: JSON.stringify(value).length });
   });
 
-  cacheInstance.on('del', key => {
+  cacheInstance.on('del', (key) => {
     cacheStats.deletes++;
     logger.debug('Cache DELETE', { key });
   });
 
-  cacheInstance.on('expired', key => {
+  cacheInstance.on('expired', (key) => {
     logger.debug('Cache EXPIRED', { key });
   });
 
