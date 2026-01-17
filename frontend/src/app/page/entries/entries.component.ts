@@ -30,7 +30,7 @@ export class EntriesComponent implements OnInit, OnDestroy {
     private readonly notifyService: NotificationService
   ) {
     this.columns = this.config.entriesTableColumns;
-    this.list$ = this.entryService.getAll();
+    this.list$ = this.entryService.list$;
   }
 
   ngOnInit(): void {
@@ -43,7 +43,8 @@ export class EntriesComponent implements OnInit, OnDestroy {
   }
 
   private loadEntries(): void {
-    this.list$ = this.entryService.getAll();
+    // Request all entries with high page size for dictionary search
+    this.entryService.getAll({ pageSize: 10000 }).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   private showSuccessDelete(): void {

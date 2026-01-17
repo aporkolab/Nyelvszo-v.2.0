@@ -128,22 +128,23 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   }
 
   private prepareList(): void {
+    // Create copies to avoid mutating original data
     this.flattenedList = this.list.map(item => {
-      for (const key in item) {
-        if (typeof item[key] === 'boolean') {
-          item[key] = item[key] ? ('igen' as any) : 'nem';
+      const copy = { ...item } as T;
+      for (const key in copy) {
+        if (typeof copy[key] === 'boolean') {
+          copy[key] = copy[key] ? ('igen' as any) : 'nem';
         }
 
-        if (item[key] && typeof item[key] === 'object') {
+        if (copy[key] && typeof copy[key] === 'object') {
           let merged: any = '';
-          for (const subKey in item[key]) {
-            merged += `${item[key][subKey]} `;
+          for (const subKey in copy[key]) {
+            merged += `${copy[key][subKey]} `;
           }
-          merged.trimEnd();
-          item[key] = merged;
+          copy[key] = merged.trimEnd();
         }
       }
-      return item;
+      return copy;
     });
   }
 
