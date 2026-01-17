@@ -131,12 +131,6 @@ export class EntriesComponent implements OnInit, OnDestroy {
         break;
     }
 
-    console.log('=== FRONTEND SEARCH DEBUG ===');
-    console.log('filterKey:', this.filterKey);
-    console.log('searchTerm:', this.searchTerm);
-    console.log('options:', options);
-    console.log('=============================');
-
     this.entryService.search(options).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.results = response.data;

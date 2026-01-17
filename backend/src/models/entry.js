@@ -164,11 +164,6 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
     }
   }
 
-  console.log('=== SEARCH QUERY ===');
-  console.log('hasColumnFilter:', hasColumnFilter, '| hungarian:', hungarian, '| searchTerm:', searchTerm);
-  console.log('query:', JSON.stringify(query, (k, v) => v instanceof RegExp ? v.toString() : v));
-  console.log('====================');
-
   // Sorting
   let sort = {};
   switch (sortBy) {

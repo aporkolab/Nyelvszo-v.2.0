@@ -80,5 +80,11 @@
   "English": "English meaning",
   "englishValid": "The English title must be at least 5 letters and must not contains numbers!",
   "updateEntry": "Update data of the entry",
-  "createEntry": "Create data of the entry"
+  "createEntry": "Create data of the entry",
+  "Found": "Found",
+  "entries": "entries",
+  "page": "page",
+  "Enter at least 2 characters to search": "Enter at least 2 characters to search",
+  "Loading...": "Loading...",
+  "No entries found": "No entries found"
 }

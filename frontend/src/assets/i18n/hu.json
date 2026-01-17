@@ -80,5 +80,11 @@
   "English": "Angol jelentés",
   "englishValid": "Az angol jelentésnek legalább 3 betűből kell állnia, és nem tartalmazhat számokat!",
   "updateEntry": "A szócikk adatainak frissítése",
-  "createEntry": "Új szócikk létrehozása"
+  "createEntry": "Új szócikk létrehozása",
+  "Found": "Találatok",
+  "entries": "szócikk",
+  "page": "oldal",
+  "Enter at least 2 characters to search": "Írjon be legalább 2 karaktert a kereséshez",
+  "Loading...": "Betöltés...",
+  "No entries found": "Nincs találat"
 }
