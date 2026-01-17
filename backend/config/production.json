@@ -3,7 +3,8 @@
     "host": "${DB_HOST}",
     "user": "${DB_USER}",
     "pass": "${DB_PASS}",
-    "name": "${DB_NAME}"
+    "name": "${DB_NAME}",
+    "protocol": "mongodb+srv"
   },
   "jwt": {
     "secret": "${JWT_SECRET}",

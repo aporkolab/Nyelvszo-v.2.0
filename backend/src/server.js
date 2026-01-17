@@ -71,20 +71,26 @@ if (process.env.TRUST_PROXY === 'true') {
 //Documentation
 const swaggerDocument = YAML.load('./docs/swagger.yaml');
 
-const { host, user, pass, name = 'nyelvszo' } = config.get('database');
+// MongoDB connection - support MONGODB_URI env var or build from config
+let mongoUri = process.env.MONGODB_URI;
+
+if (!mongoUri) {
+  const { host, user, pass, name = 'nyelvszo', protocol = 'mongodb+srv' } = config.get('database');
+  mongoUri = user && pass
+    ? `${protocol}://${user}:${pass}@${host}/${name}`
+    : `${protocol}://${host}/${name}`;
+}
+
+const isAtlas = mongoUri.startsWith('mongodb+srv://');
 
 mongoose
-  .connect(`mongodb+srv://${user}:${pass}@${host}/${name}`, {
+  .connect(mongoUri, {
     maxPoolSize: process.env.DB_MAX_POOL_SIZE || 10,
     serverSelectionTimeoutMS: process.env.DB_CONNECTION_TIMEOUT_MS || 30000,
     socketTimeoutMS: process.env.DB_SOCKET_TIMEOUT_MS || 45000,
-    retryWrites: true,
+    ...(isAtlas && { retryWrites: true }),
   })
-  .then(
-    // require('./seed/seeder'), // Seed the database, ONLY ONCE MUST RUN
-    // logger.info('Data has been seeded into the database.'),
-    (conn) => logger.info('Connected to MongoDB Atlas')
-  )
+  .then(() => logger.info(`Connected to MongoDB (${isAtlas ? 'Atlas' : 'Local'})`))
   .catch((err) => {
     logger.error('MongoDB connection error:', err);
     process.exit(1);
