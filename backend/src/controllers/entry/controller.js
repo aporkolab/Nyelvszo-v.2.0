@@ -28,8 +28,8 @@ const getAllEntries = catchAsync(async (req, res) => {
   } = req.query;
 
   // Validate pagination parameters
-  const pageNum = Math.max(1, parseInt(page));
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
 
   // Build search options
   const searchOptions = {

@@ -179,8 +179,17 @@ export class EntriesComponent implements OnInit, OnDestroy {
     this.notifyService.showSuccess(`${this.entity} deleted successfully!`, 'NyelvSzó v.2.0.0');
   }
 
-  private showError(err: Error | string): void {
-    const message = err instanceof Error ? err.message : err;
+  private showError(err: unknown): void {
+    let message = 'Unknown error';
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'string') {
+      message = err;
+    } else if (err && typeof err === 'object') {
+      // Handle HttpErrorResponse
+      const httpErr = err as { error?: { message?: string }; message?: string; statusText?: string };
+      message = httpErr.error?.message || httpErr.message || httpErr.statusText || JSON.stringify(err);
+    }
     this.notifyService.showError(`Something went wrong. Details: ${message}`, 'NyelvSzó v.2.0.0');
   }
 
