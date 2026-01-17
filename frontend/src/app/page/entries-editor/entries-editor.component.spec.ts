@@ -32,19 +32,13 @@ describe('EntriesEditorComponent', () => {
     fixture = TestBed.createComponent(EntriesEditorComponent);
     component = fixture.componentInstance;
 
-    const mockEntry: Entry = {
+    const mockEntry = new Entry({
       _id: '1',
-      id: 1,
       english: 'Test Word',
       hungarian: 'Teszt szó',
       fieldOfExpertise: 'general',
       wordType: 'noun',
-      description: 'Test Description',
-      example: 'Test Example',
-      sound: 'Test Sound',
-      topic: 'Test Topic',
-      language: 'en',
-    };
+    });
 
     // @Input előbb:
     component.entry = mockEntry;

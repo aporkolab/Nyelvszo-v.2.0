@@ -1,12 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { HttpTestingController, HttpClientTestingModule } from '@angular/common/http/testing';
-import { BehaviorSubject } from 'rxjs';
 
 import { JwtInterceptor } from './jwt.interceptor';
 import { AuthService } from './auth.service';
+
 class AuthServiceMock {
-  access_token$ = new BehaviorSubject<string | null>('TEST_TOKEN');
+  private _token: string | null = 'TEST_TOKEN';
+
+  get token(): string | null {
+    return this._token;
+  }
+
+  setToken(value: string | null): void {
+    this._token = value;
+  }
 }
 
 describe('JwtInterceptor', () => {
@@ -39,7 +47,7 @@ describe('JwtInterceptor', () => {
   });
 
   it('nem ad hozzá headert, ha nincs token', () => {
-    authMock.access_token$.next(null);
+    authMock.setToken(null);
     http.get('/api/ping2').subscribe();
     const req = httpMock.expectOne('/api/ping2');
     expect(req.request.headers.has('Authorization')).toBeFalse();

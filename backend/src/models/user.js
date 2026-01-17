@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const SALT_ROUNDS = 10;
 
 const UserSchema = mongoose.Schema(
   {
@@ -40,7 +43,6 @@ const UserSchema = mongoose.Schema(
       required: true,
       minlength: 8,
       maxlength: 128,
-      bcrypt: true,
       select: false, // Don't include password by default in queries
     },
     lastLogin: {
@@ -85,10 +87,11 @@ UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Pre-save middleware to track updates
-UserSchema.pre('save', function (next) {
-  if (this.isModified() && !this.isNew) {
-    this.updatedAt = new Date();
+// Pre-save middleware to hash password
+UserSchema.pre('save', async function (next) {
+  // Only hash the password if it has been modified (or is new)
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
   }
   next();
 });
@@ -112,6 +115,14 @@ UserSchema.methods.isAdmin = function () {
   return this.role >= 3;
 };
 
+// Verify password method
+UserSchema.methods.verifyPassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Alias for verifyPassword (backwards compatibility)
+UserSchema.methods.comparePassword = UserSchema.methods.verifyPassword;
+
 // Static methods
 UserSchema.statics.findByRole = function (role) {
   return this.find({ role, isActive: true });
@@ -120,7 +131,5 @@ UserSchema.statics.findByRole = function (role) {
 UserSchema.statics.findActiveUsers = function () {
   return this.find({ isActive: true });
 };
-
-UserSchema.plugin(require('mongoose-bcrypt'));
 
 module.exports = mongoose.model('User', UserSchema);

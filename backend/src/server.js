@@ -39,29 +39,31 @@ if (process.env.HELMET_ENABLED !== 'false') {
 // Compression middleware
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
-  max: process.env.RATE_LIMIT_MAX_REQUESTS || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-    retryAfter: Math.ceil((process.env.RATE_LIMIT_WINDOW_MS || 900000) / 1000),
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/api/', limiter);
-app.use(
-  '/login',
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5, // limit each IP to 5 login attempts per windowMs
+// Rate limiting (disabled in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  const limiter = rateLimit({
+    windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
+    max: process.env.RATE_LIMIT_MAX_REQUESTS || 100, // limit each IP to 100 requests per windowMs
     message: {
-      error: 'Too many login attempts from this IP, please try again later.',
+      error: 'Too many requests from this IP, please try again later.',
+      retryAfter: Math.ceil((process.env.RATE_LIMIT_WINDOW_MS || 900000) / 1000),
     },
-  })
-);
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.use('/api/', limiter);
+  app.use(
+    '/login',
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 5, // limit each IP to 5 login attempts per windowMs
+      message: {
+        error: 'Too many login attempts from this IP, please try again later.',
+      },
+    })
+  );
+}
 
 // Trust proxy if behind reverse proxy
 if (process.env.TRUST_PROXY === 'true') {
@@ -84,18 +86,21 @@ if (!mongoUri) {
 
 const isAtlas = mongoUri.startsWith('mongodb+srv://');
 
-mongoose
-  .connect(mongoUri, {
-    maxPoolSize: process.env.DB_MAX_POOL_SIZE || 10,
-    serverSelectionTimeoutMS: process.env.DB_CONNECTION_TIMEOUT_MS || 30000,
-    socketTimeoutMS: process.env.DB_SOCKET_TIMEOUT_MS || 45000,
-    ...(isAtlas && { retryWrites: true }),
-  })
-  .then(() => logger.info(`Connected to MongoDB (${isAtlas ? 'Atlas' : 'Local'})`))
-  .catch((err) => {
-    logger.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
+// Skip MongoDB connection in test environment (tests use mongodb-memory-server)
+if (process.env.NODE_ENV !== 'test') {
+  mongoose
+    .connect(mongoUri, {
+      maxPoolSize: process.env.DB_MAX_POOL_SIZE || 10,
+      serverSelectionTimeoutMS: process.env.DB_CONNECTION_TIMEOUT_MS || 30000,
+      socketTimeoutMS: process.env.DB_SOCKET_TIMEOUT_MS || 45000,
+      ...(isAtlas && { retryWrites: true }),
+    })
+    .then(() => logger.info(`Connected to MongoDB (${isAtlas ? 'Atlas' : 'Local'})`))
+    .catch((err) => {
+      logger.error('MongoDB connection error:', err);
+      process.exit(1);
+    });
+}
 
 // Cross Origin Resource Sharing
 const allowedOrigins = process.env.ALLOWED_ORIGINS

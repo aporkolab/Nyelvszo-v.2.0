@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ToastrModule } from 'ngx-toastr';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { EntriesComponent } from './entries.component';
 
@@ -10,7 +11,12 @@ describe('EntriesComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EntriesComponent, HttpClientTestingModule, ToastrModule.forRoot()],
+      imports: [
+        EntriesComponent,
+        HttpClientTestingModule,
+        ToastrModule.forRoot(),
+        TranslateModule.forRoot(),
+      ],
     }).compileComponents();
   });
 

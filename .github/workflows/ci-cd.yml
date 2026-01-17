@@ -115,8 +115,7 @@ jobs:
           DB_NAME: testdb
           JWT_SECRET: test-secret-key-for-testing-purposes-only
           REDIS_URL: redis://localhost:6379
-        run: npm test || echo "Tests have known issues - see https://github.com/nodkz/mongodb-memory-server/issues/898"
-        continue-on-error: true
+        run: npm test
 
       - name: Run integration tests
         working-directory: ./backend
@@ -128,8 +127,7 @@ jobs:
           DB_NAME: testdb
           JWT_SECRET: test-secret-key-for-testing-purposes-only
           REDIS_URL: redis://localhost:6379
-        run: npm run test:integration || echo "Integration tests have known issues"
-        continue-on-error: true
+        run: npm run test:integration
 
       - name: Generate test coverage
         working-directory: ./backend
@@ -141,8 +139,7 @@ jobs:
           DB_NAME: testdb
           JWT_SECRET: test-secret-key-for-testing-purposes-only
           REDIS_URL: redis://localhost:6379
-        run: npm run test:coverage || echo "Coverage has known issues"
-        continue-on-error: true
+        run: npm run test:coverage
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
@@ -174,8 +171,7 @@ jobs:
 
       - name: Run unit tests
         working-directory: ./frontend
-        run: npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage || echo "Frontend tests have known issues"
-        continue-on-error: true
+        run: npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3

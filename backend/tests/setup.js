@@ -20,8 +20,6 @@ beforeAll(async () => {
   
   // Connect to in-memory database
   await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     maxPoolSize: 5,
     serverSelectionTimeoutMS: 5000
   });
@@ -102,6 +100,7 @@ jest.mock('../src/logger/logger', () => ({
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
+  logError: jest.fn(),
   stream: {
     write: jest.fn()
   }

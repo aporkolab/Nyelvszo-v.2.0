@@ -92,7 +92,7 @@ describe('User Model', () => {
       const savedUser = await user.save();
 
       expect(savedUser.password).not.toBe(plainPassword);
-      expect(savedUser.password).toMatch(/^\\$2[ayb]\\$.{56}$/); // bcrypt hash pattern
+      expect(savedUser.password).toMatch(/^\$2[ayb]\$.{56}$/); // bcrypt hash pattern
     });
   });
 
@@ -109,13 +109,13 @@ describe('User Model', () => {
       });
     });
 
-    test('should verify correct password', () => {
-      const isValid = user.verifyPasswordSync('SecurePassword123!');
+    test('should verify correct password', async () => {
+      const isValid = await user.verifyPassword('SecurePassword123!');
       expect(isValid).toBe(true);
     });
 
-    test('should reject incorrect password', () => {
-      const isValid = user.verifyPasswordSync('WrongPassword123!');
+    test('should reject incorrect password', async () => {
+      const isValid = await user.verifyPassword('WrongPassword123!');
       expect(isValid).toBe(false);
     });
 

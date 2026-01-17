@@ -15,7 +15,7 @@ const logger = require('../../logger/logger');
 router.post('/', sanitize('body'), validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = req.ip || req.connection?.remoteAddress;
     const userAgent = req.get('User-Agent');
 
     // Rate limiting is handled by middleware in server.js
@@ -38,7 +38,7 @@ router.post('/', sanitize('body'), validate(loginSchema), async (req, res, next)
     }
 
     // Verify password
-    const isValidPassword = await user.verifyPasswordSync(password);
+    const isValidPassword = await user.verifyPassword(password);
 
     if (!isValidPassword) {
       // Log failed login attempt

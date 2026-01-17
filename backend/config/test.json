@@ -1,9 +1,10 @@
 {
   "database": {
     "host": "localhost",
-    "user": "test",
-    "pass": "test", 
-    "name": "test_nyelvszo"
+    "user": "",
+    "pass": "",
+    "name": "test_nyelvszo",
+    "protocol": "mongodb"
   },
   "jwt": {
     "secret": "test-jwt-secret-for-testing-only",

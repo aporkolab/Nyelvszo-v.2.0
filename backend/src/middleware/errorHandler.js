@@ -27,7 +27,7 @@ const sendErrorDev = (err, req, res) => {
     path: req.originalUrl || req.url,
     method: req.method,
     ...(err.details && { details: err.details }),
-    ...(process.env.NODE_ENV === 'development' && {
+    ...((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && {
       stack: err.stack,
       name: err.name,
     }),
@@ -207,8 +207,8 @@ const errorHandler = (err, req, res, _next) => {
     error = handleRateLimitError(err);
   }
 
-  // Send error response
-  if (process.env.NODE_ENV === 'development') {
+  // Send error response (use dev mode for both development and test)
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     sendErrorDev(error, req, res);
   } else {
     sendErrorProd(error, req, res);
