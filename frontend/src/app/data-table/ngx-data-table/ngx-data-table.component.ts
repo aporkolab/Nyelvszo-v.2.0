@@ -52,7 +52,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   page: number = 1;
 
   get filteredList(): T[] {
-    if (!this.list?.length) {
+    if (!Array.isArray(this.list) || !this.list.length) {
       return [];
     }
     if (!this.phrase) {
@@ -115,7 +115,7 @@ export class NgxDataTableComponent<T extends { [x: string]: any }> implements On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['list'] && this.list) {
+    if (changes['list'] && Array.isArray(this.list)) {
       this.prepareList();
       this.page = 1;
       this.startSlice = 0;
