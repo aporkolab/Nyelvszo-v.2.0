@@ -107,33 +107,41 @@
   </div>
 
   <!-- Pagination -->
-  <nav aria-label="paginator" *ngIf="pagination && pagination.totalPages > 1">
-    <ul class="pagination pagination-lg mt-4 nav justify-content-center">
-      <li [class.disabled]="!pagination.hasPrevPage" class="page-item">
+  <nav aria-label="paginator" class="pagination-nav" *ngIf="pagination && pagination.totalPages > 1">
+    <ul class="pagination justify-content-center flex-wrap gap-1">
+      <!-- Previous button -->
+      <li class="page-item" [class.disabled]="!pagination.hasPrevPage">
         <button
           class="page-link"
           (click)="onPageChange(currentPage - 1)"
           [disabled]="!pagination.hasPrevPage"
+          aria-label="Previous"
         >
-          {{ 'Previous' | translate }}<i-feather name="corner-down-left"></i-feather>
+          <i-feather name="chevron-left"></i-feather>
         </button>
       </li>
-      <li *ngFor="let pageNum of pageList" class="page-item">
-        <button
-          [class.active]="currentPage === pageNum"
-          class="page-link"
-          (click)="onPageChange(pageNum)"
-        >
-          {{ pageNum }}
-        </button>
-      </li>
-      <li [class.disabled]="!pagination.hasNextPage" class="page-item">
+
+      <!-- Page numbers -->
+      <ng-container *ngFor="let pageNum of pageList">
+        <li *ngIf="pageNum === '...'" class="page-item disabled">
+          <span class="page-link ellipsis">…</span>
+        </li>
+        <li *ngIf="pageNum !== '...'" class="page-item" [class.active]="currentPage === pageNum">
+          <button class="page-link" (click)="onPageChange(+pageNum)">
+            {{ pageNum }}
+          </button>
+        </li>
+      </ng-container>
+
+      <!-- Next button -->
+      <li class="page-item" [class.disabled]="!pagination.hasNextPage">
         <button
           class="page-link"
           (click)="onPageChange(currentPage + 1)"
           [disabled]="!pagination.hasNextPage"
+          aria-label="Next"
         >
-          {{ 'Next' | translate }}<i-feather name="corner-down-right"></i-feather>
+          <i-feather name="chevron-right"></i-feather>
         </button>
       </li>
     </ul>

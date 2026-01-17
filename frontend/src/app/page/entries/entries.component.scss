@@ -403,16 +403,85 @@ html {
 }
 
 /* Pagination styling */
+.pagination-nav {
+  margin: 2rem 0;
+  padding: 1rem;
+}
+
 .pagination {
+  display: flex;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-item {
+  margin: 0;
 }
 
 .page-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-link:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: #000;
+}
+
+.page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+.page-item.active .page-link:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
 }
 
 .page-item.disabled .page-link {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
   cursor: not-allowed;
+  pointer-events: none;
+}
+
+.page-link.ellipsis {
+  border: none;
+  background: transparent;
+  cursor: default;
+  min-width: 30px;
+  padding: 0.5rem 0.25rem;
+}
+
+.page-link.ellipsis:hover {
+  background: transparent;
+}
+
+/* Icon sizing in pagination */
+.page-link i-feather,
+.page-link svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Button styling */

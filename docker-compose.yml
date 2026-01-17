@@ -54,6 +54,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
+      - MONGODB_URI=mongodb://${DB_USER}:${DB_PASS}@mongodb:27017/${DB_NAME:-nyelvszo}?authSource=admin
       - DB_HOST=mongodb:27017
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}

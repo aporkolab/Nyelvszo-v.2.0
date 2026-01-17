@@ -28,7 +28,7 @@ export class EntriesComponent implements OnInit, OnDestroy {
 
   // Search state
   searchTerm = '';
-  filterKey = ''; // Empty = search all columns
+  filterKey = 'hungarian'; // Default: search Hungarian column
   currentPage = 1;
   pageSize = 25;
 
@@ -193,12 +193,45 @@ export class EntriesComponent implements OnInit, OnDestroy {
     this.notifyService.showError(`Something went wrong. Details: ${message}`, 'NyelvSzó v.2.0.0');
   }
 
-  get pageList(): number[] {
+  get pageList(): (number | string)[] {
     const pagination = this.entryService.pagination$.value;
     if (!pagination || pagination.totalPages <= 1) {
       return [];
     }
-    return Array.from({ length: pagination.totalPages }, (_, i) => i + 1);
+
+    const total = pagination.totalPages;
+    const current = this.currentPage;
+    const delta = 2; // Pages to show around current page
+    const pages: (number | string)[] = [];
+
+    // Always show first page
+    pages.push(1);
+
+    // Calculate range around current page
+    const rangeStart = Math.max(2, current - delta);
+    const rangeEnd = Math.min(total - 1, current + delta);
+
+    // Add ellipsis after first page if needed
+    if (rangeStart > 2) {
+      pages.push('...');
+    }
+
+    // Add pages in range
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      pages.push(i);
+    }
+
+    // Add ellipsis before last page if needed
+    if (rangeEnd < total - 1) {
+      pages.push('...');
+    }
+
+    // Always show last page (if more than 1 page)
+    if (total > 1) {
+      pages.push(total);
+    }
+
+    return pages;
   }
 
   get pagination() {

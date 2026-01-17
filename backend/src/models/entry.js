@@ -152,15 +152,10 @@ EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
       if (regex) query.wordType = regex;
     }
   } else if (searchTerm) {
-    // General search across all columns (like the original filter pipe without key)
+    // Default search in Hungarian column only
     const regex = createRegex(searchTerm);
     if (regex) {
-      query.$or = [
-        { hungarian: regex },
-        { english: regex },
-        { fieldOfExpertise: regex },
-        { wordType: regex },
-      ];
+      query.hungarian = regex;
     }
   }
 
