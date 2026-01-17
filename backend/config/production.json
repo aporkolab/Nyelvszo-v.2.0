@@ -1,0 +1,28 @@
+{
+  "database": {
+    "host": "${DB_HOST}",
+    "user": "${DB_USER}",
+    "pass": "${DB_PASS}",
+    "name": "${DB_NAME}"
+  },
+  "jwt": {
+    "secret": "${JWT_SECRET}",
+    "expiresIn": "${JWT_EXPIRES_IN}",
+    "refreshExpiresIn": "${JWT_REFRESH_EXPIRES_IN}"
+  },
+  "server": {
+    "port": "${PORT}",
+    "env": "production"
+  },
+  "logging": {
+    "level": "warn"
+  },
+  "cache": {
+    "ttl": 600,
+    "checkperiod": 620
+  },
+  "rateLimiting": {
+    "windowMs": 900000,
+    "max": 200
+  }
+}

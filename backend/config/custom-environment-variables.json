@@ -1,0 +1,20 @@
+{
+  "database": {
+    "host": "DB_HOST",
+    "user": "DB_USER",
+    "pass": "DB_PASS",
+    "name": "DB_NAME"
+  },
+  "jwt": {
+    "secret": "JWT_SECRET",
+    "expiresIn": "JWT_EXPIRES_IN",
+    "refreshExpiresIn": "JWT_REFRESH_EXPIRES_IN"
+  },
+  "server": {
+    "port": "PORT",
+    "env": "NODE_ENV"
+  },
+  "logging": {
+    "level": "LOG_LEVEL"
+  }
+}
