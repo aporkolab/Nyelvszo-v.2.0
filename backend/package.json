@@ -41,7 +41,7 @@
     "express-rate-limit": "^6.7.0",
     "express-validator": "^6.15.0",
     "helmet": "^6.1.5",
-    "http-errors": "^2.0.0",
+    "http-errors": "^2.0.1",
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.0",
