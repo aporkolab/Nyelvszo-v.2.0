@@ -122,3 +122,8 @@ nginx/ssl/
 nginx/logs/
 certbot/
 backend/logs/
+
+# Stray root lockfile: this repo has no root package.json — the two
+# workspaces (backend/, frontend/) own their own. An accidental `npm install`
+# from the repo root recreates one, which then confuses tooling.
+/package-lock.json
