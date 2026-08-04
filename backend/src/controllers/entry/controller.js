@@ -1,115 +1,111 @@
+const mongoose = require('mongoose');
+
 const Entry = require('../../models/entry');
-const {
-  catchAsync,
-  createNotFoundError,
-  createValidationError,
-} = require('../../middleware/errorHandler');
-const { validate, sanitize } = require('../../middleware/validation');
-const { entrySchema, entryUpdateSchema, idSchema } = require('../../validation/schemas');
-const { presets: cachePresets, invalidateCache } = require('../../middleware/cache');
+const { catchAsync, createNotFoundError } = require('../../middleware/errorHandler');
+const { invalidateCache } = require('../../middleware/cache');
 const logger = require('../../logger/logger');
 
+// Only these fields may be written from a request body. `createdBy`,
+// `updatedBy`, `views`, `isActive` and the timestamps are server-owned.
+const WRITABLE_FIELDS = ['hungarian', 'english', 'fieldOfExpertise', 'wordType'];
+
 /**
- * Get all entries with advanced filtering, search, and pagination
+ * Copy only whitelisted, present fields out of a request body.
+ *
+ * @param {object} body - Validated request body.
+ * @returns {object} Object containing at most the writable fields.
+ */
+const pickWritable = (body) =>
+  WRITABLE_FIELDS.reduce((acc, field) => {
+    if (body[field] !== undefined) {
+      acc[field] = body[field];
+    }
+    return acc;
+  }, {});
+
+/**
+ * Read the validated query.
+ *
+ * Express 5 makes `req.query` read-only, so the validation middleware also
+ * publishes the coerced value on `req.validatedQuery`.
+ *
+ * @param {object} req - Express request.
+ * @returns {object} Validated query parameters.
+ */
+const query = (req) => req.validatedQuery || req.query;
+
+/**
+ * List entries with search, filtering and pagination.
+ *
  * @route GET /entries
  * @access Public
  */
 const getAllEntries = catchAsync(async (req, res) => {
   const {
-    page = 1,
-    limit = 20,
+    page,
+    limit,
     search,
     hungarian,
     english,
     fieldOfExpertise,
     wordType,
-    sortBy = 'relevance',
-    includeStats = false,
-  } = req.query;
+    sortBy,
+    includeStats,
+  } = query(req);
 
-  // Validate pagination parameters
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-
-  // Build search options
-  const searchOptions = {
-    page: pageNum,
-    limit: limitNum,
+  const { query: findQuery, countQuery } = Entry.searchEntries(search, {
+    page,
+    limit,
     hungarian,
     english,
     fieldOfExpertise,
     wordType,
     sortBy,
-  };
-
-  logger.performance('Entry search request', {
-    search: search || 'none',
-    filters: { hungarian, english, fieldOfExpertise, wordType },
-    sortBy,
-    pagination: { page: pageNum, limit: limitNum },
-    userRole: req.user?.role || 'anonymous',
   });
 
-  // Execute search with optimized queries
-  const { query, countQuery } = Entry.searchEntries(search, searchOptions);
+  const [entries, totalItems] = await Promise.all([findQuery, countQuery]);
 
-  // Execute both queries in parallel
-  const [entries, totalCount] = await Promise.all([query, countQuery]);
+  const totalPages = Math.ceil(totalItems / limit) || 1;
 
-  // Calculate pagination metadata
-  const totalPages = Math.ceil(totalCount / limitNum);
-  const hasNextPage = pageNum < totalPages;
-  const hasPrevPage = pageNum > 1;
-
-  // Prepare response
   const response = {
     data: entries,
     pagination: {
-      currentPage: pageNum,
+      currentPage: page,
       totalPages,
-      totalItems: totalCount,
-      itemsPerPage: limitNum,
-      hasNextPage,
-      hasPrevPage,
-      nextPage: hasNextPage ? pageNum + 1 : null,
-      prevPage: hasPrevPage ? pageNum - 1 : null,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
     },
     meta: {
       searchTerm: search || null,
-      filters: {
-        fieldOfExpertise: fieldOfExpertise || null,
-        wordType: wordType || null,
-      },
+      filters: { fieldOfExpertise: fieldOfExpertise || null, wordType: wordType || null },
       sortBy,
-      timestamp: new Date().toISOString(),
     },
   };
 
-  // Include statistics if requested
-  if (includeStats === 'true' || includeStats === true) {
-    const stats = await Entry.getStatistics();
-    response.statistics = stats;
+  if (includeStats) {
+    response.statistics = await Entry.getStatistics();
   }
 
-  // Set appropriate cache headers
   res.set({
-    'X-Total-Count': totalCount,
-    'X-Page': pageNum,
-    'X-Per-Page': limitNum,
+    'X-Total-Count': String(totalItems),
+    'X-Page': String(page),
+    'X-Per-Page': String(limit),
   });
 
   res.json(response);
 });
 
 /**
- * Get single entry by ID
+ * Fetch a single entry and record the view.
+ *
  * @route GET /entries/:id
  * @access Public
  */
 const getEntryById = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  // Find entry with lean query for better performance
   const entry = await Entry.findOne({ _id: id, isActive: true })
     .populate('createdBy', 'firstName lastName')
     .populate('updatedBy', 'firstName lastName')
@@ -119,317 +115,183 @@ const getEntryById = catchAsync(async (req, res) => {
     throw createNotFoundError('Entry');
   }
 
-  // Increment view count asynchronously (fire and forget)
-  Entry.findByIdAndUpdate(
-    id,
-    {
-      $inc: { views: 1 },
-      $set: { lastViewed: new Date() },
-    },
-    { new: false }
-  ).catch((err) => {
-    logger.warn('Failed to increment view count', {
-      entryId: id,
-      error: err.message,
-    });
+  // Fire and forget: a failed view counter must never fail the read.
+  Entry.updateOne({ _id: id }, { $inc: { views: 1 }, $set: { lastViewed: new Date() } }).catch(
+    (err) => logger.warn('Failed to increment view count', { entryId: id, error: err.message })
+  );
+
+  res.json({ data: entry });
+});
+
+/**
+ * Create an entry.
+ *
+ * @route POST /entries
+ * @access Editor, Admin
+ */
+const createEntry = catchAsync(async (req, res) => {
+  const entry = new Entry({
+    ...pickWritable(req.body),
+    createdBy: req.user.userId,
+    updatedBy: req.user.userId,
   });
 
-  // Log entry view for analytics
-  logger.performance('Entry viewed', {
-    entryId: id,
+  await entry.save();
+  await entry.populate('createdBy', 'firstName lastName');
+
+  invalidateCache.entries();
+
+  logger.audit('Entry created', {
+    entryId: entry._id.toString(),
     hungarian: entry.hungarian,
-    english: entry.english,
-    userRole: req.user?.role || 'anonymous',
-    ip: req.ip,
+    by: req.user.email,
+  });
+
+  res.status(201).json({
+    data: entry,
+    meta: { message: 'Entry created successfully' },
+  });
+});
+
+/**
+ * Update an entry.
+ *
+ * @route PUT /entries/:id
+ * @route PATCH /entries/:id
+ * @access Editor, Admin
+ */
+const updateEntry = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const entry = await Entry.findOneAndUpdate(
+    { _id: id, isActive: true },
+    { ...pickWritable(req.body), updatedBy: req.user.userId },
+    { new: true, runValidators: true }
+  ).populate('createdBy updatedBy', 'firstName lastName');
+
+  if (!entry) {
+    throw createNotFoundError('Entry');
+  }
+
+  invalidateCache.entries();
+
+  logger.audit('Entry updated', {
+    entryId: id,
+    fields: Object.keys(pickWritable(req.body)),
+    by: req.user.email,
   });
 
   res.json({
     data: entry,
-    meta: {
-      timestamp: new Date().toISOString(),
-      viewed: true,
-    },
+    meta: { message: 'Entry updated successfully' },
   });
 });
 
 /**
- * Create new entry
- * @route POST /entries
- * @access Private (Editor+)
- */
-const createEntry = [
-  sanitize('body'),
-  validate(entrySchema),
-  catchAsync(async (req, res) => {
-    const entryData = {
-      ...req.body,
-      createdBy: req.user?.userId || null,
-    };
-
-    const entry = new Entry(entryData);
-    const savedEntry = await entry.save();
-
-    // Populate creator info
-    await savedEntry.populate('createdBy', 'firstName lastName');
-
-    // Invalidate relevant caches
-    invalidateCache.entries();
-
-    // Log entry creation
-    logger.audit('Entry created', {
-      entryId: savedEntry._id,
-      hungarian: savedEntry.hungarian,
-      english: savedEntry.english,
-      createdBy: req.user?.email,
-    });
-
-    res.status(201).json({
-      data: savedEntry,
-      meta: {
-        message: 'Entry created successfully',
-        timestamp: new Date().toISOString(),
-      },
-    });
-  }),
-];
-
-/**
- * Update entry
- * @route PUT /entries/:id
- * @access Private (Editor+)
- */
-const updateEntry = [
-  validate(idSchema, 'params'),
-  sanitize('body'),
-  validate(entryUpdateSchema),
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const updateData = {
-      ...req.body,
-      updatedBy: req.user?.userId || null,
-    };
-
-    const entry = await Entry.findOneAndUpdate({ _id: id, isActive: true }, updateData, {
-      new: true,
-      runValidators: true,
-    }).populate('createdBy updatedBy', 'firstName lastName');
-
-    if (!entry) {
-      throw createNotFoundError('Entry');
-    }
-
-    // Invalidate relevant caches
-    invalidateCache.entries();
-
-    // Log entry update
-    logger.audit('Entry updated', {
-      entryId: id,
-      hungarian: entry.hungarian,
-      english: entry.english,
-      updatedBy: req.user?.email,
-      changes: Object.keys(req.body),
-    });
-
-    res.json({
-      data: entry,
-      meta: {
-        message: 'Entry updated successfully',
-        timestamp: new Date().toISOString(),
-      },
-    });
-  }),
-];
-
-/**
- * Partial update entry
- * @route PATCH /entries/:id
- * @access Private (Editor+)
- */
-const patchEntry = updateEntry; // Same logic for PATCH
-
-/**
- * Delete entry (soft delete)
+ * Soft-delete an entry.
+ *
  * @route DELETE /entries/:id
- * @access Private (Editor+)
+ * @access Editor, Admin
  */
-const deleteEntry = [
-  validate(idSchema, 'params'),
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
+const deleteEntry = catchAsync(async (req, res) => {
+  const { id } = req.params;
 
-    const entry = await Entry.findOneAndUpdate(
-      { _id: id, isActive: true },
-      {
-        isActive: false,
-        updatedBy: req.user?.userId || null,
-      },
-      { new: true }
-    );
+  const entry = await Entry.findOneAndUpdate(
+    { _id: id, isActive: true },
+    { isActive: false, updatedBy: req.user.userId },
+    { new: true }
+  );
 
-    if (!entry) {
-      throw createNotFoundError('Entry');
-    }
+  if (!entry) {
+    throw createNotFoundError('Entry');
+  }
 
-    // Invalidate relevant caches
-    invalidateCache.entries();
+  invalidateCache.entries();
 
-    // Log entry deletion
-    logger.audit('Entry deleted (soft)', {
-      entryId: id,
-      hungarian: entry.hungarian,
-      english: entry.english,
-      deletedBy: req.user?.email,
-    });
+  logger.audit('Entry deleted', { entryId: id, hungarian: entry.hungarian, by: req.user.email });
 
-    res.json({
-      meta: {
-        message: 'Entry deleted successfully',
-        entryId: id,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  }),
-];
+  res.json({ meta: { message: 'Entry deleted successfully', entryId: id } });
+});
 
 /**
- * Get popular entries
+ * Most-viewed entries.
+ *
  * @route GET /entries/popular
  * @access Public
  */
 const getPopularEntries = catchAsync(async (req, res) => {
-  const { limit = 10 } = req.query;
-  const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-
-  const popularEntries = await Entry.getPopularEntries(limitNum);
-
-  res.json({
-    data: popularEntries,
-    meta: {
-      type: 'popular',
-      limit: limitNum,
-      timestamp: new Date().toISOString(),
-    },
-  });
+  const { limit } = query(req);
+  const data = await Entry.getPopularEntries(limit);
+  res.json({ data, meta: { type: 'popular', limit } });
 });
 
 /**
- * Get recent entries
+ * Most recently added entries.
+ *
  * @route GET /entries/recent
  * @access Public
  */
 const getRecentEntries = catchAsync(async (req, res) => {
-  const { limit = 10 } = req.query;
-  const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-
-  const recentEntries = await Entry.getRecentEntries(limitNum);
-
-  res.json({
-    data: recentEntries,
-    meta: {
-      type: 'recent',
-      limit: limitNum,
-      timestamp: new Date().toISOString(),
-    },
-  });
+  const { limit } = query(req);
+  const data = await Entry.getRecentEntries(limit);
+  res.json({ data, meta: { type: 'recent', limit } });
 });
 
 /**
- * Get entry statistics
+ * Aggregate dictionary statistics.
+ *
  * @route GET /entries/statistics
  * @access Public
  */
 const getStatistics = catchAsync(async (req, res) => {
   const stats = await Entry.getStatistics();
 
-  // Add additional computed statistics
-  const additionalStats = {
-    averageViewsPerEntry: stats.totalEntries > 0 ? stats.totalViews / stats.totalEntries : 0,
-    entriesPerField: stats.totalEntries > 0 ? stats.totalEntries / stats.totalFields : 0,
-    lastUpdated: new Date().toISOString(),
-  };
-
   res.json({
     data: {
       ...stats,
-      ...additionalStats,
+      averageViewsPerEntry: stats.totalEntries > 0 ? stats.totalViews / stats.totalEntries : 0,
     },
-    meta: {
-      type: 'statistics',
-      timestamp: new Date().toISOString(),
-    },
+    meta: { type: 'statistics' },
   });
 });
 
 /**
- * Bulk operations for entries
+ * Bulk soft-delete or bulk field update.
+ *
+ * The request body is validated against `entryBulkSchema`, which restricts
+ * `filters` to a closed set of scalar equality matches — the previous version
+ * forwarded the raw object into `updateMany`, so an administrator could pass
+ * arbitrary Mongo operators.
+ *
  * @route POST /entries/bulk
- * @access Private (Admin)
+ * @access Admin
  */
 const bulkOperations = catchAsync(async (req, res) => {
-  const { operation, entries, filters } = req.body;
+  const { operation, entries, filters, updateData } = req.body;
 
-  if (!operation) {
-    throw createValidationError('Operation type is required');
-  }
+  // `mongoose.trusted()` is required because `sanitizeFilter` is on globally:
+  // it rewrites every operator object it sees into `{ $eq: … }`, including the
+  // ones the server builds itself, which turned this `$in` into a cast error
+  // and made bulk-by-id fail outright. The ids are safe to trust — the Joi
+  // schema has already checked each one against /^[0-9a-fA-F]{24}$/.
+  const selector = entries?.length
+    ? { _id: mongoose.trusted({ $in: entries }), isActive: true }
+    : { ...filters, isActive: true };
 
-  let result;
+  const update =
+    operation === 'delete'
+      ? { isActive: false, updatedBy: req.user.userId }
+      : { ...pickWritable(updateData), updatedBy: req.user.userId };
 
-  switch (operation) {
-    case 'delete':
-      if (entries && entries.length > 0) {
-        // Delete specific entries
-        result = await Entry.updateMany(
-          { _id: { $in: entries }, isActive: true },
-          {
-            isActive: false,
-            updatedBy: req.user?.userId,
-          }
-        );
-      } else if (filters) {
-        // Delete by filters
-        result = await Entry.updateMany(
-          { ...filters, isActive: true },
-          {
-            isActive: false,
-            updatedBy: req.user?.userId,
-          }
-        );
-      } else {
-        throw createValidationError('Either entries array or filters must be provided');
-      }
-      break;
+  const result = await Entry.updateMany(selector, update);
 
-    case 'update':
-      if (!req.body.updateData) {
-        throw createValidationError('Update data is required');
-      }
-
-      const updateData = {
-        ...req.body.updateData,
-        updatedBy: req.user?.userId,
-      };
-
-      if (entries && entries.length > 0) {
-        result = await Entry.updateMany({ _id: { $in: entries }, isActive: true }, updateData);
-      } else if (filters) {
-        result = await Entry.updateMany({ ...filters, isActive: true }, updateData);
-      } else {
-        throw createValidationError('Either entries array or filters must be provided');
-      }
-      break;
-
-    default:
-      throw createValidationError('Invalid operation type');
-  }
-
-  // Invalidate caches after bulk operations
   invalidateCache.entries();
 
-  // Log bulk operation
-  logger.audit('Bulk operation performed', {
+  logger.audit('Bulk entry operation', {
     operation,
-    entriesAffected: result.modifiedCount || result.matchedCount,
-    performedBy: req.user?.email,
+    matched: result.matchedCount,
+    modified: result.modifiedCount,
+    by: req.user.email,
   });
 
   res.json({
@@ -437,12 +299,8 @@ const bulkOperations = catchAsync(async (req, res) => {
       operation,
       matched: result.matchedCount || 0,
       modified: result.modifiedCount || 0,
-      acknowledged: result.acknowledged,
     },
-    meta: {
-      message: `Bulk ${operation} completed successfully`,
-      timestamp: new Date().toISOString(),
-    },
+    meta: { message: `Bulk ${operation} completed successfully` },
   });
 });
 
@@ -451,7 +309,6 @@ module.exports = {
   getEntryById,
   createEntry,
   updateEntry,
-  patchEntry,
   deleteEntry,
   getPopularEntries,
   getRecentEntries,

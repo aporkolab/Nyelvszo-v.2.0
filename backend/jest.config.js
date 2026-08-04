@@ -1,93 +1,40 @@
 module.exports = {
-  // Test environment
   testEnvironment: 'node',
 
-  // Test file patterns
-  testMatch: [
-    '**/tests/**/*.test.js',
-    '**/src/**/*.test.js',
-    '**/src/**/*.spec.js'
-  ],
+  testMatch: ['**/tests/**/*.test.js'],
 
-  // Files to ignore
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/coverage/',
-    '/logs/'
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/coverage/', '/logs/'],
 
-  // Allow transformation of ES modules in MongoDB packages
-  transformIgnorePatterns: [
-    '/node_modules/(?!(mongodb|mongodb-memory-server|mongodb-memory-server-core|@mongodb-js|bson)/)',
-  ],
-
-  // Coverage configuration
-  collectCoverage: false,
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/index.js',
-    '!src/server.js',
     '!src/seed/**',
-    '!src/migrations/**',
-    '!**/node_modules/**'
+    '!src/logger/**',
+    '!**/node_modules/**',
   ],
 
   coverageDirectory: 'coverage',
-  coverageReporters: [
-    'text',
-    'lcov',
-    'html',
-    'clover'
-  ],
+  coverageReporters: ['text-summary', 'lcov', 'html'],
 
+  // Set just below the suite's current numbers so a regression fails the build.
+  // Raise these when coverage improves; never lower them to make CI green.
   coverageThreshold: {
     global: {
-      branches: 10,
-      functions: 10,
-      lines: 15,
-      statements: 15
-    }
+      statements: 75,
+      branches: 60,
+      functions: 75,
+      lines: 75,
+    },
   },
 
-  // Setup files
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
 
-  // Module paths
-  moduleDirectories: ['node_modules', 'src'],
-
-  // Transform files
-  transform: {
-    '^.+\\.js$': 'babel-jest',
-    '^.+\\.ts$': 'ts-jest'
-  },
-
-  // Global variables
-  globals: {
-    NODE_ENV: 'test'
-  },
-
-  // Test timeout
-  testTimeout: 30000,
-
-  // Verbose output
-  verbose: true,
-
-  // Clear mocks between tests
-  clearMocks: true,
-
-  // Restore mocks after each test
-  restoreMocks: true,
-
-  // Force exit after tests complete
-  forceExit: true,
-
-  // Detect handles that prevent Jest from exiting
-  detectOpenHandles: true,
-
-  // Maximum number of concurrent workers
+  // mongodb-memory-server spins up a real mongod; running suites in parallel
+  // against one shared instance produces cross-test interference.
   maxWorkers: 1,
 
-  // Test name pattern for integration tests
-  testNamePattern: process.env.TEST_TYPE === 'integration' ? 'integration' : undefined
+  testTimeout: 30000,
+  clearMocks: true,
+  restoreMocks: true,
+  verbose: true,
 };

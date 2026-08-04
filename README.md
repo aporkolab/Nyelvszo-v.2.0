@@ -1,254 +1,372 @@
-# NyelvSzó v.2.2.0
+# NyelvSzó v2.2.0
 
-> **Professional English-Hungarian Linguistic Dictionary** - Angol-magyar nyelvészeti szakszótár
+English–Hungarian linguistic dictionary. Angol-magyar nyelvészeti szakszótár.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/APorkolab/Nyelvszo-v.2.0/ci-cd.yml?branch=main)](../../actions)
-[![Security Rating](https://img.shields.io/badge/security-A+-green.svg)](#security)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](#docker-setup)
-[![Live Demo](https://img.shields.io/badge/demo-nyelvszo.eu-success)](https://nyelvszo.eu/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/APorkolab/Nyelvszo-v.2.0/ci.yml?branch=main)](../../actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
+[![Live](https://img.shields.io/badge/live-nyelvszo.eu-success)](https://nyelvszo.eu/)
 
 ---
 
 ## Overview
 
-NyelvSzó is a full-stack web application for managing and searching linguistic terminology. It serves as a comprehensive English-Hungarian linguistic dictionary, created by Dr. Ádám Porkoláb and Dr. Tamás Fekete.
+A searchable dictionary of linguistic terminology, compiled by Dr. Ádám Porkoláb and
+Dr. Tamás Fekete. The repository holds two deployable pieces:
 
-### Key Features
+| Directory   | What it is                                                    |
+|-------------|---------------------------------------------------------------|
+| `backend/`  | REST API — Express 4, Mongoose 7, MongoDB                     |
+| `frontend/` | Single-page client — Angular 21, standalone components        |
 
-- **Advanced Search**: Full-text search with column filtering (Hungarian, English, Field of Expertise, Word Type)
-- **User Roles**: Guest (view), Editor (create/edit), Administrator (full access)
-- **Security**: JWT authentication, rate limiting, input validation
-- **Performance**: Server-side pagination, MongoDB indexing, caching
-- **Internationalization**: Hungarian and English UI
-- **Responsive Design**: Mobile-first Bootstrap 5 UI
+Anyone may read the dictionary without an account. Writing requires a token.
 
----
+## Stack
 
-## Tech Stack
+**Backend** — Node.js 24 (`engines: >=24`), Express 4.22, Mongoose 7, MongoDB
+(Atlas or self-hosted), JWT auth via `jsonwebtoken`, Joi validation, Winston
+logging with daily rotation, OpenAPI 3.0 served by `swagger-ui-express`,
+in-process response caching via `node-cache`.
 
-### Backend
-- **Runtime**: Node.js 18+ with Express.js
-- **Database**: MongoDB (Atlas or local)
-- **Authentication**: JWT with refresh tokens
-- **Logging**: Winston with daily rotation
-- **API Docs**: OpenAPI 3.0 (Swagger)
+**Frontend** — Angular 21, TypeScript 5.9, RxJS, a purpose-built CSS design
+system (no UI framework),
+`@ngx-translate` (Hungarian and English UI), `ngx-toastr`, `angular-feather`.
 
-### Frontend
-- **Framework**: Angular 20 with TypeScript
-- **UI**: Bootstrap 5
-- **State Management**: RxJS
-- **Build**: Angular CLI
+**Infrastructure** — multi-stage Dockerfiles for both apps, Nginx as the
+production reverse proxy, GitHub Actions for CI.
 
-### Infrastructure
-- **Containerization**: Docker with multi-stage builds
-- **CI/CD**: GitHub Actions
-- **Reverse Proxy**: Nginx
+There is no WebSocket layer, no CQRS/event-sourcing layer and no AI-assisted
+search in this codebase. Earlier revisions of this file described all three;
+they were never functional and have been removed.
 
 ---
 
-## Quick Start
+## Quick start
 
 ### Prerequisites
 
-- Node.js 18+ ([Download](https://nodejs.org/))
-- Docker ([Get Docker](https://docs.docker.com/get-docker/))
-- Git ([Download](https://git-scm.com/))
+- Node.js 24 or newer
+- MongoDB 6+ (local, containerised, or an Atlas cluster)
+- Docker, if you want to run the stack with Compose
 
-### Installation
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/APorkolab/Nyelvszo-v.2.0.git
-cd Nyelvszo-v.2.0
-```
-
-2. **Configure environment**
+### 1. Configure the backend
 
 ```bash
 cp backend/.env.example backend/.env
-# Edit backend/.env with your MongoDB and JWT settings
 ```
 
-3. **Install dependencies**
+Generate the two JWT secrets — they must be different, and each at least 32
+characters:
 
 ```bash
-# Backend
-cd backend && npm install
-
-# Frontend
-cd ../frontend && npm install
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"   # JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"   # JWT_REFRESH_SECRET
 ```
 
-4. **Start development servers**
+Paste them into `backend/.env`. The server validates its configuration before
+it binds a port and exits with an explanatory message if anything is missing,
+too short, or if the two secrets are identical.
+
+### 2. Install and run
 
 ```bash
-# Terminal 1: Backend (http://localhost:3000)
-cd backend && npm run dev
-
-# Terminal 2: Frontend (http://localhost:4200)
-cd frontend && npm start
+cd backend  && npm install && npm run dev     # http://localhost:3000
+cd frontend && npm install && npm start       # http://localhost:4200
 ```
 
-### Docker Setup
+Useful URLs once the API is up:
+
+- `http://localhost:3000/` — service descriptor
+- `http://localhost:3000/api-docs` — interactive OpenAPI documentation
+- `http://localhost:3000/health` — health summary
+
+### 3. Seed data (optional)
 
 ```bash
-# Development
-docker-compose up --build
-
-# Production
-docker-compose -f docker-compose.prod.yml up --build
-
-# Access points:
-# - Frontend: http://localhost:4200
-# - Backend API: http://localhost:3000
-# - API Docs: http://localhost:3000/api-docs
-# - Health Check: http://localhost:3000/health
+cd backend && npm run seed
 ```
+
+The seeder is a no-op for any collection that already contains documents.
 
 ---
 
-## API Documentation
+## Environment variables
 
-Interactive documentation available at: `http://localhost:3000/api-docs`
+Backend only; `backend/.env.example` is the authoritative list.
 
-### Key Endpoints
+### Database
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/health` | Health check | No |
-| POST | `/login` | Authentication | No |
-| GET | `/entries` | Search entries | No |
-| GET | `/entries/:id` | Get entry | No |
-| POST | `/entries` | Create entry | Editor+ |
-| PUT | `/entries/:id` | Update entry | Editor+ |
-| DELETE | `/entries/:id` | Delete entry | Editor+ |
-| GET | `/users` | List users | Admin |
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `MONGODB_URI` | — | Full connection string. Takes precedence over the `DB_*` parts. |
+| `DB_HOST` | `localhost:27017` | Used when `MONGODB_URI` is unset. |
+| `DB_USER`, `DB_PASS` | — | Credentials; URL-encoded before use. |
+| `DB_NAME` | `nyelvszo` | Database name. |
+| `DB_MAX_POOL_SIZE` | `10` | Connection pool size. |
+| `DB_CONNECTION_TIMEOUT_MS` | `30000` | Server selection timeout. |
+| `DB_SOCKET_TIMEOUT_MS` | `45000` | Socket timeout. |
 
-### Search Parameters
+At least one of `MONGODB_URI` and `DB_HOST` must be set.
 
-```
-GET /entries?hungarian=nyelv&page=1&limit=25&sortBy=alphabetical
-```
+### JWT
 
-| Parameter | Description |
-|-----------|-------------|
-| `hungarian` | Filter by Hungarian column |
-| `english` | Filter by English column |
-| `fieldOfExpertise` | Filter by field |
-| `wordType` | Filter by word type |
-| `page` | Page number (default: 1) |
-| `limit` | Items per page (default: 25) |
-| `sortBy` | alphabetical, newest, oldest, popular |
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `JWT_SECRET` | — | **Required.** Signs access tokens. 32+ characters. |
+| `JWT_REFRESH_SECRET` | — | **Required.** Signs refresh tokens. 32+ characters, must differ from `JWT_SECRET`. |
+| `JWT_EXPIRES_IN` | `15m` | Access token lifetime. |
+| `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh token lifetime. |
 
----
+### Server, CORS and limits
 
-## User Roles
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `PORT` | `3000` | Listen port. |
+| `NODE_ENV` | `development` | `production` enables response caching and hides error internals. |
+| `ALLOWED_ORIGINS` | `http://localhost:4200,https://nyelvszo.eu` | Comma-separated exact origins. **Required in production.** |
+| `RATE_LIMIT_WINDOW_MS` | `900000` | Global rate-limit window. |
+| `RATE_LIMIT_MAX_REQUESTS` | `300` | Requests per window per IP. `/health*` is exempt. |
+| `LOGIN_RATE_LIMIT_WINDOW_MS` | `900000` | Login window. |
+| `LOGIN_RATE_LIMIT_MAX_ATTEMPTS` | `10` | Failed logins per window per IP; successful ones are not counted. |
+| `TRUST_PROXY_HOPS` | `0` | Number of reverse proxies in front of the app. Never set it above the real hop count — each extra hop lets a client forge one more `X-Forwarded-For` entry and evade rate limiting. |
+| `LOG_LEVEL` | `info` | Winston level. |
+| `HELMET_ENABLED` | `true` | Set to `false` only to debug header problems locally. |
 
-| Role | Value | Permissions |
-|------|-------|-------------|
-| User | 1 | View entries only |
-| Editor | 2 | View, create, edit, delete entries |
-| Administrator | 3 | Full access including user management |
-
----
-
-## Environment Variables
-
-### Backend (.env)
-
-```env
-# Database (Option 1: Full URI)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/nyelvszo
-
-# Database (Option 2: Individual values)
-DB_HOST=your-mongodb-host
-DB_USER=your-username
-DB_PASS=your-password
-DB_NAME=nyelvszo
-
-# Security
-JWT_SECRET=your-secure-jwt-secret-at-least-32-chars
-JWT_EXPIRES_IN=1h
-
-# Server
-PORT=3000
-NODE_ENV=production
-LOG_LEVEL=info
-```
+Rate limiting is disabled when `NODE_ENV=test`.
 
 ---
 
-## Development
+## Roles
 
-### Code Quality
+Roles are numeric and stored on the account. Authorisation checks **exact
+membership**, not rank — a route lists every role it admits.
+
+| Value | Role   | Can do                                                                  |
+|-------|--------|-------------------------------------------------------------------------|
+| 1     | Viewer | Read entries. Reads are public anyway, so this is effectively a login with no write rights. |
+| 2     | Editor | Everything a viewer can, plus create, update and delete entries.        |
+| 3     | Admin  | Everything an editor can, plus bulk entry operations, user administration and `GET /health/detailed`. |
+
+The role in a token is not trusted: every authenticated request re-reads the
+account, so demoting or deactivating a user takes effect immediately instead of
+when their token expires.
+
+---
+
+## API
+
+Full reference at `/api-docs`; the spec lives in `backend/docs/swagger.yaml`.
+
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/` | public |
+| POST | `/login` | public |
+| POST | `/login/refresh` | public |
+| GET | `/entries` | public |
+| GET | `/entries/popular` | public |
+| GET | `/entries/recent` | public |
+| GET | `/entries/statistics` | public |
+| GET | `/entries/:id` | public |
+| POST | `/entries` | editor, admin |
+| PUT / PATCH | `/entries/:id` | editor, admin |
+| DELETE | `/entries/:id` | editor, admin |
+| POST | `/entries/bulk` | admin |
+| GET / POST | `/users` | admin |
+| GET / PUT / PATCH / DELETE | `/users/:id` | admin |
+| GET | `/health` | public |
+| GET | `/health/live` | public |
+| GET | `/health/ready` | public |
+| GET | `/health/detailed` | admin |
+
+### Authentication flow
+
+`POST /login` returns an access token and a refresh token. Send the access
+token as `Authorization: Bearer <token>`; when it expires, `POST /login/refresh`
+exchanges the refresh token for a **new pair** and the old refresh token should
+be discarded.
+
+### Search parameters
+
+```
+GET /entries?search=hang&page=1&limit=20&sortBy=alphabetical
+```
+
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `page` | `1` | 1–10000. |
+| `limit` | `20` | 1–100. |
+| `search` | — | Prefix match against the Hungarian and English columns at once. |
+| `hungarian`, `english`, `fieldOfExpertise`, `wordType` | — | Per-column prefix filters. When any of these is present, `search` is ignored. |
+| `sortBy` | `relevance` | `relevance`, `alphabetical`, `newest`, `oldest`, `popular`. |
+| `includeStats` | `false` | Appends a `statistics` block to the response. |
+
+Unknown query parameters are rejected with `400`, not silently dropped.
+
+### Response shapes
+
+Collections return `{ data, pagination, meta }`, single resources `{ data }`,
+and writes `{ data, meta }`. Errors always look like this:
+
+```json
+{
+  "error": "Entry not found",
+  "statusCode": 404,
+  "type": "NotFoundError",
+  "timestamp": "2026-01-31T10:12:44.108Z",
+  "path": "/entries/507f1f77bcf86cd799439011"
+}
+```
+
+`details` is present only on validation failures. A `stack` field is included
+when `NODE_ENV` is `development` or `test`, never in production. `429`
+responses are the one exception to the envelope: they come from the rate
+limiter and carry only `error`.
+
+---
+
+## Security
+
+Properties the code enforces, not aspirations:
+
+- **Separate token secrets.** Access and refresh tokens are signed with
+  different keys and carry a `typ` claim, so a refresh token cannot authorise
+  API calls and an access token cannot renew itself indefinitely.
+- **Pinned verification.** Algorithm (`HS256`), issuer and audience are all
+  pinned, so an `alg: none` token or one minted for another service is rejected.
+- **Live account checks.** Every authenticated request re-reads the account and
+  rejects missing or deactivated ones.
+- **Refresh rotation.** `POST /login/refresh` issues a new refresh token each
+  time, limiting how long a stolen one stays useful.
+- **Boot-time config validation.** The process refuses to start with missing,
+  short, or identical JWT secrets, without a database target, or without
+  `ALLOWED_ORIGINS` in production.
+- **Allow-list validation.** Every body, path parameter and query string is
+  checked against a Joi schema with `stripUnknown`; unknown fields are
+  rejected. This is what keeps `?hungarian[$ne]=` from reaching the database
+  filter as an object. Mongoose runs with `strictQuery` and `sanitizeFilter` as
+  a second layer.
+- **Field whitelists.** Controllers copy a fixed list of writable fields out of
+  the request body, so `role`, `isActive`, `views` and the audit fields cannot
+  be mass-assigned.
+- **Admin lockout guards.** An administrator cannot revoke their own admin
+  access, delete their own account, or remove the last active administrator.
+- **Password handling.** bcrypt at 12 rounds, hashes excluded from queries by
+  default, and 12+ character passwords requiring mixed case, a digit and a
+  symbol. Login compares against a dummy hash when no account matches, so
+  response time does not reveal whether an address is registered.
+- **Log redaction.** Passwords, tokens and secrets are replaced with
+  `[REDACTED]` before anything reaches a log file.
+- **Cache isolation.** Responses to requests carrying an `Authorization` header
+  are never cached or served from cache.
+- **Rate limiting** on every route except health probes, with a tighter budget
+  for `/login`, counted against a proxy hop count rather than a blanket
+  `trust proxy`.
+- **Security headers** via Helmet, including HSTS, `frame-ancestors 'none'` and
+  a CSP with a correct `base-uri` directive. CORS is an exact-origin allow-list
+  that fails closed.
+
+Report a vulnerability privately to adam@porkolab.digital rather than opening
+an issue.
+
+---
+
+## Scripts
+
+### Backend (`cd backend`)
+
+| Script | What it does |
+|--------|--------------|
+| `npm start` | Run the API. |
+| `npm run dev` | Run under nodemon. |
+| `npm test` | Full Jest suite. |
+| `npm run test:unit` | Unit tests only. |
+| `npm run test:integration` | Integration tests only. |
+| `npm run test:watch` | Watch mode. |
+| `npm run test:coverage` | Coverage report into `coverage/`. |
+| `npm run test:ci` | CI run — coverage, two workers. |
+| `npm run lint` / `lint:fix` | ESLint 9 (flat config in `eslint.config.mjs`). |
+| `npm run format` / `format:check` | Prettier. |
+| `npm run audit:prod` | `npm audit` over production dependencies, high and above. |
+| `npm run seed` | Seed the database. |
+| `npm run health` | `curl` the health endpoint (requires `jq`). |
+
+### Frontend (`cd frontend`)
+
+| Script | What it does |
+|--------|--------------|
+| `npm start` | Dev server on port 4200. |
+| `npm run build` / `build:prod` | Production build into `dist/nyelvszo`. |
+| `npm test` | Karma in headless Chrome, single run. |
+| `npm run test:watch` / `test:coverage` | Watch mode / coverage. |
+| `npm run lint` / `lint:check` | ESLint. |
+| `npm run format` / `format:check` | Prettier. |
+| `npm run analyze` | Bundle analysis. |
+
+---
+
+## Tests
+
+The backend suite runs against an in-memory MongoDB (`mongodb-memory-server`),
+so no local database is needed and nothing is written to a real one. Because
+the suites share one `mongod`, Jest is pinned to a single worker.
 
 ```bash
-# Linting
-npm run lint
-
-# Formatting
-npx prettier --write "src/**/*.{js,ts,html,scss}"
-
-# Security audit
-npm audit --audit-level=high
-
-# Tests
-npm test
+cd backend
+npm test                  # everything
+npm run test:unit         # tests/unit
+npm run test:integration  # tests/integration
+npm run test:coverage
 ```
 
-### Build for Production
+Coverage thresholds are set just below the suite's current numbers so a
+regression fails the build. Raise them when coverage improves; do not lower
+them to make CI green.
+
+---
+
+## Docker
 
 ```bash
-# Backend Docker image
-docker build -t nyelvszo-backend:latest ./backend --target production
-
-# Frontend Docker image
-docker build -t nyelvszo-frontend:latest ./frontend --target production
+docker compose up --build                              # development
+docker compose -f docker-compose.prod.yml up --build   # production
 ```
+
+Both Compose files require `JWT_SECRET` and `JWT_REFRESH_SECRET` and refuse to
+start without them, so put both in a `.env` beside the compose file (see
+`backend/.env.example`). Development binds MongoDB to `127.0.0.1` only. There is
+no Redis service: the cache is in-process.
 
 ---
 
 ## Troubleshooting
 
-### MongoDB Connection Failed
-- Verify `MONGODB_URI` or `DB_*` variables in `.env`
-- Check if MongoDB service is running: `docker-compose ps`
+**The API exits immediately with "Cannot start NyelvSzó API".** Configuration
+validation failed; the listed problems are the actual cause. Usually a missing
+or too-short `JWT_REFRESH_SECRET`.
 
-### Port Already in Use
-```bash
-lsof -i :3000
-kill -9 <PID>
-```
+**MongoDB connection error on startup.** Check `MONGODB_URI` or the `DB_*`
+variables, and that the server is reachable: `docker compose ps`.
 
-### Build Failures
+**Browser reports a CORS failure.** The origin is not in `ALLOWED_ORIGINS`. The
+API deliberately omits the CORS headers rather than returning an error, so the
+only symptom is the browser-side rejection.
+
+**Port already in use.**
+
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+lsof -i :3000 && kill -9 <PID>
 ```
 
 ---
 
 ## Contact
 
-- **Website & Technical Issues**: Dr. Ádám Porkoláb (adam@porkolab.digital)
-- **Dictionary Content & Corrections**: Dr. Tamás Fekete (fekete.tamas@pte.hu)
-
----
+- Site and technical issues — Dr. Ádám Porkoláb, adam@porkolab.digital
+- Dictionary content and corrections — Dr. Tamás Fekete, fekete.tamas@pte.hu
 
 ## License
 
-© 2021-2026 Dr. Ádám Porkoláb & Dr. Tamás Fekete
+© 2021–2026 Dr. Ádám Porkoláb & Dr. Tamás Fekete.
 
-This project is licensed under the MIT License. The dictionary content is protected by Hungarian copyright law. Private use is permitted; commercial use requires author permission.
-
----
-
-<div align="center">
-
-**Made in Hungary**
-
-[Dr. Ádám Porkoláb](https://porkolab.digital) • [Dr. Tamás Fekete](mailto:fekete.tamas@pte.hu)
-
-</div>
+The code is MIT-licensed. The dictionary content is protected by Hungarian
+copyright law: private use is permitted, commercial use requires the authors'
+permission.

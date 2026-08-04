@@ -1,44 +1,60 @@
-version: '3.8'
-
-
-
+# NyelvSzó — production stack.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml --profile ssl up -d   # + certbot
+#
+# There is no database service here: production uses a managed MongoDB reached
+# through MONGODB_URI. That URI carries credentials, so it — like the JWT
+# secrets — must come from the deployment environment (an .env file that is
+# never committed; see .gitignore), and every one of them is declared with `:?`
+# so a missing value stops the deploy instead of silently starting a service
+# with a placeholder.
+#
+# The `version:` key is gone: Compose v2 ignores it and warns about it.
 
 services:
-  
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
+    image: nyelvszo/backend:${IMAGE_TAG:-latest}
     container_name: nyelvszo_backend_prod
     restart: always
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGODB_URI=${MONGODB_URI}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_NAME=${DB_NAME:-nyelvszo}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1h}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - LOG_LEVEL=${LOG_LEVEL:-warn}
-      - RATE_LIMIT_WINDOW_MS=900000
-      - RATE_LIMIT_MAX_REQUESTS=100
+      - MONGODB_URI=${MONGODB_URI:?set MONGODB_URI in the deployment environment}
+      # Two different secrets, 32+ characters each; src/index.js validates both
+      # at boot and refuses to start if they are missing, short or identical.
+      - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET in the deployment environment}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in the deployment environment}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-15m}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://nyelvszo.eu}
-      - TRUST_PROXY=true
-      - HELMET_ENABLED=true
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-300}
+      - LOGIN_RATE_LIMIT_WINDOW_MS=${LOGIN_RATE_LIMIT_WINDOW_MS:-900000}
+      - LOGIN_RATE_LIMIT_MAX_ATTEMPTS=${LOGIN_RATE_LIMIT_MAX_ATTEMPTS:-10}
+      # Exactly one reverse proxy sits in front of this service. The old
+      # TRUST_PROXY=true is not a variable the app reads, and `true` would let
+      # a client forge X-Forwarded-For and walk around the rate limiter.
+      - TRUST_PROXY_HOPS=1
     volumes:
       - ./backend/logs:/app/logs
-      - ./backend/public:/app/public:ro
     expose:
       - "3000"
     networks:
       - nyelvszo-network-prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      # Liveness only — a database outage must not make the orchestrator
+      # restart an otherwise healthy process.
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -57,32 +73,46 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
+    image: nyelvszo/frontend:${IMAGE_TAG:-latest}
     container_name: nyelvszo_frontend_prod
     restart: always
+    # 8080: the container runs nginx as an unprivileged user, which cannot bind
+    # a port below 1024.
     expose:
-      - "80"
+      - "8080"
     networks:
       - nyelvszo-network-prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  
   nginx:
-    image: nginx:1.25-alpine
+    image: nginx:1.27-alpine
     container_name: nyelvszo_nginx_prod
     restart: always
     ports:
@@ -101,59 +131,57 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "5"
 
-  
+  # Certificate renewal. Enabled with `--profile ssl`; nginx picks up the new
+  # files on its next reload.
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:latest
     container_name: nyelvszo_certbot
+    restart: unless-stopped
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    security_opt:
+      - no-new-privileges:true
     profiles:
       - ssl
-
-  
-  redis:
-    image: redis:7.2-alpine
-    container_name: nyelvszo_redis_prod
-    restart: always
-    command: >
-      redis-server 
-      --requirepass ${REDIS_PASSWORD}
-      --appendonly yes
-      --maxmemory 100mb
-      --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data_prod:/data
-    expose:
-      - "6379"
-    networks:
-      - nyelvszo-network-prod
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.25'
           memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
-volumes:
-  redis_data_prod:
-    driver: local
+# No redis service: the backend has no Redis dependency left, its cache is
+# in-process (src/middleware/cache.js). The old service also interpolated
+# ${REDIS_PASSWORD} into `command:` and into the healthcheck, which exposed the
+# password in `docker inspect` and in the process list of the host.
 
 networks:
   nyelvszo-network-prod:

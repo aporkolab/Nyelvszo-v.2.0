@@ -2,21 +2,63 @@ openapi: 3.0.0
 info:
   title: NyelvSzó API
   description: |
-    Angol-magyar Nyelvészeti Szakszótár API dokumentáció.
-    
-    Ez az API lehetővé teszi a nyelvészeti szakkifejezések keresését, létrehozását, módosítását és törlését.
-    Három felhasználói szerepkör létezik:
-    - **Felhasználó (1)**: Csak megtekintés
-    - **Szerkesztő (2)**: Szócikkek kezelése
-    - **Adminisztrátor (3)**: Teljes hozzáférés
-    
-    ## Autentikáció
-    Az API JWT (JSON Web Token) alapú autentikációt használ. A token-t a `/login` végponton lehet megszerezni.
-    
-    ## Rate Limiting
-    - Általános végpontok: 100 kérés / 15 perc / IP
-    - Login végpont: 5 kérés / 15 perc / IP
-    
+    REST API for the NyelvSzó English–Hungarian linguistic dictionary.
+
+    ## Authentication
+
+    `POST /login` returns a short-lived **access token** and a long-lived
+    **refresh token**. The two are signed with different secrets and carry a
+    `typ` claim (`access` / `refresh`), so a refresh token cannot authorise API
+    calls and an access token cannot renew itself.
+
+    Send the access token as `Authorization: Bearer <token>`. When it expires,
+    exchange the refresh token at `POST /login/refresh`; that endpoint rotates
+    the pair and returns a new refresh token too.
+
+    Every authenticated request re-reads the account from the database, so
+    deactivating or demoting a user takes effect immediately rather than when
+    their token expires.
+
+    ## Roles
+
+    Roles are numeric and are checked by exact membership, not by rank:
+
+    | Value | Role   | May do                                                |
+    |-------|--------|-------------------------------------------------------|
+    | 1     | Viewer | Read entries (which is public anyway)                 |
+    | 2     | Editor | Create, update and delete entries                     |
+    | 3     | Admin  | Everything, plus user administration and bulk writes  |
+
+    ## Errors
+
+    Every handled error is returned by the central error handler in the same
+    shape: `error`, `statusCode`, `type`, `timestamp`, `path`, and `details`
+    for field-level validation failures. In `development` and `test` the body
+    also carries a `stack` field; in production it never does.
+
+    Rate-limit rejections (`429`) are the one exception — they are produced by
+    the rate limiter before the error handler runs and carry only an `error`
+    field.
+
+    ## Rate limiting
+
+    Defaults, both configurable through the environment:
+
+    - All endpoints except `/health*`: 300 requests / 15 minutes / IP
+      (`RATE_LIMIT_MAX_REQUESTS`, `RATE_LIMIT_WINDOW_MS`)
+    - `/login` and `/login/refresh`: 10 **failed** attempts / 15 minutes / IP
+      (`LOGIN_RATE_LIMIT_MAX_ATTEMPTS`, `LOGIN_RATE_LIMIT_WINDOW_MS`);
+      successful requests are not counted
+
+    Limits are disabled when `NODE_ENV=test`.
+
+    ## Caching
+
+    Public `GET` responses are cached in-process **in production only**, and
+    never for a request that carries an `Authorization` header. Cached
+    responses carry `X-Cache: HIT|MISS|SKIP` and an `ETag`; a matching
+    `If-None-Match` gets a `304`.
+
   version: 2.2.0
   contact:
     name: Dr. Ádám Porkoláb
@@ -32,107 +74,197 @@ servers:
   - url: https://api.nyelvszo.eu
     description: Production server
 
+tags:
+  - name: Service
+    description: Service descriptor
+  - name: Authentication
+    description: Token issuance and rotation
+  - name: Entries
+    description: Dictionary entries — public reads, editorial writes
+  - name: Users
+    description: Account administration (admin only)
+  - name: Health
+    description: Liveness, readiness and operational detail
+
 paths:
+  # -------------------------------------------------------------------------
+  # Service
+  # -------------------------------------------------------------------------
+  /:
+    get:
+      tags:
+        - Service
+      summary: Service descriptor
+      description: Name, version and the location of the docs and health endpoints.
+      operationId: getServiceInfo
+      security: []
+      responses:
+        '200':
+          description: Service descriptor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: NyelvSzó API
+                  version:
+                    type: string
+                    example: 2.2.0
+                  documentation:
+                    type: string
+                    example: /api-docs
+                  health:
+                    type: string
+                    example: /health
+
+  # -------------------------------------------------------------------------
+  # Authentication
+  # -------------------------------------------------------------------------
   /login:
     post:
       tags:
         - Authentication
-      summary: User login
-      description: Authenticate user and receive JWT access token
-      operationId: loginUser
+      summary: Log in
+      description: |
+        Verifies the credentials and returns an access/refresh token pair.
+
+        The comparison is deliberately constant in cost: when no account
+        matches, a dummy bcrypt hash is compared anyway, so the response time
+        does not reveal whether the email address exists.
+      operationId: login
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
-            example:
-              email: "user@example.com"
-              password: "SecurePassword123!"
       responses:
         '200':
-          description: Login successful
+          description: Authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Invalid credentials
+          description: |
+            Invalid credentials. Returned identically for an unknown email
+            address and for a wrong password.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error: Invalid credentials
+                statusCode: 401
+                type: Error
+                timestamp: '2026-01-31T10:12:44.108Z'
+                path: /login
+        '403':
+          description: The account exists and the password is correct, but the account is deactivated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: This account has been deactivated
+                statusCode: 403
+                type: Error
+                timestamp: '2026-01-31T10:12:44.108Z'
+                path: /login
         '429':
-          description: Too many login attempts
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
   /login/refresh:
     post:
       tags:
         - Authentication
-      summary: Refresh access token
-      description: Get a new access token using refresh token
-      operationId: refreshToken
+      summary: Rotate the token pair
+      description: |
+        Exchanges a valid refresh token for a brand new access **and** refresh
+        token. The presented refresh token's replacement is returned, so a
+        stolen token stops working as soon as the legitimate client refreshes.
+
+        The token must carry `typ: refresh`; an access token presented here is
+        rejected with `401`. The account is re-read and must still be active.
+      operationId: refreshTokens
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                refreshToken:
-                  type: string
-                  description: Valid refresh token
-              required:
-                - refreshToken
+              $ref: '#/components/schemas/RefreshRequest'
       responses:
         '200':
-          description: Token refreshed successfully
+          description: A new token pair
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  accessToken:
-                    type: string
-                  expiresIn:
-                    type: string
+                $ref: '#/components/schemas/RefreshResponse'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Invalid refresh token
+          description: |
+            The refresh token is missing, expired, signed with the wrong
+            secret, not a refresh token, or belongs to an account that no
+            longer exists or has been deactivated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error: Invalid refresh token
+                statusCode: 401
+                type: Error
+                timestamp: '2026-01-31T10:12:44.108Z'
+                path: /login/refresh
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
+  # -------------------------------------------------------------------------
+  # Entries
+  # -------------------------------------------------------------------------
   /entries:
     get:
       tags:
         - Entries
-      summary: Get all entries
-      description: Retrieve all dictionary entries with optional filtering
-      operationId: getAllEntries
+      summary: Search and list entries
+      description: |
+        Public. Returns only active entries.
+
+        Column filters (`hungarian`, `english`, `fieldOfExpertise`,
+        `wordType`) take precedence over the free-text `search` term: when any
+        column filter is present, `search` is ignored. All matching is
+        case-insensitive and **prefix-anchored**, so the field indexes can be
+        used; `search` is matched against the Hungarian and English columns at
+        once.
+
+        Unknown query parameters are rejected with `400`, which is what keeps a
+        crafted query string (`?hungarian[$ne]=`) from reaching the database
+        filter as an object.
+      operationId: listEntries
+      security: []
       parameters:
         - name: page
           in: query
-          description: Page number for pagination
+          description: 1-based page number.
           schema:
             type: integer
             minimum: 1
+            maximum: 10000
             default: 1
         - name: limit
           in: query
-          description: Number of items per page
+          description: Page size.
           schema:
             type: integer
             minimum: 1
@@ -140,48 +272,102 @@ paths:
             default: 20
         - name: search
           in: query
-          description: Search term for filtering entries
+          description: Free-text prefix matched against the Hungarian and English columns. Ignored when any column filter is set.
           schema:
             type: string
+            maxLength: 200
+        - name: hungarian
+          in: query
+          description: Prefix filter on the Hungarian column.
+          schema:
+            type: string
+            maxLength: 200
+        - name: english
+          in: query
+          description: Prefix filter on the English column.
+          schema:
+            type: string
+            maxLength: 200
         - name: fieldOfExpertise
           in: query
-          description: Filter by field of expertise
+          description: Prefix filter on the field of expertise.
           schema:
             type: string
+            maxLength: 200
         - name: wordType
           in: query
-          description: Filter by word type
+          description: Prefix filter on the word type.
           schema:
             type: string
+            maxLength: 100
+        - name: sortBy
+          in: query
+          description: |
+            Sort order. `relevance` is currently an alias of `alphabetical`
+            (ascending Hungarian headword).
+          schema:
+            type: string
+            enum:
+              - relevance
+              - alphabetical
+              - newest
+              - oldest
+              - popular
+            default: relevance
+        - name: includeStats
+          in: query
+          description: Append the dictionary-wide `statistics` block to the response.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
-          description: List of entries retrieved successfully
+          description: A page of entries
+          headers:
+            X-Total-Count:
+              description: Total number of matching entries.
+              schema:
+                type: string
+            X-Page:
+              description: Page number that was served.
+              schema:
+                type: string
+            X-Per-Page:
+              description: Page size that was applied.
+              schema:
+                type: string
+            X-Cache:
+              description: Cache disposition. Present in production only.
+              schema:
+                type: string
+                enum:
+                  - HIT
+                  - MISS
+                  - SKIP
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Entry'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
+                $ref: '#/components/schemas/EntryListResponse'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
     post:
       tags:
         - Entries
-      summary: Create new entry
-      description: Create a new dictionary entry (requires editor role or higher)
+      summary: Create an entry
+      description: |
+        Requires the **editor** (2) or **admin** (3) role.
+
+        Only `hungarian`, `english`, `fieldOfExpertise` and `wordType` are read
+        from the body; `createdBy`, `updatedBy`, `views` and `isActive` are set
+        by the server and cannot be supplied.
       operationId: createEntry
       security:
-        - BearerAuth: []
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -190,147 +376,240 @@ paths:
               $ref: '#/components/schemas/EntryInput'
       responses:
         '201':
-          description: Entry created successfully
+          description: Entry created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Entry'
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Entry'
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Entry created successfully
         '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
         '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
-  /entries/{id}:
-    get:
+  /entries/bulk:
+    post:
       tags:
         - Entries
-      summary: Get entry by ID
-      description: Retrieve a specific dictionary entry by its ID
-      operationId: getEntryById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Entry ID
-          schema:
-            type: string
-            pattern: '^[0-9a-fA-F]{24}$'
-      responses:
-        '200':
-          description: Entry retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Entry'
-        '404':
-          description: Entry not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+      summary: Bulk soft-delete or bulk field update
+      description: |
+        Requires the **admin** (3) role.
 
-    put:
-      tags:
-        - Entries
-      summary: Update entry
-      description: Update an existing dictionary entry (requires editor role or higher)
-      operationId: updateEntry
+        Select the target set with either an explicit `entries` array of IDs or
+        a `filters` object — exactly one of the two, never both. `filters` is
+        restricted to scalar equality on `fieldOfExpertise` and `wordType`, so
+        arbitrary Mongo operators cannot be smuggled into the update.
+
+        `operation: update` additionally requires `updateData`.
+        `operation: delete` is a soft delete: it sets `isActive: false`.
+      operationId: bulkEntryOperation
       security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Entry ID
-          schema:
-            type: string
-            pattern: '^[0-9a-fA-F]{24}$'
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EntryInput'
+              $ref: '#/components/schemas/EntryBulkRequest'
+            examples:
+              deleteByIds:
+                summary: Soft-delete a list of entries
+                value:
+                  operation: delete
+                  entries:
+                    - '507f1f77bcf86cd799439011'
+                    - '507f1f77bcf86cd799439012'
+              updateByFilter:
+                summary: Re-label every entry in a field of expertise
+                value:
+                  operation: update
+                  filters:
+                    fieldOfExpertise: fonetika
+                  updateData:
+                    fieldOfExpertise: fonológia
       responses:
         '200':
-          description: Entry updated successfully
+          description: Bulk operation completed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Entry'
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      operation:
+                        type: string
+                        enum:
+                          - delete
+                          - update
+                      matched:
+                        type: integer
+                        example: 42
+                      modified:
+                        type: integer
+                        example: 42
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Bulk update completed successfully
         '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
         '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Entry not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
-    patch:
+  /entries/popular:
+    get:
       tags:
         - Entries
-      summary: Partially update entry
-      description: Partially update an existing dictionary entry (requires editor role or higher)
-      operationId: patchEntry
-      security:
-        - BearerAuth: []
+      summary: Most-viewed entries
+      description: Public. Active entries ordered by view count, descending.
+      operationId: listPopularEntries
+      security: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Entry ID
-          schema:
-            type: string
-            pattern: '^[0-9a-fA-F]{24}$'
+        - $ref: '#/components/parameters/TopListLimit'
+      responses:
+        '200':
+          description: Most-viewed entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTopListResponse'
+              example:
+                data: []
+                meta:
+                  type: popular
+                  limit: 10
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /entries/recent:
+    get:
+      tags:
+        - Entries
+      summary: Most recently added entries
+      description: Public. Active entries ordered by creation date, descending.
+      operationId: listRecentEntries
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TopListLimit'
+      responses:
+        '200':
+          description: Most recently added entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryTopListResponse'
+              example:
+                data: []
+                meta:
+                  type: recent
+                  limit: 10
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /entries/statistics:
+    get:
+      tags:
+        - Entries
+      summary: Dictionary-wide statistics
+      description: Public. Totals plus the distinct field-of-expertise and word-type lists. Takes no parameters.
+      operationId: getEntryStatistics
+      security: []
+      responses:
+        '200':
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Statistics'
+                  meta:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: statistics
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /entries/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ObjectId'
+    get:
+      tags:
+        - Entries
+      summary: Fetch one entry
+      description: |
+        Public. Returns the entry with `createdBy` and `updatedBy` populated to
+        first and last name. Increments the view counter as a side effect; a
+        failed increment never fails the read.
+      operationId: getEntryById
+      security: []
+      responses:
+        '200':
+          description: The entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EntryDetail'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '404':
+          $ref: '#/components/responses/EntryNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Entries
+      summary: Update an entry
+      description: |
+        Requires the **editor** (2) or **admin** (3) role. Identical to `PATCH`:
+        the body is a partial update and at least one writable field must be
+        present. Fields that are not sent are left untouched.
+      operationId: updateEntry
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -339,133 +618,134 @@ paths:
               $ref: '#/components/schemas/EntryUpdateInput'
       responses:
         '200':
-          description: Entry updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Entry'
+          $ref: '#/components/responses/EntryUpdated'
         '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
         '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Entry not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/EntryNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags:
+        - Entries
+      summary: Partially update an entry
+      description: Requires the **editor** (2) or **admin** (3) role. Same handler and same semantics as `PUT`.
+      operationId: patchEntry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryUpdateInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/EntryUpdated'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EntryNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     delete:
       tags:
         - Entries
-      summary: Delete entry
-      description: Delete a dictionary entry (requires editor role or higher)
+      summary: Delete an entry
+      description: |
+        Requires the **editor** (2) or **admin** (3) role. Soft delete: the
+        document is retained with `isActive: false` and disappears from every
+        read endpoint.
       operationId: deleteEntry
       security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Entry ID
-          schema:
-            type: string
-            pattern: '^[0-9a-fA-F]{24}$'
+        - bearerAuth: []
       responses:
         '200':
-          description: Entry deleted successfully
+          description: Entry deleted
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Entry deleted successfully"
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Entry deleted successfully
+                      entryId:
+                        type: string
+                        example: '507f1f77bcf86cd799439011'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
         '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: Entry not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/EntryNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
+  # -------------------------------------------------------------------------
+  # Users — the whole router is admin-only
+  # -------------------------------------------------------------------------
   /users:
     get:
       tags:
         - Users
-      summary: Get all users
-      description: Retrieve all users (requires authentication)
-      operationId: getAllUsers
+      summary: List users
+      description: Requires the **admin** (3) role. Newest accounts first. Password hashes are never returned.
+      operationId: listUsers
       security:
-        - BearerAuth: []
+        - bearerAuth: []
       parameters:
         - name: page
           in: query
-          description: Page number for pagination
+          description: 1-based page number.
           schema:
             type: integer
             minimum: 1
+            maximum: 10000
             default: 1
         - name: limit
           in: query
-          description: Number of items per page
+          description: Page size.
           schema:
             type: integer
             minimum: 1
             maximum: 100
-            default: 20
+            default: 25
         - name: role
           in: query
-          description: Filter by user role
+          description: Filter by role.
           schema:
             type: integer
             enum: [1, 2, 3]
         - name: isActive
           in: query
-          description: Filter by active status
+          description: Filter by activation state.
           schema:
             type: boolean
       responses:
         '200':
-          description: List of users retrieved successfully
+          description: A page of users
           content:
             application/json:
               schema:
@@ -477,27 +757,27 @@ paths:
                       $ref: '#/components/schemas/User'
                   pagination:
                     $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalError'
 
     post:
       tags:
         - Users
-      summary: Create new user
-      description: Create a new user (requires admin role)
+      summary: Create a user
+      description: |
+        Requires the **admin** (3) role. The password is hashed with bcrypt
+        (12 rounds) before it is stored and is never echoed back.
       operationId: createUser
       security:
-        - BearerAuth: []
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -506,143 +786,611 @@ paths:
               $ref: '#/components/schemas/UserInput'
       responses:
         '201':
-          description: User created successfully
+          description: User created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: User created successfully
         '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationFailed'
         '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthenticated'
         '403':
-          description: Insufficient permissions (admin required)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Forbidden'
         '409':
-          description: User with this email already exists
+          description: An account with that email address already exists.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error: An account with this email address already exists
+                statusCode: 409
+                type: ConflictError
+                timestamp: '2026-01-31T10:12:44.108Z'
+                path: /users
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '500':
-          description: Internal server error
+          $ref: '#/components/responses/InternalError'
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ObjectId'
+    get:
+      tags:
+        - Users
+      summary: Fetch one user
+      description: Requires the **admin** (3) role.
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The user
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
+    put:
+      tags:
+        - Users
+      summary: Update a user
+      description: |
+        Requires the **admin** (3) role. Identical to `PATCH`: a partial
+        update, at least one field required.
+
+        An absent or empty `password` means "leave the current one alone" — the
+        admin form has no way to know it and must not be able to blank it. When
+        a password is sent, it is re-hashed through the model's save hook.
+
+        Two lockouts are refused with `409`: revoking your own administrator
+        access (by role change or by deactivating yourself), and removing the
+        last remaining active administrator.
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserUpdated'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/UserConflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags:
+        - Users
+      summary: Partially update a user
+      description: Requires the **admin** (3) role. Same handler and same guards as `PUT`.
+      operationId: patchUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserUpdated'
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/UserConflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete a user
+      description: |
+        Requires the **admin** (3) role. Hard delete — unlike entries, the
+        document is removed.
+
+        Refused with `409` when the caller targets their own account, or when
+        the deletion would leave no active administrator.
+      operationId: deleteUser
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: User deleted. No body.
+        '400':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/UserConflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # -------------------------------------------------------------------------
+  # Health — exempt from the global rate limiter
+  # -------------------------------------------------------------------------
   /health:
     get:
       tags:
         - Health
-      summary: Health check
-      description: Check the health status of the API
-      operationId: healthCheck
+      summary: Health summary
+      description: |
+        Public and deliberately terse: status, timestamp and uptime, nothing
+        that would help an attacker fingerprint the deployment. Returns `503`
+        when the database is unreachable.
+      operationId: getHealth
+      security: []
       responses:
         '200':
-          description: API is healthy
+          description: Healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/HealthSummary'
         '503':
-          description: API is unhealthy
+          description: Degraded — the database is not reachable.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/HealthSummary'
+              example:
+                status: degraded
+                timestamp: '2026-01-31T10:12:44.108Z'
+                uptimeSeconds: 3600
+
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: |
+        Public. Answers "is this process running?" and nothing more, so a
+        database outage does not cause the orchestrator to restart an otherwise
+        healthy container. Always `200` while the process is up.
+      operationId: getLiveness
+      security: []
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Public. Answers "can this process serve traffic?", which requires a reachable database.
+      operationId: getReadiness
+      security: []
+      responses:
+        '200':
+          description: Ready to serve traffic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReadiness'
+        '503':
+          description: Not ready — the database is not connected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReadiness'
+              example:
+                status: unavailable
+                database: disconnected
+
+  /health/detailed:
+    get:
+      tags:
+        - Health
+      summary: Operational detail
+      description: |
+        Requires the **admin** (3) role. Version, runtime, memory and cache
+        counters. Returns `503` with the same body when the database is down.
+      operationId: getDetailedHealth
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Operational detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthDetailed'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          description: Degraded — the database is not reachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthDetailed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 components:
   securitySchemes:
-    BearerAuth:
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
       description: |
-        JWT authentication. Add 'Bearer ' prefix to your JWT token.
-        Example: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+        The access token from `POST /login`, sent as
+        `Authorization: Bearer <token>`.
+
+        Verification pins the algorithm (`HS256`), the issuer
+        (`nyelvszo-api`), the audience (`nyelvszo-client`) and the `typ`
+        claim (`access`). A refresh token presented here is rejected.
+
+  parameters:
+    ObjectId:
+      name: id
+      in: path
+      required: true
+      description: 24-character hexadecimal MongoDB ObjectId.
+      schema:
+        type: string
+        pattern: '^[0-9a-fA-F]{24}$'
+        example: '507f1f77bcf86cd799439011'
+
+    TopListLimit:
+      name: limit
+      in: query
+      description: How many entries to return.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+
+  responses:
+    ValidationFailed:
+      description: |
+        The request body, path parameter or query string failed validation.
+        Unknown query parameters and unknown body fields are rejected, not
+        ignored.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Validation Error
+            statusCode: 400
+            type: ValidationError
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /entries
+            details:
+              - field: limit
+                message: '"limit" must be less than or equal to 100'
+
+    Unauthenticated:
+      description: |
+        No bearer token, or a token that is expired, malformed, signed with the
+        wrong secret, of the wrong `typ`, or issued for an account that has
+        since been deleted or deactivated.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Access token is required
+            statusCode: 401
+            type: Error
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /entries
+
+    Forbidden:
+      description: Authenticated, but the account's role is not in the set this route admits.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Insufficient permissions
+            statusCode: 403
+            type: Error
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /users
+
+    EntryNotFound:
+      description: No active entry with that ID.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Entry not found
+            statusCode: 404
+            type: NotFoundError
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /entries/507f1f77bcf86cd799439011
+
+    UserNotFound:
+      description: No user with that ID.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: User not found
+            statusCode: 404
+            type: NotFoundError
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /users/507f1f77bcf86cd799439011
+
+    UserConflict:
+      description: |
+        The change is refused: it would take a duplicate email address, revoke
+        the caller's own administrator access, delete the caller's own account,
+        or leave the installation with no active administrator.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: At least one active administrator must remain
+            statusCode: 409
+            type: ConflictError
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /users/507f1f77bcf86cd799439011
+
+    EntryUpdated:
+      description: Entry updated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/EntryDetail'
+              meta:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Entry updated successfully
+
+    UserUpdated:
+      description: User updated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/User'
+              meta:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User updated successfully
+
+    RateLimited:
+      description: |
+        Rate limit exceeded. Produced by the rate limiter before the error
+        handler runs, so the body carries only `error` — not the standard
+        envelope. `RateLimit-*` headers (draft-7) describe the window.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Too many requests from this IP, please try again later.
+
+    InternalError:
+      description: |
+        Unexpected failure. In production the message is always
+        `Something went wrong` and no stack is included; in `development` and
+        `test` the real message and a `stack` field are returned.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Something went wrong
+            statusCode: 500
+            type: InternalServerError
+            timestamp: '2026-01-31T10:12:44.108Z'
+            path: /entries
 
   schemas:
     Entry:
       type: object
+      description: An entry as returned by the list endpoints.
       properties:
         _id:
           type: string
-          format: objectId
-          description: Unique identifier
-          example: "507f1f77bcf86cd799439011"
+          example: '507f1f77bcf86cd799439011'
         hungarian:
           type: string
-          description: Hungarian term
-          example: "számítógép"
           maxLength: 500
+          example: hangrend
         english:
           type: string
-          description: English term
-          example: "computer"
           maxLength: 500
+          example: vowel harmony
         fieldOfExpertise:
           type: string
-          description: Field of expertise
-          example: "informatika"
           maxLength: 200
+          example: fonológia
         wordType:
           type: string
-          description: Type of word (noun, verb, etc.)
-          example: "főnév"
           maxLength: 100
+          example: főnév
+        views:
+          type: integer
+          example: 128
         createdAt:
           type: string
           format: date-time
-          description: Creation timestamp
         updatedAt:
           type: string
           format: date-time
-          description: Last update timestamp
       required:
         - _id
         - hungarian
         - english
         - fieldOfExpertise
 
+    EntryDetail:
+      type: object
+      description: |
+        An entry as returned by `GET /entries/{id}` and by the write endpoints.
+        Carries the audit fields that the list projection omits.
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        hungarian:
+          type: string
+          example: hangrend
+        english:
+          type: string
+          example: vowel harmony
+        fieldOfExpertise:
+          type: string
+          example: fonológia
+        wordType:
+          type: string
+          example: főnév
+        views:
+          type: integer
+          example: 128
+        lastViewed:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+          example: true
+        createdBy:
+          $ref: '#/components/schemas/AuditReference'
+        updatedBy:
+          $ref: '#/components/schemas/AuditReference'
+        wordCount:
+          type: object
+          description: Virtual field — token counts for the two headwords.
+          properties:
+            hungarian:
+              type: integer
+              example: 1
+            english:
+              type: integer
+              example: 2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuditReference:
+      type: object
+      nullable: true
+      description: Populated reference to the acting user, first and last name only.
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439099'
+        firstName:
+          type: string
+          example: Ádám
+        lastName:
+          type: string
+          example: Porkoláb
+
     EntryInput:
       type: object
+      description: Body of `POST /entries`. Unknown fields are rejected.
       properties:
         hungarian:
           type: string
-          description: Hungarian term
-          example: "számítógép"
           minLength: 1
           maxLength: 500
+          example: hangrend
         english:
           type: string
-          description: English term
-          example: "computer"
           minLength: 1
           maxLength: 500
+          example: vowel harmony
         fieldOfExpertise:
           type: string
-          description: Field of expertise
-          example: "informatika"
           minLength: 1
           maxLength: 200
+          example: fonológia
         wordType:
           type: string
-          description: Type of word (noun, verb, etc.)
-          example: "főnév"
-          minLength: 1
           maxLength: 100
+          description: Optional. An empty string is accepted and stored as such.
+          example: főnév
       required:
         - hungarian
         - english
@@ -650,75 +1398,198 @@ components:
 
     EntryUpdateInput:
       type: object
+      minProperties: 1
+      description: Body of `PUT`/`PATCH /entries/{id}`. At least one field is required.
       properties:
         hungarian:
           type: string
-          description: Hungarian term
-          example: "számítógép"
           minLength: 1
           maxLength: 500
+          example: hangrend
         english:
           type: string
-          description: English term
-          example: "computer"
           minLength: 1
           maxLength: 500
+          example: vowel harmony
         fieldOfExpertise:
           type: string
-          description: Field of expertise
-          example: "informatika"
           minLength: 1
           maxLength: 200
+          example: fonológia
         wordType:
           type: string
-          description: Type of word (noun, verb, etc.)
-          example: "főnév"
-          minLength: 1
           maxLength: 100
+          example: főnév
+
+    EntryBulkRequest:
+      type: object
+      description: |
+        Body of `POST /entries/bulk`. Exactly one of `entries` and `filters`
+        must be present. `updateData` is required when `operation` is `update`
+        and ignored when it is `delete`.
+      properties:
+        operation:
+          type: string
+          enum:
+            - delete
+            - update
+        entries:
+          type: array
+          maxItems: 1000
+          description: Explicit list of entry IDs.
+          items:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+        filters:
+          type: object
+          minProperties: 1
+          description: Scalar equality filters. No other field is accepted.
+          properties:
+            fieldOfExpertise:
+              type: string
+              maxLength: 200
+            wordType:
+              type: string
+              maxLength: 100
+        updateData:
+          type: object
+          minProperties: 1
+          description: Fields to write. Required for `operation: update`.
+          properties:
+            fieldOfExpertise:
+              type: string
+              minLength: 1
+              maxLength: 200
+            wordType:
+              type: string
+              maxLength: 100
+      required:
+        - operation
+
+    EntryListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          type: object
+          description: Echo of the search that produced this page.
+          properties:
+            searchTerm:
+              type: string
+              nullable: true
+              example: hang
+            filters:
+              type: object
+              properties:
+                fieldOfExpertise:
+                  type: string
+                  nullable: true
+                wordType:
+                  type: string
+                  nullable: true
+            sortBy:
+              type: string
+              example: relevance
+        statistics:
+          allOf:
+            - $ref: '#/components/schemas/Statistics'
+          description: Present only when `includeStats=true`.
+
+    EntryTopListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+        meta:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - popular
+                - recent
+            limit:
+              type: integer
+              example: 10
+
+    Statistics:
+      type: object
+      properties:
+        totalEntries:
+          type: integer
+          example: 4821
+        totalFields:
+          type: integer
+          example: 37
+        totalWordTypes:
+          type: integer
+          example: 9
+        totalViews:
+          type: integer
+          example: 91204
+        fields:
+          type: array
+          description: Distinct fields of expertise, sorted.
+          items:
+            type: string
+        wordTypes:
+          type: array
+          description: Distinct word types, sorted, empty values removed.
+          items:
+            type: string
+        averageViewsPerEntry:
+          type: number
+          description: Present on `GET /entries/statistics`; not part of the `includeStats` block.
+          example: 18.92
 
     User:
       type: object
+      description: A user account. The password hash is never included.
       properties:
         _id:
           type: string
-          format: objectId
-          description: Unique identifier
-          example: "507f1f77bcf86cd799439011"
+          example: '507f1f77bcf86cd799439099'
         firstName:
           type: string
-          description: First name
-          example: "János"
+          example: Ádám
         lastName:
           type: string
-          description: Last name
-          example: "Kovács"
+          example: Porkoláb
         email:
           type: string
           format: email
-          description: Email address
-          example: "janos.kovacs@example.com"
+          example: adam@example.com
         role:
           type: integer
-          description: User role (1=User, 2=Editor, 3=Admin)
+          description: 1 = viewer, 2 = editor, 3 = admin.
           enum: [1, 2, 3]
-          example: 2
+          example: 3
         isActive:
           type: boolean
-          description: Whether user is active
           example: true
         lastLogin:
           type: string
           format: date-time
-          description: Last login timestamp
+          nullable: true
+        createdBy:
+          type: string
+          nullable: true
+        updatedBy:
+          type: string
           nullable: true
         createdAt:
           type: string
           format: date-time
-          description: Creation timestamp
         updatedAt:
           type: string
           format: date-time
-          description: Last update timestamp
       required:
         - _id
         - firstName
@@ -728,39 +1599,43 @@ components:
 
     UserInput:
       type: object
+      description: Body of `POST /users`. Unknown fields are rejected.
       properties:
         firstName:
           type: string
-          description: First name
-          example: "János"
           minLength: 2
           maxLength: 100
-          pattern: '^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\s-]+$'
+          description: Letters (any script, accents included), spaces, hyphens and apostrophes only.
+          example: Ádám
         lastName:
           type: string
-          description: Last name
-          example: "Kovács"
           minLength: 2
           maxLength: 100
-          pattern: '^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\s-]+$'
+          description: Letters (any script, accents included), spaces, hyphens and apostrophes only.
+          example: Porkoláb
         email:
           type: string
           format: email
-          description: Email address
-          example: "janos.kovacs@example.com"
           maxLength: 255
+          description: Normalised to lower case.
+          example: adam@example.com
         role:
           type: integer
-          description: User role (1=User, 2=Editor, 3=Admin)
           enum: [1, 2, 3]
           example: 2
         password:
           type: string
-          description: Password (minimum 8 chars, must contain uppercase, lowercase, number, and special character)
-          example: "SecurePassword123!"
-          minLength: 8
+          minLength: 12
           maxLength: 128
-          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]'
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$'
+          description: |
+            At least 12 characters, containing a lower-case letter, an
+            upper-case letter, a digit and a symbol. The symbol class is open,
+            so any non-alphanumeric character qualifies.
+          example: 'kek-Elefant-42!'
+        isActive:
+          type: boolean
+          default: true
       required:
         - firstName
         - lastName
@@ -768,18 +1643,53 @@ components:
         - role
         - password
 
+    UserUpdateInput:
+      type: object
+      minProperties: 1
+      description: Body of `PUT`/`PATCH /users/{id}`. At least one field is required.
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Ádám
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Porkoláb
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: adam@example.com
+        role:
+          type: integer
+          enum: [1, 2, 3]
+          example: 2
+        password:
+          type: string
+          maxLength: 128
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$'
+          description: |
+            Same rules as on create. Send an empty string, or omit the field,
+            to keep the existing password.
+          example: 'kek-Elefant-42!'
+        isActive:
+          type: boolean
+
     LoginRequest:
       type: object
       properties:
         email:
           type: string
           format: email
-          description: User email address
-          example: "user@example.com"
+          maxLength: 255
+          example: adam@example.com
         password:
           type: string
-          description: User password
-          example: "SecurePassword123!"
+          maxLength: 128
+          example: 'kek-Elefant-42!'
       required:
         - email
         - password
@@ -789,22 +1699,92 @@ components:
       properties:
         success:
           type: boolean
-          description: Login success status
           example: true
         accessToken:
           type: string
-          description: JWT access token
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          description: Short-lived bearer token. Lifetime from `JWT_EXPIRES_IN`, 15 minutes by default.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: Long-lived token, only valid at `POST /login/refresh`. Lifetime from `JWT_REFRESH_EXPIRES_IN`, 7 days by default.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/LoginUser'
         expiresIn:
           type: string
-          description: Token expiration time
-          example: "1h"
+          description: Access token lifetime, as configured.
+          example: 15m
       required:
         - success
         - accessToken
+        - refreshToken
         - user
+        - expiresIn
+
+    LoginUser:
+      type: object
+      description: Public projection of the authenticated account.
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439099'
+        firstName:
+          type: string
+          example: Ádám
+        lastName:
+          type: string
+          example: Porkoláb
+        email:
+          type: string
+          format: email
+          example: adam@example.com
+        role:
+          type: integer
+          enum: [1, 2, 3]
+          example: 3
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          maxLength: 4096
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      required:
+        - refreshToken
+
+    RefreshResponse:
+      type: object
+      description: |
+        No `user` object here — refresh only rotates credentials. The pair is
+        replaced wholesale; discard the refresh token you sent.
+      properties:
+        success:
+          type: boolean
+          example: true
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        expiresIn:
+          type: string
+          example: 15m
+      required:
+        - success
+        - accessToken
+        - refreshToken
         - expiresIn
 
     Pagination:
@@ -812,154 +1792,176 @@ components:
       properties:
         currentPage:
           type: integer
-          description: Current page number
           example: 1
         totalPages:
           type: integer
-          description: Total number of pages
           example: 10
         totalItems:
           type: integer
-          description: Total number of items
-          example: 200
+          example: 194
         itemsPerPage:
           type: integer
-          description: Number of items per page
           example: 20
         hasNextPage:
           type: boolean
-          description: Whether there is a next page
           example: true
         hasPrevPage:
           type: boolean
-          description: Whether there is a previous page
           example: false
 
-    HealthResponse:
+    HealthSummary:
       type: object
       properties:
         status:
           type: string
-          enum: ["OK", "ERROR"]
-          description: Health status
-          example: "OK"
+          enum:
+            - ok
+            - degraded
+          example: ok
         timestamp:
           type: string
           format: date-time
-          description: Health check timestamp
+        uptimeSeconds:
+          type: integer
+          example: 3600
+
+    HealthReadiness:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+            - unavailable
+          example: ok
+        database:
+          type: string
+          enum:
+            - connected
+            - connecting
+            - disconnecting
+            - disconnected
+            - error
+            - unknown
+          example: connected
+
+    HealthDetailed:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+            - degraded
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
         version:
           type: string
-          description: API version
-          example: "2.2.0"
-        uptime:
-          type: number
-          description: Server uptime in seconds
-          example: 3600.5
+          example: 2.2.0
+        nodeVersion:
+          type: string
+          example: v24.4.0
+        environment:
+          type: string
+          example: production
+        startedAt:
+          type: string
+          format: date-time
+        uptimeSeconds:
+          type: integer
+          example: 3600
         database:
           type: object
           properties:
             status:
               type: string
-              enum: ["connected", "disconnected", "error"]
-              example: "connected"
-            responseTime:
-              type: number
-              description: Database response time in milliseconds
-              example: 15.2
+              example: connected
+            connected:
+              type: boolean
+              example: true
+            responseTimeMs:
+              type: integer
+              description: Present only when the ping succeeded.
+              example: 4
         memory:
           type: object
           properties:
-            used:
+            rssMb:
               type: number
-              description: Used memory in bytes
-              example: 104857600
-            total:
+              example: 118.35
+            heapTotalMb:
               type: number
-              description: Total memory in bytes
-              example: 1073741824
-            usage:
+              example: 62.5
+            heapUsedMb:
               type: number
-              description: Memory usage percentage
-              example: 9.77
+              example: 48.11
+        cache:
+          type: object
+          description: In-process cache counters.
+          properties:
+            hits:
+              type: integer
+            misses:
+              type: integer
+            sets:
+              type: integer
+            errors:
+              type: integer
+            hitRatio:
+              type: number
+              example: 0.734
+            tiers:
+              type: object
+              description: Key counts per tier (`short`, `medium`, `long`).
 
     Error:
       type: object
+      description: |
+        The single error envelope produced by the central error handler. `429`
+        responses are the exception — see the rate-limit description.
       properties:
         error:
           type: string
-          description: Error message
-          example: "Invalid credentials"
-        message:
-          type: string
-          description: Detailed error message
-          example: "The provided email or password is incorrect"
+          description: Human-readable message, safe to display.
+          example: Entry not found
         statusCode:
           type: integer
-          description: HTTP status code
-          example: 401
+          example: 404
+        type:
+          type: string
+          description: |
+            Machine-readable class. `ValidationError`, `NotFoundError`,
+            `ConflictError`, `DuplicateError`, `AuthenticationError`,
+            `ForbiddenError`, `InternalServerError`, or plain `Error` for the
+            HTTP errors raised in the auth layer.
+          example: NotFoundError
         timestamp:
           type: string
           format: date-time
-          description: Error timestamp
         path:
           type: string
-          description: Request path where error occurred
-          example: "/login"
-      required:
-        - error
-        - statusCode
-
-    ValidationError:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Error message
-          example: "Validation Error"
-        message:
-          type: string
-          description: Detailed error message
-          example: "Input validation failed"
-        statusCode:
-          type: integer
-          description: HTTP status code
-          example: 400
+          description: The request path the error occurred on.
+          example: /entries/507f1f77bcf86cd799439011
         details:
           type: array
-          description: Validation error details
+          description: Field-level detail. Present on validation failures only.
           items:
             type: object
             properties:
               field:
                 type: string
-                description: Field that failed validation
-                example: "email"
+                example: email
               message:
                 type: string
-                description: Validation error message
-                example: "Please provide a valid email address"
-              value:
-                description: The invalid value that was provided
-                example: "invalid-email"
-        timestamp:
+                example: Please provide a valid email address
+        stack:
           type: string
-          format: date-time
-          description: Error timestamp
-        path:
-          type: string
-          description: Request path where error occurred
-          example: "/users"
+          description: Present only when `NODE_ENV` is `development` or `test`.
       required:
         - error
         - statusCode
-        - details
-
-tags:
-  - name: Authentication
-    description: User authentication and authorization
-  - name: Entries
-    description: Dictionary entries management
-  - name: Users
-    description: User management (admin only)
-  - name: Health
-    description: API health monitoring
+        - type
+        - timestamp
+        - path

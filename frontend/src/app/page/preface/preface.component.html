@@ -1,10 +1,23 @@
-<div id="container" class="px-2">
-  <h1 id="home">Angol-magyar nyelvészeti szakszótár v.2.2.0 (2025-08-27)</h1>
-  <div id="szoveg">
+<!--
+  The preface and the bibliography.
+
+  The text is the authors' own, in Hungarian; it is marked up here rather than
+  translated. Previously it was a full-bleed run of paragraphs with no measure,
+  so on a wide screen a line ran the whole width of the monitor.
+-->
+<div class="container container--medium stack stack--loose">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ 'preface.title' | translate }}</h1>
+      <p class="page-header__lead">{{ 'Dictionary' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="prose">
     <h2>Előszó az első kiadáshoz</h2>
-    <p></p>
+
     <h3>Üdvözöljük az Olvasót!</h3>
-    <p></p>
+
     <p>
       Magyar nyelven már az érdeklődő közönség hozzáférhet német–magyar, orosz–magyar nyelvészeti
       szakszótárakhoz, ám a modern idők tudományos világnyelvéhez, az angolhoz még nem készült
@@ -15,18 +28,20 @@
       elődök nélküli vállalkozás: tudomásunk szerint két nyelvészeti csoport kísérelt meg a miénkhez
       hasonló angol-magyar nyelvészeti szakszótárat létrehozni.
     </p>
+
     <p>
-      Az első próbálkozás Theodora Bynon "Történeti nyelvészet" című munkájának magyar fordítóihoz
+      Az első próbálkozás Theodora Bynon „Történeti nyelvészet” című munkájának magyar fordítóihoz
       kötődik: Gherdán Tamás, Számadó Tamás, illetve Nádasdy Ádám készítettek nyelvészeti
       glosszáriumot, mely az 1997-ben, az Osiris Kiadónál megjelent kötet végén található. Ezt a
       fordítók Bynon-glosszáriumnak nevezték és körülbelül 500 címszót tartalmazott, melynek
-      legnagyobb része hangtani és nyelvtörténeti jellegű volt. A második egy "Angol–magyar
-      nyelvészeti glosszárium" című, 172 címszavas, 2002 körül keletkezett szakszójegyzék volt,
-      melyet Várnai Judit Szilvia szerkesztett, s mely az "Onomastica Uralica" sorozat 2. kötetének
+      legnagyobb része hangtani és nyelvtörténeti jellegű volt. A második egy „Angol–magyar
+      nyelvészeti glosszárium” című, 172 címszavas, 2002 körül keletkezett szakszójegyzék volt,
+      melyet Várnai Judit Szilvia szerkesztett, s mely az „Onomastica Uralica” sorozat 2. kötetének
       fordításakor nyert tapasztalatokból keletkezett. Ez leginkább névtani jellegű szavakat
-      tartalmazott. Mindkét "elődünk" szerzőinek, szerkesztőinek, fordítóinak köszönettel tartozunk
+      tartalmazott. Mindkét „elődünk” szerzőinek, szerkesztőinek, fordítóinak köszönettel tartozunk
       a munkájukért.
     </p>
+
     <p>
       Előzetes tervezésünk során e két előd címszavainak áttekintéséből, lektorálásából indultunk
       ki, majd második körben a magyarul hozzáférhető nyelvészeti szakszótárak (német, illetve
@@ -37,18 +52,21 @@
       következő oldalakon olvashatja a Kedves Olvasó. Szótárunk – bár teljességre törekszik – de
       természetesen nem minden nyelvészeti fogalom lefordítására terjed ki.
     </p>
+
     <p>
       2018 és 2021 között zajlott szerkesztési folyamat eredménye a most bemutatott angol-magyar
       nyelvészeti szakszótár körülbelül 12.500 szócikke. Munkánkat elsősorban szaktanulmányok
       írásához és fordításához, illetve nyelvészeti kutatáshoz ajánljuk. Mindezen okok miatt
-      mellőztük a "hagyományos" angol–magyar szótárakban már megszokott, kiejtést segítő IPA
+      mellőztük a „hagyományos” angol–magyar szótárakban már megszokott, kiejtést segítő IPA
       átírást.
     </p>
+
     <p>
       Szótárunk írásmódjában a nyelvészetben megszokottabb amerikai írásmódot követi. Jelezzük
       viszont azokat a címszavakat, ahol a brit írásmód különbözik. Például: behavior (-ou-), center
       (-re).
     </p>
+
     <p>
       Már munkánk kezdeti szakaszától tudtuk a végcélunkat: olyan nyelvészeti indíttatású szótárat
       szerettünk volna megalkotni, amit az érettségire készülő középiskolástól egészen a külföldi
@@ -63,6 +81,7 @@
       például: a befejezett szemlélet és a perfektív aspektus is. Ennek oka, hogy az eltérő
       nyelvészeti képzettséggel rendelkezők is haszonnal forgathassák munkánkat.
     </p>
+
     <p>
       A szótár anyagának összeállítása során különösen, de nem kizárólagosan a stilisztika, a
       szociolingvisztika, a szemantika, a nyelvtörténet, az areális nyelvészet, az anglisztika, a
@@ -75,33 +94,38 @@
       terjedelmi körülhatárolás miatt, hogy elsősorban csak a germán és uráli nyelvek esetében
       vettük fel a szótár anyagába az adott nyelvek nyelvtörténeti korszakainak elnevezéseit (pl.
       ómagyar, középangol). Munkánk felépítésében támaszkodtunk a magyar-angol szótárszerkesztés
-      hagyományaira, kifejezetten a "nagy előd" Országh László szerkesztési elveire, de el is
+      hagyományaira, kifejezetten a „nagy előd” Országh László szerkesztési elveire, de el is
       tértünk azoktól: mivel a szaknyelvi szókincs esetén nem láttuk célszerűnek, így a hasonló
       alakú szavak szóbokrozásától eltekintettünk, de az eltérő jelentéseket megkülönböztettük
       egymástól. Itt is újítani kényszerültünk: a sorszámozás helyett nyelvtudományi szakterület
       szerint külböztettük meg azokat egymástól. Ha szükséges volt saját, rövid magyarázatot adtunk
-      a címszóhoz.&nbsp;
+      a címszóhoz.
     </p>
+
     <p>
-      &nbsp;Bármennyire is törekedtünk rá, de biztosan tudjuk, hogy munkánk nem hibátlan. A Kedves
-      Olvasó szótárunk anyagához fűzött, segítő szándékú kritikáját, hibajelzéseit és kiegészítéseit
+      Bármennyire is törekedtünk rá, de biztosan tudjuk, hogy munkánk nem hibátlan. A Kedves Olvasó
+      szótárunk anyagához fűzött, segítő szándékú kritikáját, hibajelzéseit és kiegészítéseit
       szeretettel várjuk. Ezekre a címekre várjuk könyvkiadók, nyomdaipari szakemberek megkeresését
       is, akik segítenének szótáraink nyomtatott formában történő megjelentetésében, a tördelési
       hiányosságok kiküszöbölésében. Végezetül minden olvasónk számára kívánjuk, hogy szótárunk
       legyen annyira teljes és jól használható, mint amilyennek mi terveztük.
     </p>
+
     <p>Pécsett, 2021. március 26.</p>
+
     <p>
-      <em
-        ><a href="mailto:adam.porkolab@gmail.com">Dr. Porkoláb Ádám</a> és
-        <a href="mailto:fekete.tamas@pte.hu">Dr.Fekete Tamás</a>
+      <em>
+        <a href="mailto:adam.porkolab@gmail.com">Dr. Porkoláb Ádám</a> és
+        <a href="mailto:fekete.tamas@pte.hu">Dr. Fekete Tamás</a>
       </em>
+      <br />
+      <strong>A szerzők</strong>
     </p>
-    <p><strong>A szerzők </strong></p>
-  </div>
-  <div id="forrasok">
-    <h1>A szótár anyagának összeállítása során a következő művekre támaszkodtunk</h1>
-    <strong>Az itt megadott internetes linkek 2020. július 1-jén még elérhetőek voltak.</strong>
+
+    <h2>A szótár anyagának összeállítása során a következő művekre támaszkodtunk</h2>
+
+    <p>Az itt megadott internetes linkek 2020. július 1-jén még elérhetőek voltak.</p>
+
     <ul>
       <li>Babbie E. (2008). A társadalomtudományi kutatás gyakorlata. Budapest: Balassi K.</li>
       <li>
@@ -118,11 +142,8 @@
       </li>
       <li>
         Bölcskei A., Farkas T. &amp; Slíz M. (Szerk.) (2017). Magyar és nemzetközi névtani
-        terminológia / Hungarian and
-      </li>
-      <li>
-        International Onomastic Terminology. International Council of Onomastic Sciences; Magyar
-        Nyelvtudományi Társaság, Uppsala; Budapest.
+        terminológia / Hungarian and International Onomastic Terminology. International Council of
+        Onomastic Sciences; Magyar Nyelvtudományi Társaság, Uppsala; Budapest.
       </li>
       <li>
         Borgulya I. (2014). Kulturális távolságok: vállalatokon belüli és országok közötti
@@ -153,8 +174,8 @@
       <li>Földes Cs. (1997). Linguistisches Wörterbuch Deutsch-Ungarisch. Szeged: Generalia.</li>
       <li>
         Gherdán T., Számadó T. &amp; Nádasdy Á. (összeáll.) (1997). Nyelvészeti szakszójegyzék
-        angol-magyar, magyar-angol (ún. "Bynon-glosszárium") Letöltés helye:
-        <a href="http://www.nytud.hu/tlp/glossary/">https://www.nytud.hu/tlp/glossary/</a>
+        angol-magyar, magyar-angol (ún. „Bynon-glosszárium”). Letöltés helye:
+        <a href="https://www.nytud.hu/tlp/glossary/">https://www.nytud.hu/tlp/glossary/</a>
       </li>
       <li>Gyurgyák J. (2005). Szerzők és szerkesztők kézikönyve. Budapest: Osiris.</li>
       <li>
@@ -165,7 +186,7 @@
         Horváth M., D. Mátai M., Korompay K., &amp; H. Bottyánfy É. (2005). Bevezetés az egyetemi
         magyar nyelvészeti tanulmányokba: Egyetemi segédkönyv. Nemzeti Tankönyvkiadó. Letöltés
         helye:
-        <a href="http://observatory.org.hu/en/information/hungarian-english-glossary/"
+        <a href="https://observatory.org.hu/en/information/hungarian-english-glossary/"
           >https://observatory.org.hu/en/information/hungarian-english-glossary/</a
         >
       </li>
@@ -198,9 +219,9 @@
       </li>
       <li>Laczkó K. &amp; Mártonfi A. (2006). Helyesírás. Budapest: Osiris.</li>
       <li>
-        Petőfi S. J. &amp; Benkes Z. (2002). A multimediális szövegek megközelítései: Kérdések -
+        Petőfi S. J. &amp; Benkes Z. (2002). A multimediális szövegek megközelítései: Kérdések –
         válaszok. Pécs: Iskolakultúra. Letöltés helye:
-        <a href="http://mek.oszk.hu/01800/01814">https://mek.oszk.hu/01800/01814</a>
+        <a href="https://mek.oszk.hu/01800/01814">https://mek.oszk.hu/01800/01814</a>
       </li>
       <li>
         Pléh Cs. &amp; Lukács Á. (szerk.). (2014). Pszicholingvisztika 1-2: Magyar
@@ -217,12 +238,14 @@
       </li>
       <li>
         Sajtos L. &amp; Mitev A. (2007). SPSS kutatási és adatelemzési kézikönyv. Budapest: Alinea.
+      </li>
+      <li>
         Salga A. (1993). Orosz nyelvészeti kislexikon. Debrecen: Kossuth Lajos Tudományegyetem
         Bölcsészettudományi Kar.
       </li>
       <li>
         Siptár P. (1980). Nyelvészeti kisszótár. Alapvető terminus technicusok a modern
-        nyelvészetben. Budapest: MKKE - Nyelvi Intézet.
+        nyelvészetben. Budapest: MKKE – Nyelvi Intézet.
       </li>
       <li>
         Szathmári I. (2004). Stilisztikai lexikon: stilisztikai fogalmak magyarázata szepirodalmi
@@ -238,8 +261,8 @@
       </li>
       <li>Trudgill P. (2003). A Glossary of Sociolinguistics. Oxford University Press.</li>
       <li>
-        Várnai J. Sz. (2002): Angol--magyar nyelvészeti glosszárium. Letöltés helye:
-        <a href="http://mnytud.arts.klte.hu/glossary.htm"
+        Várnai J. Sz. (2002): Angol–magyar nyelvészeti glosszárium. Letöltés helye:
+        <a href="https://mnytud.arts.klte.hu/glossary.htm"
           >https://mnytud.arts.klte.hu/glossary.htm</a
         >
       </li>

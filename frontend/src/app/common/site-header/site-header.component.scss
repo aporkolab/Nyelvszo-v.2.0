@@ -1,0 +1,13 @@
+// The header's structural styles live in src/styles/_navigation.scss, because
+// they are shared with the footer and the layout shell. Only genuinely
+// component-local rules belong here.
+
+:host {
+  display: block;
+}
+
+// The header row is the positioning context for the mobile nav panel, which is
+// absolutely positioned beneath it.
+.site-header__inner {
+  position: relative;
+}

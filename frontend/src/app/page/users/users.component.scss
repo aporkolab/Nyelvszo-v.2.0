@@ -1,0 +1,17 @@
+@charset "UTF-8";
+
+// ---------------------------------------------------------------------------
+// Users page
+//
+// Everything here is drawn with the shared classes; the only local rule is the
+// placeholder that stands in for the table while the first page loads. It keeps
+// the same outer frame as the real table, so the layout does not jump when the
+// rows arrive.
+// ---------------------------------------------------------------------------
+
+.users__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}

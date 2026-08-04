@@ -1,0 +1,25 @@
+# Everything the image must not inherit from the host.
+#
+# node_modules is the important one: it is built for the host's platform and
+# would shadow the one `npm ci` installs inside the image.
+node_modules
+dist
+.angular
+coverage
+out-tsc
+
+.git
+.gitignore
+.vscode
+.idea
+
+*.log
+npm-debug.log*
+
+.env
+.env.*
+!.env.example
+
+Dockerfile
+.dockerignore
+README.md

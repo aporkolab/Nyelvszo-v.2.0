@@ -1,35 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../../models/user');
 
-const controller = require('../base/controller')(User);
+const { authenticate, authorize } = require('../../models/auth/authenticate');
+const { validate } = require('../../middleware/validation');
+const {
+  userSchema,
+  userUpdateSchema,
+  idSchema,
+  userListQuerySchema,
+} = require('../../validation/schemas');
+const { ADMIN_ROLES } = require('../../constants/roles');
+const controller = require('./controller');
 
-// Create
-router.post('/', (req, res, next) => {
-  return controller.create(req, res, next);
-});
+// Every route below administers other people's accounts, so the whole router is
+// admin-only. Previously this was mounted behind `authenticate` alone, which
+// let any logged-in viewer read, create, modify and delete accounts.
+router.use(authenticate, authorize(ADMIN_ROLES));
 
-//Read
-router.get('/', (req, res, next) => {
-  return controller.findAll(req, res, next);
-});
+router.get('/', validate(userListQuerySchema, 'query'), controller.listUsers);
 
-router.get('/:id', (req, res, next) => {
-  return controller.findOne(req, res, next);
-});
+router.post('/', validate(userSchema), controller.createUser);
 
-// Update
-router.put('/:id', (req, res, next) => {
-  return controller.update(req, res, next);
-});
+router.get('/:id', validate(idSchema, 'params'), controller.getUser);
 
-router.patch('/:id', (req, res, next) => {
-  return controller.update(req, res, next);
-});
+router.put('/:id', validate(idSchema, 'params'), validate(userUpdateSchema), controller.updateUser);
 
-// Delete
-router.delete('/:id', (req, res, next) => {
-  return controller.delete(req, res, next);
-});
+router.patch(
+  '/:id',
+  validate(idSchema, 'params'),
+  validate(userUpdateSchema),
+  controller.updateUser
+);
+
+router.delete('/:id', validate(idSchema, 'params'), controller.deleteUser);
 
 module.exports = router;

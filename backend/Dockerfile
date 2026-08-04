@@ -1,103 +1,84 @@
-# Multi-stage Dockerfile for Node.js backend
+# Multi-stage Dockerfile for the NyelvSzó Node.js backend
+# syntax=docker/dockerfile:1
 
-# Base stage
-FROM node:18-alpine AS base
+ARG NODE_VERSION=24-alpine
+
+# ---------------------------------------------------------------------------
+# Base: package manifests only, so dependency layers stay cached across
+# source changes.
+# ---------------------------------------------------------------------------
+FROM node:${NODE_VERSION} AS base
 LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
-LABEL version="2.2.0"
-LABEL description="NyelvSzó Backend API"
+LABEL org.opencontainers.image.title="NyelvSzó Backend API"
+LABEL org.opencontainers.image.version="2.2.0"
+LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
-# Create app directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apk add --no-cache \
-    curl \
-    wget \
-    ca-certificates \
-    && rm -rf /var/cache/apk/*
+# curl is required by the HEALTHCHECK instructions below.
+RUN apk add --no-cache curl ca-certificates && rm -rf /var/cache/apk/*
 
-# Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-# Development stage
+# ---------------------------------------------------------------------------
+# Development: full dependency tree, live reload.
+# ---------------------------------------------------------------------------
 FROM base AS development
 ENV NODE_ENV=development
 
-# Install all dependencies (including devDependencies)
 RUN npm ci --include=dev
 
-# Copy source code
 COPY . .
-
-# Create logs directory
 RUN mkdir -p logs
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -fsS http://localhost:3000/health/live || exit 1
 
-# Start the application in development mode
 CMD ["npm", "run", "dev"]
 
-# Production dependencies stage
-FROM base AS prod-deps
-ENV NODE_ENV=production
-
-# Install only production dependencies
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
-
-# Production stage
-FROM node:18-alpine AS production
-ENV NODE_ENV=production
-
-# Install only required system packages for production
-RUN apk add --no-cache curl ca-certificates \
-    && rm -rf /var/cache/apk/*
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Set working directory
-WORKDIR /app
-
-# Copy production dependencies
-COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-
-# Copy application code
-COPY --chown=nodejs:nodejs src ./src
-COPY --chown=nodejs:nodejs docs ./docs
-COPY --chown=nodejs:nodejs config ./config
-COPY --chown=nodejs:nodejs package*.json ./
-
-# Create logs directory and set permissions
-RUN mkdir -p logs && chown -R nodejs:nodejs /app
-
-# Switch to non-root user
-USER nodejs
-
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
-
-# Start the application
-CMD ["node", "src/index.js"]
-
-# Testing stage
+# ---------------------------------------------------------------------------
+# Testing: runs the suite at build time so a broken suite fails the image.
+# ---------------------------------------------------------------------------
 FROM development AS testing
 ENV NODE_ENV=test
-
-# Copy test files
-COPY test ./test
-
-# Run tests
+ENV JWT_SECRET=ci-only-secret-value-at-least-32-characters-long
 RUN npm test
 
-# Default target is development
-FROM development AS default
+# ---------------------------------------------------------------------------
+# Production dependencies: no devDependencies, no lifecycle scripts.
+# ---------------------------------------------------------------------------
+FROM base AS prod-deps
+ENV NODE_ENV=production
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+# ---------------------------------------------------------------------------
+# Production: minimal runtime, non-root, only the files the server needs.
+# ---------------------------------------------------------------------------
+FROM node:${NODE_VERSION} AS production
+ENV NODE_ENV=production
+
+RUN apk add --no-cache curl ca-certificates && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# node:alpine already ships an unprivileged `node` user (uid 1000).
+COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node src ./src
+COPY --chown=node:node docs ./docs
+COPY --chown=node:node config ./config
+COPY --chown=node:node package.json package-lock.json ./
+
+RUN mkdir -p logs && chown -R node:node /app
+
+USER node
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -fsS http://localhost:3000/health/live || exit 1
+
+# No npm wrapper: `node` becomes PID 1 and receives SIGTERM directly, which is
+# what the graceful-shutdown handler in src/index.js relies on.
+CMD ["node", "src/index.js"]

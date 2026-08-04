@@ -7,27 +7,24 @@ const EntrySchema = mongoose.Schema(
       required: true,
       trim: true,
       maxlength: 500,
-      index: 'text', // Text index for full-text search
     },
     fieldOfExpertise: {
       type: String,
       required: true,
       trim: true,
       maxlength: 200,
-      index: true, // Regular index for filtering
     },
     wordType: {
       type: String,
       trim: true,
       maxlength: 100,
-      index: true, // Index for word type filtering
+      default: '',
     },
     english: {
       type: String,
       required: true,
       trim: true,
       maxlength: 500,
-      index: 'text', // Text index for full-text search
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -42,7 +39,7 @@ const EntrySchema = mongoose.Schema(
     views: {
       type: Number,
       default: 0,
-      index: true,
+      min: 0,
     },
     lastViewed: {
       type: Date,
@@ -51,160 +48,139 @@ const EntrySchema = mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
     },
   },
   {
-    timestamps: true, // Automatically manage createdAt and updatedAt
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
 
-// Compound indexes for performance
+// ---------------------------------------------------------------------------
+// Indexes
+//
+// MongoDB permits exactly one text index per collection. The previous schema
+// declared `index: 'text'` on both `hungarian` and `english` *and* a compound
+// text index, so index creation failed at runtime and none of them existed.
+// This is the single, weighted text index.
+// ---------------------------------------------------------------------------
 EntrySchema.index(
   { hungarian: 'text', english: 'text' },
-  {
-    weights: {
-      hungarian: 10,
-      english: 5,
-    },
-    name: 'search_index',
-  }
+  { weights: { hungarian: 10, english: 5 }, name: 'entry_text_search' }
 );
 
-EntrySchema.index({ fieldOfExpertise: 1, wordType: 1 });
-EntrySchema.index({ createdAt: -1 }); // For sorting by creation date
-EntrySchema.index({ views: -1 }); // For popular entries
-EntrySchema.index({ isActive: 1, createdAt: -1 }); // Active entries sorted by date
+// Prefix-anchored lookups use a plain collation-aware index on each term.
+EntrySchema.index({ isActive: 1, hungarian: 1 });
+EntrySchema.index({ isActive: 1, english: 1 });
+EntrySchema.index({ isActive: 1, fieldOfExpertise: 1, wordType: 1 });
+EntrySchema.index({ isActive: 1, createdAt: -1 });
+EntrySchema.index({ isActive: 1, views: -1 });
 
-// Virtual for word count
 EntrySchema.virtual('wordCount').get(function () {
-  const hunWords = this.hungarian ? this.hungarian.split(/\s+/).length : 0;
-  const engWords = this.english ? this.english.split(/\s+/).length : 0;
-  return { hungarian: hunWords, english: engWords };
+  const count = (value) => (value ? value.trim().split(/\s+/).length : 0);
+  return { hungarian: count(this.hungarian), english: count(this.english) };
 });
 
-// Pre-save middleware
-EntrySchema.pre('save', function (next) {
-  if (this.isModified() && !this.isNew) {
-    this.updatedAt = new Date();
-  }
-  next();
-});
-
-// Instance methods
 EntrySchema.methods.incrementViews = function () {
   this.views += 1;
   this.lastViewed = new Date();
   return this.save();
 };
 
-EntrySchema.methods.toSearchResult = function () {
-  return {
-    _id: this._id,
-    hungarian: this.hungarian,
-    english: this.english,
-    fieldOfExpertise: this.fieldOfExpertise,
-    wordType: this.wordType,
-    views: this.views,
-    createdAt: this.createdAt,
-    updatedAt: this.updatedAt,
-  };
+/**
+ * Escape a user-supplied string for literal use inside a RegExp.
+ *
+ * Without this, a search for `a(` throws, and `(a+)+$` is a catastrophic
+ * backtracking payload that pins a CPU core.
+ *
+ * @param {string} term - Raw search term.
+ * @returns {string} Escaped term.
+ */
+const escapeRegex = (term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Build a case-insensitive prefix matcher.
+ *
+ * Anchored at the start so the index on the field can be used; an unanchored
+ * pattern forces a full collection scan on every keystroke.
+ *
+ * @param {string} term - Raw search term.
+ * @returns {RegExp|null} Matcher, or null when the term is blank.
+ */
+const prefixMatcher = (term) => {
+  if (typeof term !== 'string' || !term.trim()) return null;
+  return new RegExp(`^${escapeRegex(term.trim())}`, 'i');
 };
 
-// Static methods for optimized queries
+const SORTS = {
+  alphabetical: { hungarian: 1 },
+  relevance: { hungarian: 1 },
+  newest: { createdAt: -1 },
+  oldest: { createdAt: 1 },
+  popular: { views: -1 },
+};
+
+// Projection shared by every list endpoint. Keeps `createdBy`/`updatedBy` and
+// internal counters out of public responses.
+const LIST_PROJECTION = 'hungarian english fieldOfExpertise wordType views createdAt updatedAt';
+
+/**
+ * Build the find and count queries for a dictionary search.
+ *
+ * Column filters take precedence over the free-text term, matching the
+ * behaviour of the UI's "search in column" selector.
+ *
+ * @param {string} [searchTerm] - Free-text term.
+ * @param {object} [options] - Search options.
+ * @param {number} [options.page] - 1-based page number.
+ * @param {number} [options.limit] - Page size.
+ * @param {string} [options.hungarian] - Hungarian column filter.
+ * @param {string} [options.english] - English column filter.
+ * @param {string} [options.fieldOfExpertise] - Field-of-expertise filter.
+ * @param {string} [options.wordType] - Word-type filter.
+ * @param {string} [options.sortBy] - One of the keys of SORTS.
+ * @returns {{query: object, countQuery: object}} Mongoose queries.
+ */
 EntrySchema.statics.searchEntries = function (searchTerm, options = {}) {
-  const {
-    page = 1,
-    limit = 20,
-    hungarian,
-    english,
-    fieldOfExpertise,
-    wordType,
-    sortBy = 'relevance',
-  } = options;
+  const { page = 1, limit = 20, hungarian, english, fieldOfExpertise, wordType, sortBy } = options;
 
-  const query = { isActive: true };
+  const filter = { isActive: true };
 
-  // Helper function to create safe regex
-  const createRegex = (term) => {
-    if (!term || typeof term !== 'string' || !term.trim()) return null;
-    try {
-      const escaped = term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return new RegExp(escaped, 'i');
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // Check if any column-specific filter is provided
-  const hasColumnFilter = hungarian || english || fieldOfExpertise || wordType;
+  const columnFilters = { hungarian, english, fieldOfExpertise, wordType };
+  const hasColumnFilter = Object.values(columnFilters).some((value) => value && value.trim());
 
   if (hasColumnFilter) {
-    // Column-specific filtering (like the original filter pipe with key)
-    if (hungarian) {
-      const regex = createRegex(hungarian);
-      if (regex) query.hungarian = regex;
-    }
-    if (english) {
-      const regex = createRegex(english);
-      if (regex) query.english = regex;
-    }
-    if (fieldOfExpertise) {
-      const regex = createRegex(fieldOfExpertise);
-      if (regex) query.fieldOfExpertise = regex;
-    }
-    if (wordType) {
-      const regex = createRegex(wordType);
-      if (regex) query.wordType = regex;
-    }
-  } else if (searchTerm) {
-    // Default search in Hungarian column only
-    const regex = createRegex(searchTerm);
-    if (regex) {
-      query.hungarian = regex;
+    Object.entries(columnFilters).forEach(([field, value]) => {
+      const matcher = prefixMatcher(value);
+      if (matcher) filter[field] = matcher;
+    });
+  } else {
+    const matcher = prefixMatcher(searchTerm);
+    if (matcher) {
+      // Search both directions: a user typing an English word expects to find
+      // it, not just Hungarian headwords.
+      filter.$or = [{ hungarian: matcher }, { english: matcher }];
     }
   }
 
-  // Sorting
-  let sort = {};
-  switch (sortBy) {
-    case 'relevance':
-    case 'alphabetical':
-      sort = { hungarian: 1 };
-      break;
-    case 'newest':
-      sort = { createdAt: -1 };
-      break;
-    case 'oldest':
-      sort = { createdAt: 1 };
-      break;
-    case 'popular':
-      sort = { views: -1 };
-      break;
-    default:
-      sort = { hungarian: 1 };
-  }
-
-  const pageNum = parseInt(page, 10) || 1;
-  const limitNum = parseInt(limit, 10) || 20;
-  const skip = (pageNum - 1) * limitNum;
+  const pageNum = Math.max(1, Number(page) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
 
   return {
-    query: this.find(query)
-      .select('hungarian english fieldOfExpertise wordType views createdAt updatedAt')
-      .sort(sort)
-      .skip(skip)
+    query: this.find(filter)
+      .select(LIST_PROJECTION)
+      .sort(SORTS[sortBy] || SORTS.relevance)
+      .skip((pageNum - 1) * limitNum)
       .limit(limitNum)
       .lean(),
-    countQuery: this.countDocuments(query),
+    countQuery: this.countDocuments(filter),
   };
 };
 
 EntrySchema.statics.getPopularEntries = function (limit = 10) {
   return this.find({ isActive: true })
-    .select('hungarian english fieldOfExpertise views')
+    .select(LIST_PROJECTION)
     .sort({ views: -1 })
     .limit(limit)
     .lean();
@@ -212,14 +188,19 @@ EntrySchema.statics.getPopularEntries = function (limit = 10) {
 
 EntrySchema.statics.getRecentEntries = function (limit = 10) {
   return this.find({ isActive: true })
-    .select('hungarian english fieldOfExpertise createdAt')
+    .select(LIST_PROJECTION)
     .sort({ createdAt: -1 })
     .limit(limit)
     .lean();
 };
 
-EntrySchema.statics.getStatistics = function () {
-  return Promise.all([
+/**
+ * Aggregate dictionary-wide statistics.
+ *
+ * @returns {Promise<object>} Totals plus the distinct field and word-type lists.
+ */
+EntrySchema.statics.getStatistics = async function () {
+  const [totalEntries, fields, wordTypes, viewsResult] = await Promise.all([
     this.countDocuments({ isActive: true }),
     this.distinct('fieldOfExpertise', { isActive: true }),
     this.distinct('wordType', { isActive: true }),
@@ -227,14 +208,18 @@ EntrySchema.statics.getStatistics = function () {
       { $match: { isActive: true } },
       { $group: { _id: null, totalViews: { $sum: '$views' } } },
     ]),
-  ]).then(([totalEntries, fields, wordTypes, viewsResult]) => ({
+  ]);
+
+  const nonEmptyWordTypes = wordTypes.filter(Boolean);
+
+  return {
     totalEntries,
     totalFields: fields.length,
-    totalWordTypes: wordTypes.length,
+    totalWordTypes: nonEmptyWordTypes.length,
     totalViews: viewsResult[0]?.totalViews || 0,
     fields: fields.sort(),
-    wordTypes: wordTypes.sort(),
-  }));
+    wordTypes: nonEmptyWordTypes.sort(),
+  };
 };
 
 module.exports = mongoose.model('Entry', EntrySchema);

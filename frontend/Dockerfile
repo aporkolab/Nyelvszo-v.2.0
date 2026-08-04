@@ -1,124 +1,103 @@
-# Multi-stage Dockerfile for Angular frontend
+# syntax=docker/dockerfile:1
+# Multi-stage Dockerfile for the NyelvSzó Angular frontend.
+#
+# The syntax directive has to be the very first line: a parser directive that
+# follows a comment is silently ignored.
 
-# Base stage
-FROM node:20-alpine AS base
+ARG NODE_VERSION=24-alpine
+ARG NGINX_VERSION=1.27-alpine
+
+# ---------------------------------------------------------------------------
+# Dependencies: manifests only, so the install layer survives source edits.
+# ---------------------------------------------------------------------------
+FROM node:${NODE_VERSION} AS deps
 LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
-LABEL version="2.2.0"
-LABEL description="NyelvSzó Frontend"
+LABEL org.opencontainers.image.title="NyelvSzó Frontend"
+LABEL org.opencontainers.image.version="2.2.0"
+LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
-# Install system dependencies
-RUN apk add --no-cache curl wget ca-certificates \
-    && rm -rf /var/cache/apk/*
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json .npmrc ./
 
-# Development stage
-FROM base AS development
+# `npm ci`, not `npm install`: the lockfile is the build input, and install
+# would resolve newer versions than the ones the lockfile pins, so the image
+# would differ from what CI tested.
+#
+# The Angular CLI comes from devDependencies (^21, same major as the
+# framework). A globally installed CLI of a different major refuses to build
+# the workspace, which is what `npm i -g @angular/cli@20` used to do here.
+RUN npm ci
+
+# ---------------------------------------------------------------------------
+# Development: `ng serve` with live reload; compose bind-mounts the sources.
+#
+# Deliberately runs as root. The mounted tree belongs to whatever uid the host
+# user has, and the dev server writes .angular/ and dist/ into it. The image
+# that ships to production (below) is unprivileged.
+# ---------------------------------------------------------------------------
+FROM deps AS development
 ENV NODE_ENV=development
 
-# Install dependencies
-RUN npm install
+COPY angular.json tsconfig*.json .browserslistrc ./
+COPY src ./src
 
-# Install Angular CLI globally
-RUN npm install -g @angular/cli@20
-
-# Copy source code
-COPY . .
-
-# Expose port
 EXPOSE 4200
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:4200 || exit 1
+# busybox wget is part of alpine, so the probe needs no extra package.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:4200/ || exit 1
 
-# Start development server
-CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]
 
-# Build stage
-FROM base AS build
+# ---------------------------------------------------------------------------
+# Build: the production bundle.
+# ---------------------------------------------------------------------------
+FROM deps AS build
 ENV NODE_ENV=production
+# The AOT compiler is memory hungry and the default heap is not enough on
+# small CI runners.
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm install --include=dev
+COPY angular.json tsconfig*.json .browserslistrc ./
+COPY src ./src
 
-# Install Angular CLI
-RUN npm install -g @angular/cli@20
+# No `--build-optimizer=false --aot=false`: those two flags disabled ahead-of-
+# time compilation and the optimiser, which shipped a bigger, slower bundle
+# that also needed 'unsafe-eval' in the CSP to run the JIT compiler.
+#
+# The output directory is read back out of angular.json rather than hard-coded.
+# It has already moved once (dist/nyelvszo2.0 under the webpack `browser`
+# builder -> dist/nyelvszo under `@angular/build:application`, which also puts
+# the bundle in a browser/ subdirectory unless outputPath.browser overrides
+# it), and a stale path here would ship an empty document root that only shows
+# up as a 404 in production. The index.html check turns any future move into a
+# build failure instead.
+RUN npm run build -- --configuration production && \
+    OUT="$(node -e 'const c=require("./angular.json");const b=Object.values(c.projects)[0].architect.build;const app=/:application$/.test(b.builder);const p=b.options.outputPath;let d;if(typeof p==="string"){d=app?p+"/browser":p}else{const s=p.browser===undefined?(app?"browser":""):p.browser;d=s?p.base+"/"+s:p.base}process.stdout.write(d)')" && \
+    test -f "$OUT/index.html" && \
+    mv "$OUT" /site
 
-# Copy source code
-COPY . .
+# ---------------------------------------------------------------------------
+# Runtime: static files behind nginx, unprivileged.
+# ---------------------------------------------------------------------------
+FROM nginx:${NGINX_VERSION} AS production
 
-# Build the application with optimizations
-RUN ng build --configuration=production --build-optimizer=false --aot=false --source-map=false
-
-# Production stage with Nginx
-FROM nginx:alpine AS production
-ENV NODE_ENV=production
-
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy built application from build stage
-COPY --from=build /app/dist/nyelvszo2.0 /usr/share/nginx/html
+COPY --from=build /site /usr/share/nginx/html
 
-# Create non-root user
-RUN addgroup -g 1001 -S nginx_user
-RUN adduser -S nginx_user -u 1001
+# The image already ships an unprivileged `nginx` user (uid 101); it only needs
+# the document root and the temp/cache directories. The pid file and the logs
+# are kept out of root-owned paths by nginx.conf itself.
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx
 
-# Set permissions
-RUN chown -R nginx_user:nginx_user /usr/share/nginx/html
-RUN mkdir -p /var/cache/nginx/client_temp \
-    && mkdir -p /var/log/nginx \
-    && chown -R nginx_user:nginx_user /var/cache/nginx \
-    && chown -R nginx_user:nginx_user /var/log/nginx \
-    && chown -R nginx_user:nginx_user /etc/nginx/conf.d \
-    && touch /var/run/nginx.pid \
-    && chown -R nginx_user:nginx_user /var/run/nginx.pid
+USER nginx
 
-# Switch to non-root user
-USER nginx_user
+# 8080, not 80: an unprivileged process cannot bind a port below 1024.
+EXPOSE 8080
 
-# Expose port
-EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:8080/health || exit 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost || exit 1
-
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
-
-# Testing stage
-FROM development AS testing
-ENV NODE_ENV=test
-
-# Install Chrome for testing
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
-
-# Set Chrome path for Puppeteer
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-ENV CHROME_BIN=/usr/bin/chromium-browser
-
-# Run tests
-RUN ng test --watch=false --browsers=ChromeHeadless --code-coverage
-
-# Run e2e tests
-# RUN ng e2e
-
-# Default target is development
-FROM development AS default

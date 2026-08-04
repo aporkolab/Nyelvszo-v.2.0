@@ -1,168 +1,219 @@
-<div class="row">
-  <div class="col-12 d-flex justify-content-center text-center">
+<div class="container container--medium stack stack--loose">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ titleKey() | translate }}</h1>
+      <p class="page-header__lead">{{ 'userEditor.lead' | translate }}</p>
+    </div>
+  </header>
+
+  @if (loading()) {
     <div class="card">
-      <div class="card-header card-header-primary">
-        <ng-container *ngIf="user?._id; else createTitle">
-          <h4 class="card-title">{{ 'editUser' | translate }}</h4>
-        </ng-container>
-        <ng-template #createTitle>
-          <h4 class="card-title">{{ 'addNewUser' | translate }}</h4>
-        </ng-template>
-      </div>
-
-      <div class="card-body">
-        <!-- csak akkor rendereljük, ha van user objektum -->
-        <form *ngIf="user" #userForm="ngForm" (ngSubmit)="onSubmit(user)" novalidate>
-          <input type="hidden" name="id" [(ngModel)]="user._id" />
-
-          <h3 class="h5 text-secondary">{{ 'firstName' | translate }} *</h3>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  name="firstName"
-                  [(ngModel)]="user.firstName"
-                  required
-                  pattern="^[a-űA-ŰA-Za-z \-.,!()']{3,60}$"
-                  #firstNameModel="ngModel"
-                />
-              </div>
-              <div
-                *ngIf="firstNameModel.invalid && (firstNameModel.dirty || firstNameModel.touched)"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ 'firstNameValid' | translate }}
-              </div>
-            </div>
+      <div class="card__body editor-skeleton" aria-busy="true">
+        <p class="sr-only">{{ 'loading' | translate }}</p>
+        @for (row of skeletonRows; track row) {
+          <div class="editor-skeleton__field" aria-hidden="true">
+            <span class="skeleton skeleton--text editor-skeleton__label"></span>
+            <span class="skeleton editor-skeleton__control"></span>
           </div>
-
-          <h3 class="h5 text-secondary">{{ 'lastName' | translate }} *</h3>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  name="lastName"
-                  [(ngModel)]="user.lastName"
-                  required
-                  pattern="^[a-űA-ŰA-Za-z \-.,!()']{3,60}$"
-                  #lastNameModel="ngModel"
-                />
-              </div>
-              <div
-                *ngIf="lastNameModel.invalid && (lastNameModel.dirty || lastNameModel.touched)"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ 'lastNameValid' | translate }}
-              </div>
-            </div>
-          </div>
-
-          <h3 class="h5 text-secondary">{{ 'email' | translate }} *</h3>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <input
-                  type="email"
-                  class="form-control"
-                  name="email"
-                  [(ngModel)]="user.email"
-                  required
-                  email
-                  #emailModel="ngModel"
-                />
-              </div>
-              <div
-                *ngIf="emailModel.invalid && (emailModel.dirty || emailModel.touched)"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ 'emailValid' | translate }}
-              </div>
-            </div>
-          </div>
-
-          <h3 class="h5 text-secondary">{{ 'role' | translate }} *</h3>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <input
-                  type="number"
-                  class="form-control"
-                  name="role"
-                  [(ngModel)]="user.role"
-                  required
-                  pattern="^[1-3]{1}$"
-                  #roleModel="ngModel"
-                />
-              </div>
-              <div
-                *ngIf="roleModel.invalid && (roleModel.dirty || roleModel.touched)"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ 'roleValid' | translate }}
-              </div>
-            </div>
-          </div>
-
-          <h3 class="h5 text-secondary">{{ 'Password' | translate }} *</h3>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <input
-                  type="password"
-                  class="form-control"
-                  name="password"
-                  [(ngModel)]="user.password"
-                  required
-                  pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{7,}$"
-                  #passwordModel="ngModel"
-                />
-              </div>
-              <div
-                *ngIf="passwordModel.invalid && (passwordModel.dirty || passwordModel.touched)"
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ 'passValid2' | translate }}
-              </div>
-            </div>
-          </div>
-
-          <!-- csak type="submit", nincs (click) -> nincs dupla submit/reload -->
-          <button
-            *ngIf="user?._id"
-            [disabled]="userForm.invalid"
-            type="submit"
-            class="btn btn-primary pull-right me-md-3"
-          >
-            {{ 'updateUser' | translate }}
-          </button>
-
-          <button
-            *ngIf="!user?._id"
-            [disabled]="userForm.invalid"
-            type="submit"
-            class="btn btn-primary pull-right me-md-3"
-          >
-            {{ 'createUser' | translate }}
-          </button>
-
-          <button routerLink="/users" type="button" class="btn btn-danger pull-left">
-            {{ 'cancelEdit' | translate }}
-          </button>
-
-          <div class="clearfix"></div>
-        </form>
+        }
       </div>
     </div>
-  </div>
+  } @else if (loadFailed()) {
+    <div class="card">
+      <div class="card__body stack">
+        <div class="alert alert--danger" role="alert">
+          <i-feather name="alert-triangle" aria-hidden="true" />
+          <div>
+            <p class="alert__title">{{ 'error.loadFailed' | translate }}</p>
+            <p>{{ 'error.notFound' | translate }}</p>
+          </div>
+        </div>
+        <div class="cluster">
+          <button type="button" class="btn btn--primary" (click)="retry()">
+            {{ 'actions.retry' | translate }}
+          </button>
+          <a class="btn btn--secondary" routerLink="/users">
+            <i-feather name="arrow-left" aria-hidden="true" />
+            {{ 'actions.backToUsers' | translate }}
+          </a>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="card__body stack stack--loose">
+        @if (formError(); as message) {
+          <div class="alert alert--danger" role="alert">
+            <i-feather name="alert-circle" aria-hidden="true" />
+            <span>{{ message | translate }}</span>
+          </div>
+        }
 
-  <div class="col-md-4"></div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label" for="firstName" data-required>
+              {{ 'userEditor.firstName' | translate }}
+            </label>
+            <input
+              id="firstName"
+              class="input"
+              type="text"
+              formControlName="firstName"
+              autocomplete="given-name"
+              required
+              [attr.aria-invalid]="errorKey('firstName') ? 'true' : null"
+              [attr.aria-describedby]="describedBy('firstName', false)"
+            />
+            @if (errorKey('firstName'); as message) {
+              <p class="field__error" id="firstName-error">
+                <i-feather name="alert-circle" aria-hidden="true" />
+                <span>{{ message | translate: errorParams('firstName') }}</span>
+              </p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="lastName" data-required>
+              {{ 'userEditor.lastName' | translate }}
+            </label>
+            <input
+              id="lastName"
+              class="input"
+              type="text"
+              formControlName="lastName"
+              autocomplete="family-name"
+              required
+              [attr.aria-invalid]="errorKey('lastName') ? 'true' : null"
+              [attr.aria-describedby]="describedBy('lastName', false)"
+            />
+            @if (errorKey('lastName'); as message) {
+              <p class="field__error" id="lastName-error">
+                <i-feather name="alert-circle" aria-hidden="true" />
+                <span>{{ message | translate: errorParams('lastName') }}</span>
+              </p>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="email" data-required>
+            {{ 'userEditor.email' | translate }}
+          </label>
+          <input
+            id="email"
+            class="input"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+            required
+            [attr.aria-invalid]="errorKey('email') ? 'true' : null"
+            [attr.aria-describedby]="describedBy('email', false)"
+          />
+          @if (errorKey('email'); as message) {
+            <p class="field__error" id="email-error">
+              <i-feather name="alert-circle" aria-hidden="true" />
+              <span>{{ message | translate: errorParams('email') }}</span>
+            </p>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="role" data-required>
+            {{ 'userEditor.role' | translate }}
+          </label>
+          <select
+            id="role"
+            class="select"
+            formControlName="role"
+            [attr.aria-invalid]="errorKey('role') ? 'true' : null"
+            [attr.aria-describedby]="describedBy('role', true)"
+          >
+            @for (option of roleOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label | translate }}</option>
+            }
+          </select>
+          <p class="field__hint" id="role-hint">{{ roleHelpKey() | translate }}</p>
+          @if (errorKey('role'); as message) {
+            <p class="field__error" id="role-error">
+              <i-feather name="alert-circle" aria-hidden="true" />
+              <span>{{ message | translate: errorParams('role') }}</span>
+            </p>
+          }
+        </div>
+
+        <div class="field">
+          <div class="checkbox">
+            <input
+              id="isActive"
+              class="checkbox__control"
+              type="checkbox"
+              formControlName="isActive"
+              aria-describedby="isActive-hint"
+            />
+            <span class="checkbox__text">
+              <label class="field__label" for="isActive">
+                {{ 'userEditor.isActive' | translate }}
+              </label>
+              <span class="field__hint" id="isActive-hint">
+                {{ 'userEditor.isActiveHint' | translate }}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="password" [attr.data-required]="isNew() ? '' : null">
+            {{ 'userEditor.password' | translate }}
+          </label>
+          <div class="input-group">
+            <input
+              id="password"
+              class="input"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              [attr.required]="isNew() ? '' : null"
+              [attr.aria-invalid]="errorKey('password') ? 'true' : null"
+              [attr.aria-describedby]="describedBy('password', true)"
+            />
+            <button
+              type="button"
+              class="btn btn--ghost btn--icon btn--sm input-group__action"
+              [attr.aria-label]="
+                (passwordVisible() ? 'a11y.hidePassword' : 'a11y.showPassword') | translate
+              "
+              (click)="togglePasswordVisibility()"
+            >
+              <i-feather [name]="passwordVisible() ? 'eye-off' : 'eye'" aria-hidden="true" />
+            </button>
+          </div>
+          <p class="field__hint" id="password-hint">{{ passwordHintKey() | translate }}</p>
+          @if (errorKey('password'); as message) {
+            <p class="field__error" id="password-error">
+              <i-feather name="alert-circle" aria-hidden="true" />
+              <span>{{ message | translate: errorParams('password') }}</span>
+            </p>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="form.invalid || submitting()"
+            [attr.aria-busy]="submitting() ? 'true' : null"
+          >
+            @if (submitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
+            {{ submitKey() | translate }}
+          </button>
+          <a class="btn btn--secondary" routerLink="/users">
+            {{ 'actions.cancel' | translate }}
+          </a>
+        </div>
+      </div>
+    </form>
+  }
 </div>

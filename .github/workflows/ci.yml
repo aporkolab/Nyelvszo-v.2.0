@@ -1,31 +1,280 @@
 name: CI
+
+# Single pipeline for the whole repo. Every gate below is allowed to fail the
+# build: a green run means lint, formatting, the production dependency audit,
+# both test suites and the container scan all actually passed.
+#
+# Deployment is deliberately NOT part of this file. The previous ci-cd.yml had
+# deploy-staging / deploy-production jobs whose only step was `echo`, which
+# reported a successful deployment that never happened. Wiring real deployment
+# steps is a separate change; an empty job is worse than no job.
+
 on:
-  push: { branches: [ "main" ] }
-  pull_request: { branches: [ "main" ] }
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Least privilege for the workflow. Individual jobs widen this where they must
+# (ghcr push, SARIF upload) and nowhere else.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '24'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: aporkolab/nyelvszo-v.2.0
 
 jobs:
-  backend:
+  quality:
+    name: Quality (${{ matrix.workspace }})
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: backend } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: 
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      - run: npm i
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The frontend `lint` script passes --fix, which rewrites sources; CI
+          # must use the read-only variant so a violation is reported, not silently
+          # repaired into a green run.
+          - workspace: backend
+            lint_script: lint
+          - workspace: frontend
+            lint_script: lint:check
 
-  frontend:
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend } }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: 
-          node-version: 20
-          cache: 'npm'
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.workspace }}
+        run: npm ci
+
+      - name: ESLint
+        working-directory: ./${{ matrix.workspace }}
+        run: npm run ${{ matrix.lint_script }}
+
+      - name: Prettier check
+        working-directory: ./${{ matrix.workspace }}
+        run: npm run format:check
+
+      # Blocking gate. Production dependencies are what ships, and both
+      # workspaces are clean at `high`, so this is a threshold that can be held.
+      - name: Audit production dependencies
+        working-directory: ./${{ matrix.workspace }}
+        run: npm run audit:prod
+
+      # Informational only. The frontend dev toolchain still pulls in
+      # webpack-dev-server advisories that Angular has not shipped a fix for;
+      # nothing that reaches a browser or a server is affected. Gating here would
+      # mean gating on a fix nobody in this repo can produce, so the step reports
+      # and moves on instead of being hidden behind `|| true`.
+      - name: Audit all dependencies (informational, non-blocking)
+        id: dev_audit
+        continue-on-error: true
+        working-directory: ./${{ matrix.workspace }}
+        run: npm audit --audit-level=moderate
+
+      - name: Note dev audit outcome
+        if: steps.dev_audit.outcome == 'failure'
+        run: echo "::warning title=Dev dependency advisories::npm audit reported advisories in ${{ matrix.workspace }} dev dependencies. This does not fail the build; the production audit above is the gate."
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: quality
+
+    # No MongoDB or Redis service containers: the suite starts its own ephemeral
+    # mongod through mongodb-memory-server, and Redis is no longer a dependency.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      # No JWT_SECRET / JWT_REFRESH_SECRET here on purpose: backend/tests/setup.js
+      # sets both (to different 32+ character values) at module scope, before any
+      # application module is required. Injecting them from the workflow would only
+      # risk drifting out of sync with what the suite expects.
+      - name: Jest with coverage
+        working-directory: ./backend
+        run: npm run test:ci
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+  frontend-tests:
+    name: Frontend Tests & Build
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm i
-      - run: npm run test -- --watch=false --browsers=ChromeHeadless
-      - run: npm run build -- --configuration=production
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      # karma.conf.js already pins ChromeHeadless and singleRun; the runner image
+      # provides the Chrome binary that karma-chrome-launcher resolves.
+      - name: Karma unit tests with coverage
+        working-directory: ./frontend
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Production build
+        working-directory: ./frontend
+        run: npm run build:prod
+
+      - name: Upload production bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+  docker:
+    name: Docker Build & Scan (${{ matrix.component }})
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+
+    env:
+      LOCAL_TAG: ${{ matrix.component }}-candidate:${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.component }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Built and loaded into the local daemon first so Trivy inspects exactly the
+      # image that may later be pushed. The push step below reuses this build's
+      # cache, so it is a cache hit rather than a second compile.
+      - name: Build image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          target: production
+          load: true
+          push: false
+          tags: ${{ env.LOCAL_TAG }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+      # Full inventory for the Security tab, including vulnerabilities with no
+      # released fix. Never fails the job — its purpose is visibility.
+      - name: Trivy scan (SARIF report)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.LOCAL_TAG }}
+          format: sarif
+          output: trivy-${{ matrix.component }}.sarif
+          exit-code: '0'
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.component }}.sarif
+          category: trivy-${{ matrix.component }}
+
+      # Blocking gate, and it runs before any push. ignore-unfixed is on because
+      # an upstream base-image CVE with no patch available cannot be actioned in
+      # this repo; everything with a fix is a hard failure.
+      - name: Trivy gate (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        env:
+          # Reuse the database the previous step just downloaded into ~/.cache/trivy.
+          TRIVY_SKIP_DB_UPDATE: 'true'
+          TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
+        with:
+          image-ref: ${{ env.LOCAL_TAG }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Single-arch (linux/amd64) so the pushed image is bit-for-bit the one that
+      # was scanned above. Restoring linux/arm64 means adding QEMU and scanning
+      # each architecture separately, not widening `platforms` here.
+      - name: Push scanned image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          target: production
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}

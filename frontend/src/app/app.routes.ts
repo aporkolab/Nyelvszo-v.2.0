@@ -1,42 +1,82 @@
 import { Routes } from '@angular/router';
 
-import { ForbiddenComponent } from './page/forbidden/forbidden.component';
-import { LoginComponent } from './page/login/login.component';
-import { EntriesComponent } from './page/entries/entries.component';
-import { EntriesEditorComponent } from './page/entries-editor/entries-editor.component';
-import { UsersComponent } from './page/users/users.component';
-import { UsersEditorComponent } from './page/users-editor/users-editor.component';
-import { PrefaceComponent } from './page/preface/preface.component';
-import { VersionhistoryComponent } from './page/versionhistory/versionhistory.component';
-import { ContactComponent } from './page/contact/contact.component';
-import { AuthGuardService } from './service/auth-guard.service';
-import { RoleGuardService } from './service/role-guard.service';
+import { authGuard, roleGuard } from './service/auth.guard';
+import { UserRole } from './model/user';
 
+/**
+ * Application routes.
+ *
+ * Every screen is lazily loaded, so the initial bundle carries only the search
+ * page. The guards here are a convenience for the user, not a security
+ * boundary — the API enforces the same rules independently.
+ */
 export const routes: Routes = [
-  { path: '', component: EntriesComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'forbidden', component: ForbiddenComponent },
-  { path: 'entries', component: EntriesComponent },
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'entries',
+  },
+  {
+    path: 'entries',
+    title: 'NyelvSzó',
+    loadComponent: () => import('./page/entries/entries.component').then(m => m.EntriesComponent),
+  },
   {
     path: 'entries/edit/:id',
-    component: EntriesEditorComponent,
-    canActivate: [AuthGuardService, RoleGuardService],
-    data: { expectedRole: 2 },
+    title: 'NyelvSzó — Entry',
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRole: UserRole.Editor },
+    loadComponent: () =>
+      import('./page/entries-editor/entries-editor.component').then(m => m.EntriesEditorComponent),
   },
   {
     path: 'users',
-    component: UsersComponent,
-    canActivate: [AuthGuardService, RoleGuardService],
-    data: { expectedRole: 3 },
+    title: 'NyelvSzó — Users',
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRole: UserRole.Admin },
+    loadComponent: () => import('./page/users/users.component').then(m => m.UsersComponent),
   },
   {
     path: 'users/edit/:id',
-    component: UsersEditorComponent,
-    canActivate: [AuthGuardService, RoleGuardService],
-    data: { expectedRole: 3 },
+    title: 'NyelvSzó — User',
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRole: UserRole.Admin },
+    loadComponent: () =>
+      import('./page/users-editor/users-editor.component').then(m => m.UsersEditorComponent),
   },
-  { path: 'preface', component: PrefaceComponent },
-  { path: 'versionhistory', component: VersionhistoryComponent },
-  { path: 'contact', component: ContactComponent },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'preface',
+    title: 'NyelvSzó — Preface',
+    loadComponent: () => import('./page/preface/preface.component').then(m => m.PrefaceComponent),
+  },
+  {
+    path: 'versionhistory',
+    title: 'NyelvSzó — Version history',
+    loadComponent: () =>
+      import('./page/versionhistory/versionhistory.component').then(m => m.VersionhistoryComponent),
+  },
+  {
+    path: 'contact',
+    title: 'NyelvSzó — Contact',
+    loadComponent: () => import('./page/contact/contact.component').then(m => m.ContactComponent),
+  },
+  {
+    path: 'login',
+    title: 'NyelvSzó — Sign in',
+    loadComponent: () => import('./page/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'forbidden',
+    title: 'NyelvSzó — Access denied',
+    loadComponent: () =>
+      import('./page/forbidden/forbidden.component').then(m => m.ForbiddenComponent),
+  },
+  {
+    // A real not-found screen rather than a silent redirect, so a mistyped URL
+    // is visible instead of quietly landing on the search page.
+    path: '**',
+    title: 'NyelvSzó — Not found',
+    loadComponent: () =>
+      import('./page/not-found/not-found.component').then(m => m.NotFoundComponent),
+  },
 ];

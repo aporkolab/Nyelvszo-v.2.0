@@ -1,340 +1,201 @@
+const crypto = require('crypto');
 const NodeCache = require('node-cache');
 const logger = require('../logger/logger');
 
-// Create cache instances with different TTL settings
-const cache = {
-  // Short-term cache for frequently accessed data (5 minutes)
-  short: new NodeCache({
-    stdTTL: 300, // 5 minutes
-    checkperiod: 60, // Check for expired keys every 60 seconds
-    useClones: false, // Don't clone objects for better performance
-    maxKeys: 1000, // Maximum number of keys
-  }),
-
-  // Medium-term cache for search results (15 minutes)
-  medium: new NodeCache({
-    stdTTL: 900, // 15 minutes
-    checkperiod: 120,
-    useClones: false,
-    maxKeys: 500,
-  }),
-
-  // Long-term cache for static data (1 hour)
-  long: new NodeCache({
-    stdTTL: 3600, // 1 hour
-    checkperiod: 300,
-    useClones: false,
-    maxKeys: 100,
-  }),
+const TIERS = {
+  // Search results: change on every edit, so keep them brief.
+  short: new NodeCache({ stdTTL: 300, checkperiod: 60, useClones: false, maxKeys: 1000 }),
+  // Individual entries.
+  medium: new NodeCache({ stdTTL: 900, checkperiod: 120, useClones: false, maxKeys: 500 }),
+  // Aggregates and rarely-changing lists.
+  long: new NodeCache({ stdTTL: 3600, checkperiod: 300, useClones: false, maxKeys: 200 }),
 };
 
-// Cache statistics
-let cacheStats = {
-  hits: 0,
-  misses: 0,
-  sets: 0,
-  deletes: 0,
-  errors: 0,
-};
-
-// Event listeners for monitoring
-Object.values(cache).forEach((cacheInstance) => {
-  cacheInstance.on('set', (key, value) => {
-    cacheStats.sets++;
-    logger.debug('Cache SET', { key, size: JSON.stringify(value).length });
-  });
-
-  cacheInstance.on('del', (key) => {
-    cacheStats.deletes++;
-    logger.debug('Cache DELETE', { key });
-  });
-
-  cacheInstance.on('expired', (key) => {
-    logger.debug('Cache EXPIRED', { key });
-  });
-
-  cacheInstance.on('flush', () => {
-    logger.info('Cache FLUSH');
-  });
-});
+const stats = { hits: 0, misses: 0, sets: 0, errors: 0 };
 
 /**
- * Generate cache key from request parameters
+ * Build a cache key from the request.
+ *
+ * Only the method, path and query participate. Anything user-specific is
+ * excluded because the middleware refuses to cache authenticated responses at
+ * all — mixing the two is how one user's data ends up in another's response.
+ *
+ * @param {object} req - Express request.
+ * @returns {string} Cache key.
  */
 const generateCacheKey = (req) => {
-  const { method, originalUrl, query, user } = req;
-  const userRole = user?.role || 'anonymous';
+  const query = Object.keys(req.query)
+    .sort()
+    .map((key) => `${key}=${req.query[key]}`)
+    .join('&');
 
-  // Create a deterministic key from request parameters
-  const keyData = {
-    method,
-    url: originalUrl,
-    query: Object.keys(query)
-      .sort()
-      .reduce((obj, key) => {
-        obj[key] = query[key];
-        return obj;
-      }, {}),
-    userRole,
-  };
-
-  return Buffer.from(JSON.stringify(keyData)).toString('base64');
+  // `req.baseUrl + req.path`, not `req.path`. Inside a router mounted at
+  // /entries, `req.path` is only the portion after the mount point — "/" for
+  // the collection — so the key never contained the word "entries" and
+  // `invalidateByPath('/entries')` matched nothing. Edits stayed invisible to
+  // anonymous readers until the TTL expired.
+  return `${req.method}:${req.baseUrl || ''}${req.path}?${query}`;
 };
 
 /**
- * Cache middleware factory
+ * Response-caching middleware factory.
+ *
+ * @param {'short'|'medium'|'long'} [tier] - Which cache to store in.
+ * @param {object} [options] - Options.
+ * @param {function} [options.condition] - Predicate deciding whether to cache this request.
+ * @returns {function} Express middleware.
  */
-const cacheMiddleware = (duration = 'medium', options = {}) => {
-  const {
-    keyGenerator = generateCacheKey,
-    condition = () => true,
-    skipCache = false,
-    varyBy = [],
-  } = options;
+const cacheMiddleware = (tier = 'medium', options = {}) => {
+  const { condition = () => true } = options;
+  const store = TIERS[tier];
 
   return (req, res, next) => {
-    // Skip caching in development or if explicitly disabled
-    if (process.env.NODE_ENV === 'development' || skipCache) {
+    if (process.env.NODE_ENV !== 'production') {
       return next();
     }
 
-    // Skip caching for non-GET requests
-    if (req.method !== 'GET') {
+    // Never serve a cached body to — or store one from — an authenticated
+    // request. Responses can vary by role, and the cache has no notion of who
+    // asked.
+    if (req.method !== 'GET' || req.headers.authorization || !condition(req)) {
       return next();
     }
 
-    // Check condition
-    if (!condition(req)) {
-      return next();
-    }
+    const cacheKey = generateCacheKey(req);
 
+    let cached;
     try {
-      // Generate cache key
-      let cacheKey = keyGenerator(req);
-
-      // Add vary-by parameters to key
-      if (varyBy.length > 0) {
-        const varyData = varyBy.reduce((obj, key) => {
-          obj[key] = req[key] || req.headers[key] || req.query[key];
-          return obj;
-        }, {});
-        cacheKey += '_' + Buffer.from(JSON.stringify(varyData)).toString('base64');
-      }
-
-      // Try to get from cache
-      const cachedData = cache[duration].get(cacheKey);
-
-      if (cachedData) {
-        cacheStats.hits++;
-
-        // Set cache headers
-        res.set({
-          'X-Cache': 'HIT',
-          'X-Cache-Key': cacheKey.substring(0, 16) + '...',
-          'Cache-Control': `public, max-age=${cache[duration].options.stdTTL}`,
-          ETag: cachedData.etag,
-        });
-
-        logger.performance('Cache HIT', {
-          key: cacheKey.substring(0, 32),
-          url: req.originalUrl,
-          method: req.method,
-        });
-
-        return res.status(cachedData.statusCode || 200).json(cachedData.data);
-      }
-
-      cacheStats.misses++;
-
-      // Intercept response
-      const originalJson = res.json;
-      const originalStatus = res.status;
-      let statusCode = 200;
-
-      // Override status method
-      res.status = function (code) {
-        statusCode = code;
-        return originalStatus.call(this, code);
-      };
-
-      // Override json method
-      res.json = function (data) {
-        // Only cache successful responses
-        if (statusCode >= 200 && statusCode < 300) {
-          try {
-            const etag = require('crypto')
-              .createHash('md5')
-              .update(JSON.stringify(data))
-              .digest('hex');
-
-            const cacheData = {
-              data,
-              statusCode,
-              etag,
-              cachedAt: new Date().toISOString(),
-            };
-
-            cache[duration].set(cacheKey, cacheData);
-
-            res.set({
-              'X-Cache': 'MISS',
-              'X-Cache-Key': cacheKey.substring(0, 16) + '...',
-              'Cache-Control': `public, max-age=${cache[duration].options.stdTTL}`,
-              ETag: etag,
-            });
-
-            logger.performance('Cache MISS - Stored', {
-              key: cacheKey.substring(0, 32),
-              url: req.originalUrl,
-              method: req.method,
-              statusCode,
-            });
-          } catch (error) {
-            cacheStats.errors++;
-            logger.warn('Cache storage error', {
-              error: error.message,
-              key: cacheKey.substring(0, 32),
-            });
-          }
-        } else {
-          res.set('X-Cache', 'SKIP');
-          logger.debug('Cache SKIP - Non-success status', {
-            statusCode,
-            url: req.originalUrl,
-          });
-        }
-
-        return originalJson.call(this, data);
-      };
-
-      next();
+      cached = store.get(cacheKey);
     } catch (error) {
-      cacheStats.errors++;
-      logger.error('Cache middleware error', {
-        error: error.message,
-        stack: error.stack,
-        url: req.originalUrl,
+      stats.errors++;
+      logger.warn('Cache read failed', { error: error.message });
+      return next();
+    }
+
+    if (cached) {
+      stats.hits++;
+      res.set({
+        'X-Cache': 'HIT',
+        'Cache-Control': `public, max-age=${store.options.stdTTL}`,
+        ETag: cached.etag,
       });
 
-      // Continue without caching on error
-      next();
+      if (req.headers['if-none-match'] === cached.etag) {
+        return res.status(304).end();
+      }
+
+      return res.status(200).json(cached.body);
     }
+
+    stats.misses++;
+
+    const originalJson = res.json.bind(res);
+
+    res.json = (body) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        try {
+          const etag = `"${crypto.createHash('sha1').update(JSON.stringify(body)).digest('base64')}"`;
+          store.set(cacheKey, { body, etag });
+          stats.sets++;
+
+          res.set({
+            'X-Cache': 'MISS',
+            'Cache-Control': `public, max-age=${store.options.stdTTL}`,
+            ETag: etag,
+          });
+        } catch (error) {
+          stats.errors++;
+          logger.warn('Cache write failed', { error: error.message, key: cacheKey });
+        }
+      } else {
+        res.set('X-Cache', 'SKIP');
+      }
+
+      return originalJson(body);
+    };
+
+    next();
   };
 };
 
 /**
- * Cache invalidation helpers
+ * Drop every key whose path starts with the given prefix.
+ *
+ * Sweeps all three tiers. The previous implementation only touched `medium`,
+ * so entry writes left the search results (`short`) and the statistics
+ * (`long`) serving deleted data until their TTL expired.
+ *
+ * @param {string} pathPrefix - Path prefix, e.g. "/entries".
+ * @returns {number} Number of keys removed.
  */
-const invalidateCache = {
-  // Clear all caches
-  all: () => {
-    Object.values(cache).forEach((c) => c.flushAll());
-    logger.audit('All caches cleared');
-  },
+const invalidateByPath = (pathPrefix) => {
+  let removed = 0;
 
-  // Clear cache by pattern
-  byPattern: (pattern, cacheType = 'medium') => {
-    const keys = cache[cacheType].keys();
-    const matchingKeys = keys.filter((key) =>
-      Buffer.from(key, 'base64').toString().includes(pattern)
-    );
-
-    matchingKeys.forEach((key) => cache[cacheType].del(key));
-    logger.audit('Cache cleared by pattern', { pattern, count: matchingKeys.length });
-    return matchingKeys.length;
-  },
-
-  // Clear cache by URL pattern
-  byUrl: (urlPattern, cacheType = 'medium') => {
-    return invalidateCache.byPattern(urlPattern, cacheType);
-  },
-
-  // Clear specific entries-related cache
-  entries: () => {
-    const cleared = invalidateCache.byPattern('/entries');
-    logger.audit('Entries cache cleared', { count: cleared });
-    return cleared;
-  },
-
-  // Clear users-related cache
-  users: () => {
-    const cleared = invalidateCache.byPattern('/users');
-    logger.audit('Users cache cleared', { count: cleared });
-    return cleared;
-  },
-};
-
-/**
- * Get cache statistics
- */
-const getCacheStats = () => {
-  const stats = { ...cacheStats };
-
-  // Add cache-specific stats
-  Object.entries(cache).forEach(([name, cacheInstance]) => {
-    stats[name] = {
-      keys: cacheInstance.keys().length,
-      hits: cacheInstance.getStats().hits,
-      misses: cacheInstance.getStats().misses,
-      keys_count: cacheInstance.getStats().keys,
-      hits_ratio:
-        cacheInstance.getStats().hits /
-          (cacheInstance.getStats().hits + cacheInstance.getStats().misses) || 0,
-    };
+  Object.values(TIERS).forEach((store) => {
+    const matching = store.keys().filter((key) => key.includes(pathPrefix));
+    matching.forEach((key) => store.del(key));
+    removed += matching.length;
   });
 
-  stats.overall_hit_ratio = stats.hits / (stats.hits + stats.misses) || 0;
-  return stats;
-};
-
-/**
- * Warmup cache with frequently accessed data
- */
-const warmupCache = async () => {
-  try {
-    logger.info('Starting cache warmup');
-
-    // This would be called on server startup
-    // Add your most frequently accessed data here
-
-    logger.info('Cache warmup completed');
-  } catch (error) {
-    logger.error('Cache warmup failed', { error: error.message });
+  if (removed > 0) {
+    logger.debug('Cache invalidated', { pathPrefix, removed });
   }
+
+  return removed;
+};
+
+const invalidateCache = {
+  all: () => {
+    Object.values(TIERS).forEach((store) => store.flushAll());
+    logger.debug('All caches cleared');
+  },
+  entries: () => invalidateByPath('/entries'),
+  byPath: invalidateByPath,
 };
 
 /**
- * Preset middleware configurations
+ * Snapshot of cache counters, for the admin health endpoint.
+ *
+ * @returns {object} Hit/miss counters plus per-tier key counts.
  */
+const getCacheStats = () => {
+  const total = stats.hits + stats.misses;
+
+  return {
+    ...stats,
+    hitRatio: total > 0 ? Number((stats.hits / total).toFixed(3)) : 0,
+    tiers: Object.entries(TIERS).reduce((acc, [name, store]) => {
+      acc[name] = { keys: store.keys().length };
+      return acc;
+    }, {}),
+  };
+};
+
+/**
+ * Release every cache timer.
+ *
+ * NodeCache schedules a recurring `checkperiod` timer that keeps the event
+ * loop alive; without this the test runner hangs on exit.
+ */
+const closeCaches = () => {
+  Object.values(TIERS).forEach((store) => store.close());
+};
+
 const presets = {
-  // For search results that change frequently
+  // Only cache actual searches; an unfiltered listing is cheap and changes often.
   search: cacheMiddleware('short', {
-    condition: (req) => req.query.search || req.query.q,
-    varyBy: ['accept-language'],
+    condition: (req) => Boolean(req.query.search),
   }),
-
-  // For entry details that don't change often
-  entries: cacheMiddleware('medium', {
-    condition: (req) => req.method === 'GET',
-  }),
-
-  // For statistics and aggregated data
-  statistics: cacheMiddleware('long', {
-    condition: (req) => req.url.includes('statistics') || req.url.includes('stats'),
-  }),
-
-  // For public data that rarely changes
-  public: cacheMiddleware('long', {
-    condition: (req) => !req.user || req.user.role === 1,
-  }),
+  entries: cacheMiddleware('medium'),
+  statistics: cacheMiddleware('long'),
+  public: cacheMiddleware('long'),
 };
 
 module.exports = {
-  cache,
   cacheMiddleware,
   invalidateCache,
   getCacheStats,
-  warmupCache,
+  closeCaches,
   presets,
   generateCacheKey,
 };

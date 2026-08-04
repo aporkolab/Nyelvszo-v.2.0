@@ -1,107 +1,141 @@
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
-// Global test configuration
-global.testTimeout = 30000;
+// Set at module scope, not inside beforeAll: several modules read these at
+// require time, and require happens before any hook runs.
+process.env.NODE_ENV = 'test';
+process.env.LOG_LEVEL = 'error';
+process.env.JWT_SECRET = 'test-access-secret-at-least-32-characters-long';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-at-least-32-characters-long';
+process.env.JWT_EXPIRES_IN = '15m';
+process.env.JWT_REFRESH_EXPIRES_IN = '7d';
+
+// Silence the logger. Every method the application actually calls must be
+// present — a missing one throws a TypeError inside the code under test, and
+// the failure then surfaces somewhere unrelated.
+jest.mock('../src/logger/logger', () => {
+  const noop = jest.fn();
+  return {
+    error: noop,
+    warn: noop,
+    info: noop,
+    http: noop,
+    verbose: noop,
+    debug: noop,
+    silly: noop,
+    audit: noop,
+    security: noop,
+    performance: noop,
+    database: noop,
+    logError: noop,
+    logAuth: noop,
+    logDatabase: noop,
+    stream: { write: noop },
+  };
+});
 
 let mongod;
 
-// Setup before all tests
 beforeAll(async () => {
-  // Create in-memory MongoDB instance
-  mongod = await MongoMemoryServer.create({
-    instance: {
-      port: 0, // Use random port
-      dbName: 'test_db'
-    }
-  });
+  mongod = await MongoMemoryServer.create({ instance: { dbName: 'test_db' } });
 
-  const uri = mongod.getUri();
-  
-  // Connect to in-memory database
-  await mongoose.connect(uri, {
+  await mongoose.connect(mongod.getUri(), {
     maxPoolSize: 5,
-    serverSelectionTimeoutMS: 5000
+    serverSelectionTimeoutMS: 5000,
   });
 
-  // Set test environment variables
-  process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only';
-  process.env.LOG_LEVEL = 'error'; // Reduce logging noise in tests
+  // Unique and text indexes are declared on the schemas; build them once so a
+  // duplicate email surfaces as a real duplicate-key error rather than saving.
+  await Promise.all([
+    require('../src/models/user').syncIndexes(),
+    require('../src/models/entry').syncIndexes(),
+  ]);
 });
 
-// Cleanup after each test
 afterEach(async () => {
-  // Clean up all collections
-  const collections = mongoose.connection.collections;
-  
-  for (const key in collections) {
-    const collection = collections[key];
-    await collection.deleteMany({});
-  }
+  const { collections } = mongoose.connection;
+  await Promise.all(Object.values(collections).map((collection) => collection.deleteMany({})));
 });
 
-// Cleanup after all tests
 afterAll(async () => {
-  // Close mongoose connection
+  require('../src/middleware/cache').closeCaches();
+
   await mongoose.connection.dropDatabase();
   await mongoose.connection.close();
 
-  // Stop MongoDB instance
   if (mongod) {
     await mongod.stop();
   }
 });
 
-// Handle unhandled promise rejections in tests
-process.on('unhandledRejection', (reason, promise) => {
-  console.log('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Application specific logging, throwing an error, or other logic here
-});
-
-// Global test helpers
-global.createTestUser = async (userData = {}) => {
+/**
+ * Persist a user, filling in valid defaults.
+ *
+ * @param {object} [overrides] - Fields to override.
+ * @returns {Promise<object>} Saved user document.
+ */
+global.createTestUser = async (overrides = {}) => {
   const User = require('../src/models/user');
-  
-  const defaultUser = {
+
+  const user = new User({
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
     role: 1,
     password: 'TestPassword123!',
     isActive: true,
-    ...userData
-  };
+    ...overrides,
+  });
 
-  const user = new User(defaultUser);
   await user.save();
   return user;
 };
 
-global.createTestEntry = async (entryData = {}) => {
+/**
+ * Persist a dictionary entry, filling in valid defaults.
+ *
+ * @param {object} [overrides] - Fields to override.
+ * @returns {Promise<object>} Saved entry document.
+ */
+global.createTestEntry = async (overrides = {}) => {
   const Entry = require('../src/models/entry');
-  
-  const defaultEntry = {
+
+  const entry = new Entry({
     hungarian: 'teszt szó',
     english: 'test word',
     fieldOfExpertise: 'informatika',
     wordType: 'főnév',
-    ...entryData
-  };
+    ...overrides,
+  });
 
-  const entry = new Entry(defaultEntry);
   await entry.save();
   return entry;
 };
 
-// Mock logger to reduce test output noise
-jest.mock('../src/logger/logger', () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  logError: jest.fn(),
-  stream: {
-    write: jest.fn()
-  }
-}));
+/**
+ * Mint a signed access token for a user document.
+ *
+ * Mirrors what the login route issues, including the `typ` claim, issuer and
+ * audience — a token missing any of those is rejected by the auth middleware.
+ *
+ * @param {object} user - User document.
+ * @returns {string} Encoded JWT.
+ */
+global.signAccessToken = (user) => {
+  const jwt = require('jsonwebtoken');
+  const { JWT_ISSUER, JWT_AUDIENCE } = require('../src/models/auth/authenticate');
+
+  return jwt.sign(
+    { typ: 'access', userId: user._id.toString(), email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { issuer: JWT_ISSUER, audience: JWT_AUDIENCE, expiresIn: '15m' }
+  );
+};
+
+/**
+ * Build an Authorization header value for a user.
+ *
+ * @param {object} user - User document.
+ * @returns {string} "Bearer <token>".
+ */
+global.authHeader = (user) => `Bearer ${global.signAccessToken(user)}`;

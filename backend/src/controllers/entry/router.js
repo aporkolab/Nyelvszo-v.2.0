@@ -1,65 +1,99 @@
 const express = require('express');
 const router = express.Router();
+
 const { authenticate, authorize } = require('../../models/auth/authenticate');
+const { validate } = require('../../middleware/validation');
+const {
+  entrySchema,
+  entryUpdateSchema,
+  entryListQuerySchema,
+  entryLimitQuerySchema,
+  emptyQuerySchema,
+  entryBulkSchema,
+  idSchema,
+} = require('../../validation/schemas');
 const { presets: cachePresets } = require('../../middleware/cache');
+const { EDITORIAL_ROLES, ADMIN_ROLES } = require('../../constants/roles');
 const controller = require('./controller');
 
-// Public routes with caching
+// ---------------------------------------------------------------------------
+// Public reads
+//
+// The literal paths are declared before `/:id` so that "popular", "recent" and
+// "statistics" are not swallowed by the parameterised route.
+// ---------------------------------------------------------------------------
+router.get(
+  '/',
+  validate(entryListQuerySchema, 'query'),
+  cachePresets.search,
+  controller.getAllEntries
+);
 
-// Get all entries with search and filtering
-router.get('/', cachePresets.search, controller.getAllEntries);
+router.get(
+  '/popular',
+  validate(entryLimitQuerySchema, 'query'),
+  cachePresets.public,
+  controller.getPopularEntries
+);
 
-// Get popular entries
-router.get('/popular', cachePresets.public, controller.getPopularEntries);
+router.get(
+  '/recent',
+  validate(entryLimitQuerySchema, 'query'),
+  cachePresets.public,
+  controller.getRecentEntries
+);
 
-// Get recent entries
-router.get('/recent', cachePresets.public, controller.getRecentEntries);
+router.get(
+  '/statistics',
+  validate(emptyQuerySchema, 'query'),
+  cachePresets.statistics,
+  controller.getStatistics
+);
 
-// Get statistics
-router.get('/statistics', cachePresets.statistics, controller.getStatistics);
+router.get('/:id', validate(idSchema, 'params'), cachePresets.entries, controller.getEntryById);
 
-// Get single entry by ID
-router.get('/:id', cachePresets.entries, controller.getEntryById);
-
-// Protected routes (Editor+ required)
-
-// Create new entry
+// ---------------------------------------------------------------------------
+// Editorial writes
+// ---------------------------------------------------------------------------
 router.post(
   '/',
   authenticate,
-  authorize([2, 3]), // Editor or Admin
+  authorize(EDITORIAL_ROLES),
+  validate(entrySchema),
   controller.createEntry
 );
 
-// Bulk operations (Admin only)
 router.post(
   '/bulk',
   authenticate,
-  authorize([3]), // Admin only
+  authorize(ADMIN_ROLES),
+  validate(entryBulkSchema),
   controller.bulkOperations
 );
 
-// Update entry (full update)
 router.put(
   '/:id',
   authenticate,
-  authorize([2, 3]), // Editor or Admin
+  authorize(EDITORIAL_ROLES),
+  validate(idSchema, 'params'),
+  validate(entryUpdateSchema),
   controller.updateEntry
 );
 
-// Partial update entry
 router.patch(
   '/:id',
   authenticate,
-  authorize([2, 3]), // Editor or Admin
-  controller.patchEntry
+  authorize(EDITORIAL_ROLES),
+  validate(idSchema, 'params'),
+  validate(entryUpdateSchema),
+  controller.updateEntry
 );
 
-// Delete entry (soft delete)
 router.delete(
   '/:id',
   authenticate,
-  authorize([2, 3]), // Editor or Admin
+  authorize(EDITORIAL_ROLES),
+  validate(idSchema, 'params'),
   controller.deleteEntry
 );
 

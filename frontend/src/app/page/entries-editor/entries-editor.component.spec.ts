@@ -1,14 +1,13 @@
-// entries-editor.component.spec.ts
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms'; // <<< EZ KELL
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ToastrModule } from 'ngx-toastr';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
 
 import { EntriesEditorComponent } from './entries-editor.component';
-import { Entry } from '../../model/entry';
 
 describe('EntriesEditorComponent', () => {
   let component: EntriesEditorComponent;
@@ -16,40 +15,39 @@ describe('EntriesEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        EntriesEditorComponent, // standalone
-        ReactiveFormsModule, // <<< FormsModule helyett EZ
-        HttpClientTestingModule,
-        RouterTestingModule,
-        TranslateModule.forRoot(),
-        ToastrModule.forRoot(),
-        NoopAnimationsModule,
+      imports: [EntriesEditorComponent, TranslateModule.forRoot(), ToastrModule.forRoot()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        provideNoopAnimations(),
+        // `0` is the create route, so the component renders its form without
+        // issuing a request.
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: '0' })) } },
       ],
     }).compileComponents();
-  });
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(EntriesEditorComponent);
     component = fixture.componentInstance;
-
-    const mockEntry = new Entry({
-      _id: '1',
-      english: 'Test Word',
-      hungarian: 'Teszt szó',
-      fieldOfExpertise: 'general',
-      wordType: 'noun',
-    });
-
-    // @Input előbb:
-    component.entry = mockEntry;
-
-    // ha a komponens NEM ngOnInit-ben hozza létre a formot, biztosítsd itt:
-    // component.form = new FormGroup({ ... });  // csak ha szükséges
-
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('starts invalid so an empty entry cannot be submitted', () => {
+    const form = (component as unknown as { form: { invalid: boolean } }).form;
+    expect(form.invalid).toBeTrue();
+  });
+
+  it('renders an input for every entry field', () => {
+    const element: HTMLElement = fixture.nativeElement;
+
+    for (const id of ['hungarian', 'english', 'fieldOfExpertise', 'wordType']) {
+      expect(element.querySelector(`#${id}`))
+        .withContext(id)
+        .not.toBeNull();
+    }
   });
 });

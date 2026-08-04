@@ -1,15 +1,20 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
-@Component({
-  standalone: true,
-  selector: 'app-contact',
-  imports: [CommonModule, TranslateModule],
-  templateUrl: './contact.component.html',
-})
-export class ContactComponent implements OnInit {
-  constructor() {}
+import { IconModule } from '../../icon/icon.module';
 
-  ngOnInit(): void {}
-}
+/**
+ * Who to write to, and under what terms the dictionary may be used.
+ *
+ * The addresses used to be spelled out as "adam(kukac)porkolab pont hu" to
+ * dodge harvesters, which meant no reader could click them and anyone using a
+ * screen reader heard nonsense. They are plain `mailto:` links now.
+ */
+@Component({
+  selector: 'app-contact',
+  imports: [TranslateModule, IconModule],
+  templateUrl: './contact.component.html',
+  styleUrl: './contact.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ContactComponent {}

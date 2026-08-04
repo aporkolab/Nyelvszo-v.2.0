@@ -1,130 +1,145 @@
-<div id="container">
-  <h1 id="home">Angol-magyar nyelvészeti szakszótár v.2.2.0 (2025-08-27)</h1>
-  <h5>Verziótörténet (Changelog):</h5>
-  <h5>Webfejlesztés, design: Dr. Porkoláb Ádám</h5>
-  <h5>
-    Az adatbázisban található szócikkek száma a 2.2.0-ás verzióban:
-    <strong>12384</strong>
-  </h5>
-  <ul>
-    <li><strong>2.2.0 (2025-08-27)</strong></li>
-    - CI/CD stabilizálás és függőségfrissítések
-    <br />
-    - 🚀
-    <strong>CI/CD</strong>
-    <br />
-    &nbsp;&nbsp;• Javítva a
-    <strong>backend build job</strong
-    >: Maven helyett
-    <strong>Node.js runtime</strong>
-    használat.
-    <br />
-    &nbsp;&nbsp;•
-    <code>npm ci</code>
-    futtatása a megfelelő backend munkakönyvtárban.
-    <br />
-    &nbsp;&nbsp;•
-    <strong>Frontend job</strong>
-    ellenőrizve és optimalizálva: tesztek és build helyesen konfigurálva.
-    <br />
-    &nbsp;&nbsp;• Pipeline cache stratégia bevezetve (<code>~/.npm</code>).
-    <br />
-    - 📦
-    <strong>Frontend függőségek</strong>
-    <br />
-    &nbsp;&nbsp;•
-    <strong>Angular</strong
-    >:
-    <code>v14</code>
-    →
-    <strong><code>v20</code></strong>
-    <br />
-    &nbsp;&nbsp;•
-    <strong>TypeScript</strong
-    >:
-    <code>~5.8.0</code>
-    <br />
-    &nbsp;&nbsp;• Frissítve harmadik féltől származó csomagok:
-    <br />
-    &nbsp;&nbsp;&nbsp;&nbsp;–
-    <code>ngx-bootstrap</code
-    >:
-    <code>^9.0.0</code>
-    →
-    <strong><code>^20.0.1</code></strong>
-    <br />
-    &nbsp;&nbsp;&nbsp;&nbsp;–
-    <code>ngx-toastr</code
-    >:
-    <code>^15.1.0</code>
-    →
-    <strong><code>^19.0.0</code></strong>
-    <br />
-    &nbsp;&nbsp;&nbsp;&nbsp;–
-    <code>zone.js</code
-    >:
-    <code>~0.11.4</code>
-    →
-    <strong><code>^0.15.0</code></strong>
-    <br />
-    &nbsp;&nbsp;•
-    <strong>Lockfile újragenerálva</strong>
-    → függőségi konfliktusok megszüntetve.
-    <br />
-    - ✅
-    <strong>Eredmény</strong>
-    <br />
-    &nbsp;&nbsp;• A CI/CD pipeline
-    <strong>zölden fut minden környezetben</strong
-    >.
-    <br />
-    &nbsp;&nbsp;• A projekt függőségei naprakészek és kompatibilisek az
-    <strong>Angular 20</strong>
-    ökoszisztémával.
-    <br />
-    &nbsp;&nbsp;• Build folyamatok
-    <strong>determininsztikusak</strong
-    >, környezetek közötti eltérés minimális.
-    <br /><br />
-    <li><strong>2.0.0 (2022-10-01)</strong></li>
-    - A Heroku deploy megszűnése miatt a NyelvSzó saját szerverre került, ezzel pedig - elvileg - a
-    végleges helyére költözött.
-    <br />
-    - A Spring Boot-os applikáció teljes újraírásra került Angular 14-ben, TypeScript alapon. A
-    backendet egy saját fejlesztésű Express-es alkalmazás adja.
-    <br />
-    - NyelvSzó logó megtervezése.
-    <br />
-    - Weblapdesing fejlesztése, frontend fejlesztése.
-    <br />
-    - JWTWebtoken bevezetése és az adminfelület, 'sózott' (hashed) jelszóval védése megtörtént.
-    <br />
-    - A kezelőfelület és az alapvető szótári kifejezések többnyelvűsítését implementáltam.
-    <li><strong>1.3 (2021-10-21)</strong></li>
-    - Teljes REST API támogatás elkészült.
-    <br />
-    - Adminfelület kiépítése és a CRUD-műveletek frontendes megvalósítása.
-    <br />
-    - Az adminfelület további fejlesztése megtörtént: felhasználók kezelésének kiépítését
-    megvalósítottam.
-    <br />
-    - Weblapdesing fejlesztése, frontend fejlesztése.
-    <br />
-    - Spring Security bevezetése és az adminfelület jelszóval védése megtörtént.
-    <li><strong>1.0 (2021-10-08)</strong></li>
-    - Az átnézett és részben javított szótári anyagot - melyet a kiadványban szereplő változat
-    alapján fejlesztettünk tovább - JSON formátumba mentettük és H2 adatbázis készült belőle.
-    <br />
-    - Az alapvető keresőfelület elkészült. Felhasznált technológiák: Bootstrap (HTML és CSS3),
-    Spring Boot (Thymeleaf, Lombok)
-    <br />
-    - A www.nyelvszo.eu domain megvásárlása.
-    <br />
-    <br />
-    <li><strong>Tervek a későbbi verziókra:</strong></li>
-    - További desingbeli fejlesztés.
-    <br />
-    - A szótári anyag fejlesztése és hibajavítása.
-    <br />
-  </ul>
+<div class="container container--medium stack stack--loose">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ 'versionHistory.title' | translate }}</h1>
+      <p class="page-header__lead">{{ 'versionHistory.lead' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="prose">
+    <p>Webfejlesztés, design: Dr. Porkoláb Ádám</p>
+
+    <p>Az adatbázisban található szócikkek száma a 2.2.0-ás verzióban: <strong>12384</strong></p>
+
+    <ol class="versions">
+      <li class="versions__item">
+        <h2 class="versions__heading">
+          2.2.0
+          <time class="versions__date" datetime="2025-08-27">2025-08-27</time>
+        </h2>
+
+        <p class="versions__summary">CI/CD stabilizálás és függőségfrissítések</p>
+
+        <h3>CI/CD</h3>
+        <ul>
+          <li>
+            Javítva a <strong>backend build job</strong>: Maven helyett
+            <strong>Node.js runtime</strong> használat.
+          </li>
+          <li><code>npm ci</code> futtatása a megfelelő backend munkakönyvtárban.</li>
+          <li>
+            <strong>Frontend job</strong> ellenőrizve és optimalizálva: tesztek és build helyesen
+            konfigurálva.
+          </li>
+          <li>Pipeline cache stratégia bevezetve (<code>~/.npm</code>).</li>
+        </ul>
+
+        <h3>Frontend függőségek</h3>
+        <ul>
+          <li>
+            <strong>Angular</strong>: <code>v14</code> → <strong><code>v20</code></strong>
+          </li>
+          <li><strong>TypeScript</strong>: <code>~5.8.0</code></li>
+          <li>
+            Frissítve harmadik féltől származó csomagok:
+            <ul>
+              <li>
+                <code>ngx-bootstrap</code>: <code>^9.0.0</code> →
+                <strong><code>^20.0.1</code></strong>
+              </li>
+              <li>
+                <code>ngx-toastr</code>: <code>^15.1.0</code> →
+                <strong><code>^19.0.0</code></strong>
+              </li>
+              <li>
+                <code>zone.js</code>: <code>~0.11.4</code> → <strong><code>^0.15.0</code></strong>
+              </li>
+            </ul>
+          </li>
+          <li><strong>Lockfile újragenerálva</strong> → függőségi konfliktusok megszüntetve.</li>
+        </ul>
+
+        <h3>Eredmény</h3>
+        <ul>
+          <li>A CI/CD pipeline <strong>zölden fut minden környezetben</strong>.</li>
+          <li>
+            A projekt függőségei naprakészek és kompatibilisek az <strong>Angular 20</strong>
+            ökoszisztémával.
+          </li>
+          <li>
+            Build folyamatok <strong>determinisztikusak</strong>, környezetek közötti eltérés
+            minimális.
+          </li>
+        </ul>
+      </li>
+
+      <li class="versions__item">
+        <h2 class="versions__heading">
+          2.0.0
+          <time class="versions__date" datetime="2022-10-01">2022-10-01</time>
+        </h2>
+        <ul>
+          <li>
+            A Heroku deploy megszűnése miatt a NyelvSzó saját szerverre került, ezzel pedig –
+            elvileg – a végleges helyére költözött.
+          </li>
+          <li>
+            A Spring Boot-os applikáció teljes újraírásra került Angular 14-ben, TypeScript alapon.
+            A backendet egy saját fejlesztésű Express-es alkalmazás adja.
+          </li>
+          <li>NyelvSzó logó megtervezése.</li>
+          <li>Weblapdesign fejlesztése, frontend fejlesztése.</li>
+          <li>
+            JWTWebtoken bevezetése és az adminfelület, „sózott” (hashed) jelszóval védése
+            megtörtént.
+          </li>
+          <li>
+            A kezelőfelület és az alapvető szótári kifejezések többnyelvűsítését implementáltam.
+          </li>
+        </ul>
+      </li>
+
+      <li class="versions__item">
+        <h2 class="versions__heading">
+          1.3
+          <time class="versions__date" datetime="2021-10-21">2021-10-21</time>
+        </h2>
+        <ul>
+          <li>Teljes REST API támogatás elkészült.</li>
+          <li>Adminfelület kiépítése és a CRUD-műveletek frontendes megvalósítása.</li>
+          <li>
+            Az adminfelület további fejlesztése megtörtént: felhasználók kezelésének kiépítését
+            megvalósítottam.
+          </li>
+          <li>Weblapdesign fejlesztése, frontend fejlesztése.</li>
+          <li>Spring Security bevezetése és az adminfelület jelszóval védése megtörtént.</li>
+        </ul>
+      </li>
+
+      <li class="versions__item">
+        <h2 class="versions__heading">
+          1.0
+          <time class="versions__date" datetime="2021-10-08">2021-10-08</time>
+        </h2>
+        <ul>
+          <li>
+            Az átnézett és részben javított szótári anyagot – melyet a kiadványban szereplő változat
+            alapján fejlesztettünk tovább – JSON formátumba mentettük és H2 adatbázis készült
+            belőle.
+          </li>
+          <li>
+            Az alapvető keresőfelület elkészült. Felhasznált technológiák: Bootstrap (HTML és CSS3),
+            Spring Boot (Thymeleaf, Lombok).
+          </li>
+          <li>A www.nyelvszo.eu domain megvásárlása.</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2>Tervek a későbbi verziókra</h2>
+    <ul>
+      <li>További designbeli fejlesztés.</li>
+      <li>A szótári anyag fejlesztése és hibajavítása.</li>
+    </ul>
+  </div>
 </div>

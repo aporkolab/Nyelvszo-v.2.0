@@ -1,14 +1,43 @@
 <!doctype html>
-<html lang="en">
+<!--
+  `lang` is set to Hungarian because that is the default interface language.
+  AppComponent rewrites it at runtime when the reader switches to English; the
+  static value only has to match the first paint so screen readers do not
+  briefly announce Hungarian text with an English voice.
+-->
+<html lang="hu">
   <head>
     <meta charset="utf-8" />
-    <title>NyelvSzó v2.0.0</title>
+    <title>NyelvSzó — Angol–magyar nyelvészeti szakszótár</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Angol–magyar nyelvészeti szakszótár: mintegy 12 000 nyelvtudományi szakkifejezés magyar és angol megfelelője, kereshető formában. Szerzők: Dr. Porkoláb Ádám és Dr. Fekete Tamás."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
   </head>
 
   <body>
     <app-root></app-root>
+
+    <noscript>
+      <div class="app-shell__main">
+        <div class="container container--medium">
+          <div class="alert alert--warning">
+            <div class="stack stack--tight">
+              <p class="alert__title">A NyelvSzó használatához JavaScript szükséges.</p>
+              <p>
+                Kapcsolja be a JavaScriptet a böngészőjében, majd töltse újra az oldalt. — NyelvSzó
+                requires JavaScript. Please enable it in your browser and reload the page.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </noscript>
   </body>
 </html>

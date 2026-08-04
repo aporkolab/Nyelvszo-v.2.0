@@ -1,106 +1,56 @@
 const createError = require('http-errors');
 
 /**
- * Validation middleware factory
- * @param {object} schema - Joi validation schema
- * @param {string} source - Source of data to validate ('body', 'params', 'query')
- * @returns {function} Express middleware function
+ * Validation middleware factory.
+ *
+ * On success the validated (coerced, defaulted, unknown-stripped) value
+ * replaces the raw input, so handlers downstream never see the original.
+ *
+ * Note on `query`: Express 5 makes `req.query` a getter, so it cannot be
+ * reassigned. The validated value is therefore also exposed on
+ * `req.validatedQuery`, and handlers should prefer that.
+ *
+ * @param {object} schema - Joi schema.
+ * @param {'body'|'params'|'query'} [source] - Which part of the request to validate.
+ * @returns {function} Express middleware.
  */
 const validate = (schema, source = 'body') => {
   return (req, res, next) => {
-    const data = req[source];
-
-    if (!data) {
-      return next(createError(400, `No ${source} data provided`));
-    }
+    const data = req[source] ?? {};
 
     const { error, value } = schema.validate(data, {
-      abortEarly: false, // Include all errors
-      allowUnknown: false, // Disallow unknown fields
-      stripUnknown: true, // Remove unknown fields
-      convert: true, // Convert strings to numbers where possible
+      abortEarly: false,
+      allowUnknown: false,
+      stripUnknown: true,
+      convert: true,
     });
 
     if (error) {
-      const errorMessages = error.details.map((detail) => ({
+      const details = error.details.map((detail) => ({
         field: detail.path.join('.'),
         message: detail.message,
-        value: detail.context?.value,
       }));
 
-      return next(
-        createError(400, 'Validation Error', {
-          details: errorMessages,
-          type: 'ValidationError',
-        })
-      );
+      return next(createError(400, 'Validation Error', { details, type: 'ValidationError' }));
     }
 
-    // Replace the original data with validated data
-    req[source] = value;
-    next();
-  };
-};
-
-/**
- * Sanitize string inputs to prevent XSS and other attacks
- * @param {string} str - String to sanitize
- * @returns {string} Sanitized string
- */
-const sanitizeString = (str) => {
-  if (typeof str !== 'string') return str;
-
-  return str
-    .replace(/[<>]/g, '') // Remove < and > characters
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .trim();
-};
-
-/**
- * Sanitize object recursively
- * @param {object} obj - Object to sanitize
- * @returns {object} Sanitized object
- */
-const sanitizeObject = (obj) => {
-  if (obj === null || obj === undefined) return obj;
-
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
-  }
-
-  if (typeof obj === 'object') {
-    const sanitized = {};
-    for (const [key, value] of Object.entries(obj)) {
-      sanitized[key] = sanitizeObject(value);
+    if (source === 'query') {
+      req.validatedQuery = value;
+      // Express 4 allows the assignment; Express 5 does not. Try, and fall back
+      // to `req.validatedQuery` alone rather than throwing.
+      try {
+        req.query = value;
+      } catch {
+        /* read-only in Express 5 — validatedQuery is the supported accessor */
+      }
+    } else {
+      req[source] = value;
     }
-    return sanitized;
-  }
 
-  return obj;
-};
-
-/**
- * Sanitization middleware
- * @param {string} source - Source of data to sanitize ('body', 'params', 'query')
- * @returns {function} Express middleware function
- */
-const sanitize = (source = 'body') => {
-  return (req, res, next) => {
-    if (req[source]) {
-      req[source] = sanitizeObject(req[source]);
-    }
     next();
   };
 };
 
 module.exports = {
   validate,
-  sanitize,
-  sanitizeString,
-  sanitizeObject,
 };

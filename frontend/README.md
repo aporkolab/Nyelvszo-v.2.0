@@ -1,29 +1,79 @@
-# Nyelvszo2.0
+# NyelvSzó — frontend
 
-This is a custom error page, inspired by the free, CodePen Home 403 forbidden (CSS hover) template by Piotr Galor. (https://codepen.io/pgalor/pen/dqQqqx)
+Angular 21 client for the NyelvSzó English–Hungarian linguistic dictionary. It
+is a pure API consumer: the dictionary lives in the backend under `../backend`,
+which must be running for anything beyond the static pages to work. See the
+[repository README](../README.md) for the stack as a whole, the role model and
+the API surface.
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.8.
+## Stack
 
-## Development server
+Angular 21 with standalone components, TypeScript 5.9, RxJS, and a purpose-built
+CSS design system (no framework),
+`@ngx-translate` for the Hungarian and English UI (`src/assets/i18n`),
+`ngx-toastr` for notifications and `angular-feather` for icons.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Configuration
 
-## Code scaffolding
+The API base URL is compile-time configuration in `src/environments/`:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+| File | `apiUrl` |
+|------|----------|
+| `environment.ts` (development) | `http://localhost:3000` |
+| `environment.prod.ts` (production) | `https://api.nyelvszo.eu` |
+
+The backend must list the origin this app is served from in its
+`ALLOWED_ORIGINS`; by default that includes `http://localhost:4200`.
+
+## Development
+
+```bash
+npm install
+npm start          # http://localhost:4200, reloads on change
+```
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm run build          # development build
+npm run build:prod     # production build
+```
 
-## Running unit tests
+Output goes to `dist/nyelvszo`. The production stage of `Dockerfile` serves that
+directory from Nginx using `nginx.conf`.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Tests
 
-## Running end-to-end tests
+Karma and Jasmine, configured in `karma.conf.js`.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```bash
+npm test               # headless Chrome, single run
+npm run test:watch
+npm run test:coverage
+```
 
-## Further help
+There is no end-to-end suite in this repository.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Code quality
+
+```bash
+npm run lint           # ESLint, applies --fix
+npm run lint:check     # ESLint, report only
+npm run format         # Prettier
+npm run format:check
+npm run analyze        # bundle analysis via webpack-bundle-analyzer
+```
+
+## Scaffolding
+
+```bash
+npx ng generate component page/my-page
+```
+
+`ng generate` also handles directives, pipes, services, guards and interfaces.
+Run `npx ng help` for the full command reference.
+
+## Credits
+
+The 403 page is adapted from Piotr Galor's free CodePen template
+["Home 403 forbidden (CSS hover)"](https://codepen.io/pgalor/pen/dqQqqx).

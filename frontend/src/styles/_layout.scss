@@ -1,0 +1,129 @@
+@charset "UTF-8";
+
+// ---------------------------------------------------------------------------
+// Layout primitives
+//
+// A handful of composable containers replaces the twelve-column grid. Almost
+// every screen in this application is a single column of stacked blocks, and
+// the few that are not are better served by an intrinsic grid than by counting
+// columns.
+// ---------------------------------------------------------------------------
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-shell__main {
+  flex: 1 1 auto;
+  padding-block: var(--space-6) var(--space-9);
+}
+
+// Horizontal container with a responsive gutter.
+.container {
+  width: 100%;
+  max-width: var(--container-lg);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+
+.container--narrow {
+  max-width: var(--container-sm);
+}
+
+.container--medium {
+  max-width: var(--container-md);
+}
+
+.container--wide {
+  max-width: var(--container-xl);
+}
+
+// Vertical rhythm: one gap value applied between children, so components never
+// need their own outer margins.
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stack--tight {
+  gap: var(--space-2);
+}
+
+.stack--loose {
+  gap: var(--space-6);
+}
+
+.stack--section {
+  gap: var(--space-8);
+}
+
+// Horizontal group that wraps rather than overflowing.
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cluster--tight {
+  gap: var(--space-2);
+}
+
+.cluster--between {
+  justify-content: space-between;
+}
+
+.cluster--end {
+  justify-content: flex-end;
+}
+
+// Intrinsic grid: as many columns as fit at the given minimum, no media
+// queries required.
+.grid-auto {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+}
+
+// Constrain running prose to a readable measure.
+.measure {
+  max-width: var(--measure);
+}
+
+// Centre a block on the cross axis.
+.center {
+  margin-inline: auto;
+}
+
+// Push a flex sibling to the far end.
+.push {
+  margin-inline-start: auto;
+}
+
+// ---------------------------------------------------------------------------
+// Page header
+// ---------------------------------------------------------------------------
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.page-header__title {
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.page-header__lead {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}

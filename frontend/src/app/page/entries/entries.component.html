@@ -1,152 +1,304 @@
-<!-- Search Section -->
-<div class="s004">
-  <div class="form-group">
-    <img src="/assets/img/logo.png" alt="NyelvSzo logo" id="logo" />
-    <legend>{{ 'WHAT ARE YOU LOOKING FOR?' | translate }}</legend>
-    <div class="tableData inner-form">
-      <div class="col-12 select_container input-field">
-        <select
-          [(ngModel)]="filterKey"
-          (ngModelChange)="onFilterKeyChange()"
-          id="tableSearch"
-          class="form-control"
-        >
-          <option value="">{{ 'table.searchAll' | translate }}</option>
-          <option *ngFor="let col of columns" [value]="col.key">
-            {{ col.title | translate }}
-          </option>
-        </select>
+<!--
+  Dictionary search.
+
+  The search panel is the page: everything below it is the answer to what was
+  typed into it. The results area is a single @switch over the four states the
+  screen can be in, so it is impossible to ship a branch that renders nothing.
+-->
+<div class="container container--wide stack stack--section">
+  <section class="search-panel" aria-labelledby="search-title">
+    <div class="search-panel__inner stack stack--loose">
+      <div class="stack stack--tight">
+        <h1 class="search-panel__title" id="search-title">{{ 'search.title' | translate }}</h1>
+        <p class="search-panel__lead measure">{{ 'search.lead' | translate }}</p>
       </div>
-      <div class="mb-3 input_container">
-        <input
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()"
-          type="text"
-          class="form-control"
-          id="choices-text-preset-values"
-          placeholder="{{ 'placeholder' | translate }}"
-        />
+
+      <div class="search-panel__controls">
+        <div class="field">
+          <label class="field__label sr-only" for="entry-search">
+            {{ 'search.label' | translate }}
+          </label>
+
+          <div class="input-group">
+            <span class="input-group__icon">
+              <i-feather name="search" aria-hidden="true" />
+            </span>
+
+            <input
+              #searchInput
+              id="entry-search"
+              type="search"
+              class="input search-panel__input"
+              [formControl]="searchControl"
+              [attr.placeholder]="'search.placeholder' | translate"
+              aria-describedby="entry-search-hint"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              enterkeyhint="search"
+            />
+
+            @if (typed()) {
+              <button
+                type="button"
+                class="btn btn--ghost btn--icon input-group__action"
+                (click)="onClear()"
+                [attr.aria-label]="'a11y.clearSearch' | translate"
+              >
+                <i-feather name="x" aria-hidden="true" />
+              </button>
+            }
+          </div>
+
+          <p class="field__hint" id="entry-search-hint">{{ 'search.hint' | translate }}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="entry-column">
+            {{ 'search.columnLabel' | translate }}
+          </label>
+          <select id="entry-column" class="select select--compact" [formControl]="columnControl">
+            <option value="">{{ 'search.allColumns' | translate }}</option>
+            @for (column of columns; track column) {
+              <option [value]="column">{{ 'table.' + column | translate }}</option>
+            }
+          </select>
+        </div>
       </div>
     </div>
-    <!-- Search info -->
-    <div class="search-info text-muted text-center mt-2" *ngIf="pagination && hasSearched">
-      <small>
-        {{ 'Found' | translate }}: {{ pagination.totalItems }} {{ 'entries' | translate }}
-        <span *ngIf="pagination.totalPages > 1">
-          ({{ 'page' | translate }} {{ pagination.currentPage }}/{{ pagination.totalPages }})
-        </span>
-      </small>
+  </section>
+
+  <div class="stack">
+    <!-- Result counts are announced politely; they are the outcome of an action
+         the reader took, not an interruption. -->
+    <p class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
+
+    <div class="cluster cluster--between results-bar">
+      <p class="results-bar__summary">
+        @if (status() === 'ready') {
+          <span>{{ 'search.resultCount' | translate: { count: total() } }}</span>
+          @if (totalPages() > 1) {
+            <span class="results-bar__page">
+              {{
+                'search.pageIndicator'
+                  | translate: { current: pagination().currentPage, total: totalPages() }
+              }}
+            </span>
+          }
+        }
+      </p>
+
+      <div class="cluster cluster--tight">
+        @if (hasResults()) {
+          <label class="results-bar__label" for="entry-sort">
+            {{ 'search.sortLabel' | translate }}
+          </label>
+          <select id="entry-sort" class="select select--compact" [formControl]="sortControl">
+            @for (option of sortOptions; track option) {
+              <option [value]="option">{{ 'search.sort.' + option | translate }}</option>
+            }
+          </select>
+        }
+
+        @if (auth.isEditor) {
+          <a class="btn btn--primary" [routerLink]="['/entries', 'edit', '0']">
+            <i-feather name="plus" aria-hidden="true" />
+            {{ 'actions.addEntry' | translate }}
+          </a>
+        }
+      </div>
     </div>
-    <div class="text-muted text-center mt-2" *ngIf="!hasSearched">
-      <small>{{ 'Enter at least 2 characters to search' | translate }}</small>
-    </div>
-  </div>
-</div>
 
-<!-- Loading indicator -->
-<div *ngIf="entryService.searching$ | async" class="text-center my-4">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">{{ 'Loading...' | translate }}</span>
-  </div>
-</div>
+    @switch (status()) {
+      @case ('idle') {
+        <div class="state">
+          <span class="state__icon">
+            <i-feather name="search" aria-hidden="true" />
+          </span>
+          <h2 class="state__title">{{ 'search.idleTitle' | translate }}</h2>
+          <p class="state__body">{{ 'search.idleBody' | translate }}</p>
+        </div>
+      }
 
-<!-- Results Section -->
-<div class="col-12 scroll tableData" *ngIf="!(entryService.searching$ | async)">
-  <!-- Add new button (admin only) -->
-  <div>
-    <button
-      *ngIf="auth.user$.value?.role === 3"
-      [routerLink]="['edit', '0']"
-      class="btn btn-success col-12"
-    >
-      {{ 'Add a new' | translate }} {{ entity }}
-      <i-feather name="user-plus"></i-feather>
-    </button>
-  </div>
+      @case ('loading') {
+        <div class="results-skeleton" aria-hidden="true">
+          @for (row of skeletonRows; track row) {
+            <div class="skeleton skeleton--row"></div>
+          }
+        </div>
+      }
 
-  <!-- No results message -->
-  <div *ngIf="hasSearched && results.length === 0" class="text-center my-4">
-    <p class="text-muted">{{ 'No entries found' | translate }}</p>
-  </div>
-
-  <!-- Results table -->
-  <div class="row table-responsive" *ngIf="results.length > 0">
-    <table class="table table-striped table-hover table-dark">
-      <thead>
-        <tr>
-          <th *ngFor="let col of columns" scope="col" class="table-light">
-            {{ col.title | translate }}
-            <i-feather
-              (click)="onColumnSelect(col.key)"
-              name="Shuffle"
-              style="cursor: pointer"
-            ></i-feather>
-          </th>
-          <th class="table-light" *ngIf="auth.user$.value?.role === 3"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of results | sorter: columnKey : sortDir">
-          <td *ngFor="let col of columns">{{ row[col.key] }}</td>
-          <td *ngIf="auth.user$.value?.role === 3">
-            <div class="btn-group">
-              <button (click)="onSelectOne(row)" class="btn btn-warning">
-                <i-feather name="Settings"></i-feather>
-                {{ 'Edit' | translate }}
+      @case ('error') {
+        <div class="alert alert--danger" role="alert">
+          <i-feather name="alert-circle" aria-hidden="true" />
+          <div class="stack stack--tight">
+            <p class="alert__title">{{ 'search.errorTitle' | translate }}</p>
+            <p>{{ 'search.errorBody' | translate }}</p>
+            <p>
+              <button type="button" class="btn btn--secondary btn--sm" (click)="retry()">
+                {{ 'actions.retry' | translate }}
               </button>
-              <button (click)="onDeleteOne(row)" class="btn btn-danger">
-                <i-feather name="file-minus"></i-feather>
-                {{ 'Delete' | translate }}
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </p>
+          </div>
+        </div>
+      }
+
+      @default {
+        @if (isEmpty()) {
+          <div class="state">
+            <span class="state__icon">
+              <i-feather name="inbox" aria-hidden="true" />
+            </span>
+            <h2 class="state__title">{{ 'search.emptyTitle' | translate }}</h2>
+            <p class="state__body">{{ 'search.emptyBody' | translate }}</p>
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table class="table" role="table">
+              <caption class="sr-only">
+                {{
+                  'table.entriesCaption' | translate
+                }}
+              </caption>
+              <thead role="rowgroup">
+                <tr role="row">
+                  <th role="columnheader" scope="col" [attr.aria-sort]="hungarianSort()">
+                    <button
+                      type="button"
+                      class="table__sort"
+                      [attr.data-sorted]="hungarianSort() === 'ascending' ? '' : null"
+                      [attr.aria-label]="
+                        'a11y.sortBy' | translate: { column: 'table.hungarian' | translate }
+                      "
+                      (click)="sortAlphabetically()"
+                    >
+                      {{ 'table.hungarian' | translate }}
+                      <i-feather name="chevron-up" aria-hidden="true" />
+                    </button>
+                  </th>
+                  <th role="columnheader" scope="col">{{ 'table.english' | translate }}</th>
+                  <th role="columnheader" scope="col">
+                    {{ 'table.fieldOfExpertise' | translate }}
+                  </th>
+                  <th role="columnheader" scope="col">{{ 'table.wordType' | translate }}</th>
+                  @if (auth.isEditor) {
+                    <th role="columnheader" scope="col">{{ 'table.actions' | translate }}</th>
+                  }
+                </tr>
+              </thead>
+
+              <tbody role="rowgroup">
+                @for (entry of results(); track entry._id) {
+                  <tr role="row">
+                    <td
+                      role="cell"
+                      class="table__cell--primary"
+                      [attr.data-label]="'table.hungarian' | translate"
+                    >
+                      {{ entry.hungarian }}
+                    </td>
+                    <td role="cell" [attr.data-label]="'table.english' | translate">
+                      {{ entry.english }}
+                    </td>
+                    <td
+                      role="cell"
+                      class="table__cell--muted"
+                      [attr.data-label]="'table.fieldOfExpertise' | translate"
+                    >
+                      {{ entry.fieldOfExpertise }}
+                    </td>
+                    <td
+                      role="cell"
+                      class="table__cell--muted"
+                      [attr.data-label]="'table.wordType' | translate"
+                    >
+                      {{ entry.wordType || '—' }}
+                    </td>
+
+                    @if (auth.isEditor) {
+                      <td
+                        role="cell"
+                        class="table__cell--actions"
+                        [attr.data-label]="'table.actions' | translate"
+                      >
+                        <div class="btn-group">
+                          <a
+                            class="btn btn--secondary btn--sm btn--icon"
+                            [routerLink]="['/entries', 'edit', entry._id]"
+                            [attr.aria-label]="
+                              ('actions.edit' | translate) + ': ' + entry.hungarian
+                            "
+                          >
+                            <i-feather name="edit-3" aria-hidden="true" />
+                          </a>
+                          <button
+                            type="button"
+                            class="btn btn--ghost btn--sm btn--icon"
+                            (click)="onDelete(entry)"
+                            [attr.aria-label]="
+                              ('actions.delete' | translate) + ': ' + entry.hungarian
+                            "
+                          >
+                            <i-feather name="trash-2" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (pageList().length) {
+            <nav [attr.aria-label]="'a11y.pagination' | translate">
+              <ul class="pagination">
+                <li class="pagination__item">
+                  <button
+                    type="button"
+                    class="pagination__link"
+                    [disabled]="!pagination().hasPrevPage"
+                    (click)="goToPage(pagination().currentPage - 1)"
+                    [attr.aria-label]="'a11y.previousPage' | translate"
+                  >
+                    <i-feather name="chevron-left" aria-hidden="true" />
+                  </button>
+                </li>
+
+                @for (item of pageList(); track item.key) {
+                  <li class="pagination__item">
+                    @if (item.page === 0) {
+                      <span class="pagination__ellipsis" aria-hidden="true">…</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="pagination__link"
+                        [attr.aria-current]="item.page === pagination().currentPage ? 'page' : null"
+                        [attr.aria-label]="'a11y.goToPage' | translate: { page: item.page }"
+                        (click)="goToPage(item.page)"
+                      >
+                        {{ item.page }}
+                      </button>
+                    }
+                  </li>
+                }
+
+                <li class="pagination__item">
+                  <button
+                    type="button"
+                    class="pagination__link"
+                    [disabled]="!pagination().hasNextPage"
+                    (click)="goToPage(pagination().currentPage + 1)"
+                    [attr.aria-label]="'a11y.nextPage' | translate"
+                  >
+                    <i-feather name="chevron-right" aria-hidden="true" />
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          }
+        }
+      }
+    }
   </div>
-
-  <!-- Pagination -->
-  <nav
-    aria-label="paginator"
-    class="pagination-nav"
-    *ngIf="pagination && pagination.totalPages > 1"
-  >
-    <ul class="pagination justify-content-center flex-wrap gap-1">
-      <!-- Previous button -->
-      <li class="page-item" [class.disabled]="!pagination.hasPrevPage">
-        <button
-          class="page-link"
-          (click)="onPageChange(currentPage - 1)"
-          [disabled]="!pagination.hasPrevPage"
-          aria-label="Previous"
-        >
-          <i-feather name="chevron-left"></i-feather>
-        </button>
-      </li>
-
-      <!-- Page numbers -->
-      <ng-container *ngFor="let pageNum of pageList">
-        <li *ngIf="pageNum === '...'" class="page-item disabled">
-          <span class="page-link ellipsis">…</span>
-        </li>
-        <li *ngIf="pageNum !== '...'" class="page-item" [class.active]="currentPage === pageNum">
-          <button class="page-link" (click)="onPageChange(+pageNum)">
-            {{ pageNum }}
-          </button>
-        </li>
-      </ng-container>
-
-      <!-- Next button -->
-      <li class="page-item" [class.disabled]="!pagination.hasNextPage">
-        <button
-          class="page-link"
-          (click)="onPageChange(currentPage + 1)"
-          [disabled]="!pagination.hasNextPage"
-          aria-label="Next"
-        >
-          <i-feather name="chevron-right"></i-feather>
-        </button>
-      </li>
-    </ul>
-  </nav>
 </div>

@@ -1,0 +1,31 @@
+// The shared `.prose dl` is a two-column label/value grid, which works for
+// short terms. These labels are full sentences ("A weboldallal és általános
+// kérdésekkel kapcsolatban"), so the pairs stack instead.
+.contact-list {
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
+.contact-list dd + dt {
+  margin-top: var(--space-5);
+}
+
+.contact-list dd p {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.contact-mail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-target);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.contact-mail svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}

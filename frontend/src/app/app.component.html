@@ -1,4 +1,23 @@
-<div class="container-fluid m-0 p-0">
-  <app-navbar></app-navbar>
-  <router-outlet></router-outlet>
+<!--
+  Application shell.
+
+  The skip link and the <main> landmark are what let a keyboard or screen-reader
+  user reach the page content without traversing the whole navigation on every
+  route change; neither existed before.
+-->
+<a class="skip-link" href="#main-content">{{ 'a11y.skipToContent' | translate }}</a>
+
+<div class="app-shell">
+  <app-site-header />
+
+  <main id="main-content" class="app-shell__main" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p>© {{ currentYear }} {{ 'authorsName' | translate }}</p>
+      <p>{{ 'Dictionary' | translate }}</p>
+    </div>
+  </footer>
 </div>

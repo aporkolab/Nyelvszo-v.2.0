@@ -1,8 +1,220 @@
-<ngx-data-table
-  *ngIf="list$ | async as list"
-  [columns]="columns"
-  [entity]="entity"
-  [list]="list"
-  (selectOne)="onSelectOne($event)"
-  (deleteOne)="onDeleteOne($event)"
-></ngx-data-table>
+<div class="container container--wide stack stack--loose">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ 'users.title' | translate }}</h1>
+      <p class="page-header__lead">{{ 'users.lead' | translate }}</p>
+    </div>
+
+    <a class="btn btn--primary" routerLink="/users/edit/0">
+      <i-feather name="plus" aria-hidden="true" />
+      {{ 'actions.addUser' | translate }}
+    </a>
+  </header>
+
+  <!--
+    A refused deletion (your own account, or the last administrator) is not a
+    failure to shrug at: it says exactly what has to change first, so it stays
+    on screen until dismissed.
+  -->
+  @if (conflictMessage(); as conflict) {
+    <div class="alert alert--warning" role="alert">
+      <i-feather name="alert-triangle" aria-hidden="true" />
+      <div class="stack stack--tight">
+        <span class="alert__title">{{ 'users.deleteBlockedTitle' | translate }}</span>
+        <span>{{ conflict }}</span>
+      </div>
+      <button
+        type="button"
+        class="btn btn--ghost btn--icon btn--sm push"
+        [attr.aria-label]="'a11y.dismiss' | translate"
+        (click)="dismissConflict()"
+      >
+        <i-feather name="x" aria-hidden="true" />
+      </button>
+    </div>
+  }
+
+  @switch (status()) {
+    @case ('loading') {
+      <div class="table-wrap users__skeleton" role="status" aria-live="polite">
+        <span class="sr-only">{{ 'loading' | translate }}</span>
+        @for (row of skeletonRows; track row) {
+          <div class="skeleton skeleton--row"></div>
+        }
+      </div>
+    }
+
+    @case ('error') {
+      <div class="alert alert--danger" role="alert">
+        <i-feather name="alert-circle" aria-hidden="true" />
+        <div class="stack stack--tight">
+          <span class="alert__title">{{ 'users.errorTitle' | translate }}</span>
+          <span>{{ errorMessage() }}</span>
+          <span>
+            <button type="button" class="btn btn--secondary btn--sm" (click)="load()">
+              {{ 'actions.retry' | translate }}
+            </button>
+          </span>
+        </div>
+      </div>
+    }
+
+    @default {
+      @if (users().length === 0) {
+        <div class="state">
+          <span class="state__icon">
+            <i-feather name="users" aria-hidden="true" />
+          </span>
+          <!-- h2, matching the entries screen: this page already has an h1 in
+               its page header, so the empty state is a section heading. -->
+          <h2 class="state__title">{{ 'users.emptyTitle' | translate }}</h2>
+          <p class="state__body">{{ 'users.emptyBody' | translate }}</p>
+          <a class="btn btn--primary" routerLink="/users/edit/0">
+            <i-feather name="plus" aria-hidden="true" />
+            {{ 'actions.addUser' | translate }}
+          </a>
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table class="table" role="table">
+            <caption class="sr-only">
+              {{
+                'table.usersCaption' | translate
+              }}
+            </caption>
+            <thead role="rowgroup">
+              <tr role="row">
+                <th role="columnheader" scope="col">{{ 'table.name' | translate }}</th>
+                <th role="columnheader" scope="col">{{ 'table.email' | translate }}</th>
+                <th role="columnheader" scope="col">{{ 'table.role' | translate }}</th>
+                <th role="columnheader" scope="col">{{ 'table.status' | translate }}</th>
+                <th role="columnheader" scope="col">
+                  <span class="sr-only">{{ 'table.actions' | translate }}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody role="rowgroup">
+              @for (user of users(); track user._id) {
+                <tr role="row">
+                  <td
+                    role="cell"
+                    class="table__cell--primary"
+                    [attr.data-label]="'table.name' | translate"
+                  >
+                    {{ user.fullName }}
+                  </td>
+                  <td
+                    role="cell"
+                    class="table__cell--muted"
+                    [attr.data-label]="'table.email' | translate"
+                  >
+                    {{ user.email }}
+                  </td>
+                  <td role="cell" [attr.data-label]="'table.role' | translate">
+                    <span class="badge badge--accent">{{ roleLabel(user.role) | translate }}</span>
+                  </td>
+                  <td role="cell" [attr.data-label]="'table.status' | translate">
+                    @if (user.isActive) {
+                      <span class="badge badge--success">{{ 'users.active' | translate }}</span>
+                    } @else {
+                      <span class="badge badge--neutral">{{ 'users.inactive' | translate }}</span>
+                    }
+                  </td>
+                  <td
+                    role="cell"
+                    class="table__cell--actions"
+                    [attr.data-label]="'table.actions' | translate"
+                  >
+                    <div class="btn-group">
+                      <a
+                        class="btn btn--secondary btn--icon btn--sm"
+                        [routerLink]="['/users', 'edit', user._id]"
+                        [attr.aria-label]="'a11y.editUser' | translate: { name: user.fullName }"
+                      >
+                        <i-feather name="edit-3" aria-hidden="true" />
+                      </a>
+                      <button
+                        type="button"
+                        class="btn btn--danger btn--icon btn--sm"
+                        [disabled]="deletingId() === user._id"
+                        [attr.aria-label]="'a11y.deleteUser' | translate: { name: user.fullName }"
+                        (click)="onDelete(user)"
+                      >
+                        @if (deletingId() === user._id) {
+                          <span class="spinner"></span>
+                        } @else {
+                          <i-feather name="trash-2" aria-hidden="true" />
+                        }
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (pageItems().length > 0) {
+          <nav [attr.aria-label]="'a11y.pagination' | translate">
+            <ul class="pagination">
+              <li class="pagination__item">
+                <button
+                  type="button"
+                  class="pagination__link"
+                  [disabled]="!pagination().hasPrevPage"
+                  [attr.aria-label]="'a11y.previousPage' | translate"
+                  (click)="goTo(page() - 1)"
+                >
+                  <i-feather name="chevron-left" aria-hidden="true" />
+                </button>
+              </li>
+
+              @for (item of pageItems(); track $index) {
+                <li class="pagination__item">
+                  @if (isEllipsis(item)) {
+                    <span class="pagination__ellipsis" aria-hidden="true">{{ item }}</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="pagination__link"
+                      [attr.aria-current]="item === page() ? 'page' : null"
+                      [attr.aria-label]="'a11y.goToPage' | translate: { page: item }"
+                      (click)="goTo(+item)"
+                    >
+                      {{ item }}
+                    </button>
+                  }
+                </li>
+              }
+
+              <li class="pagination__item">
+                <button
+                  type="button"
+                  class="pagination__link"
+                  [disabled]="!pagination().hasNextPage"
+                  [attr.aria-label]="'a11y.nextPage' | translate"
+                  (click)="goTo(page() + 1)"
+                >
+                  <i-feather name="chevron-right" aria-hidden="true" />
+                </button>
+              </li>
+            </ul>
+          </nav>
+        }
+
+        <p class="pagination__summary">
+          {{ 'users.count' | translate: { count: pagination().totalItems } }}
+          @if (pagination().totalPages > 1) {
+            <span>
+              ·
+              {{
+                'users.pageIndicator'
+                  | translate: { current: pagination().currentPage, total: pagination().totalPages }
+              }}
+            </span>
+          }
+        </p>
+      }
+    }
+  }
+</div>

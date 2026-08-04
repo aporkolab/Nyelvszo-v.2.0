@@ -1,16 +1,11 @@
+/**
+ * Production environment.
+ *
+ * The API is served from a different origin, so this value also decides which
+ * requests carry the bearer token (see auth.interceptor.ts) and what the nginx
+ * Content-Security-Policy must allow in `connect-src`.
+ */
 export const environment = {
   production: true,
   apiUrl: 'https://api.nyelvszo.eu',
-  appName: 'NyelvSzó',
-  version: '2.2.0',
-  websocketUrl: 'wss://api.nyelvszo.eu/ws',
-  features: {
-    realTimeSearch: true,
-    websocket: true,
-    analytics: true,
-  },
-  cache: {
-    ttl: 900000,
-    maxSize: 500,
-  },
-};
+} as const;

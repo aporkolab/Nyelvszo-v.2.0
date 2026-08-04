@@ -1,5 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+// The releases are a list, but each item carries its own heading, so the
+// ordinal markers would only compete with the version numbers.
+.versions {
+  list-style: none;
+  padding-inline-start: 0;
+}
 
-html {
-  font-family: 'Poppins', sans-serif;
+.versions__item + .versions__item {
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.versions__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: 0;
+}
+
+.versions__date {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-normal);
+}
+
+.versions__summary {
+  color: var(--text-secondary);
 }

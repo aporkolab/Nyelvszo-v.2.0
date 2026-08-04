@@ -1,0 +1,113 @@
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="brand" routerLink="/entries">
+      <img class="brand__mark" src="assets/img/minlogo.png" alt="" width="36" height="36" />
+      <span>
+        <span class="brand__name">NyelvSzó</span>
+        <span class="brand__tagline">{{ 'Dictionary' | translate }}</span>
+      </span>
+    </a>
+
+    <!--
+      The disclosure button controls the nav panel below the medium breakpoint.
+      aria-expanded and aria-controls are what make it announce its state; the
+      panel itself is hidden rather than merely visually collapsed, so its links
+      are not reachable by tab while closed.
+    -->
+    <button
+      type="button"
+      class="btn btn--ghost btn--icon nav-toggle push"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="primary-navigation"
+      [attr.aria-label]="(menuOpen() ? 'a11y.closeMenu' : 'a11y.openMenu') | translate"
+      (click)="toggleMenu()"
+    >
+      <i-feather [name]="menuOpen() ? 'x' : 'menu'" aria-hidden="true" />
+    </button>
+
+    <!--
+      Below the medium breakpoint the panel is display:none until .is-open,
+      which also removes its links from the tab order. Above it, the class is
+      inert and the nav is always visible.
+    -->
+    <div class="nav-panel" id="primary-navigation" [class.is-open]="menuOpen()">
+      <nav [attr.aria-label]="'a11y.primaryNavigation' | translate">
+        <ul class="nav">
+          @for (item of navItems(); track item.link) {
+            <li>
+              <a
+                class="nav__link"
+                [routerLink]="item.link"
+                routerLinkActive="is-active"
+                [routerLinkActiveOptions]="{ exact: false }"
+              >
+                <i-feather [name]="item.icon" aria-hidden="true" />
+                {{ item.labelKey | translate }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>
+
+    <div class="account push">
+      <div class="field">
+        <label class="sr-only" for="language-select">
+          {{ 'a11y.selectLanguage' | translate }}
+        </label>
+        <select
+          id="language-select"
+          class="select select--compact"
+          [value]="currentLang()"
+          (change)="switchLanguage($any($event.target).value)"
+        >
+          @for (language of languages(); track language) {
+            <option [value]="language">{{ 'language.' + language | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn--ghost btn--icon"
+        [attr.aria-label]="'a11y.theme.' + themePreference() | translate"
+        (click)="cycleTheme()"
+      >
+        <i-feather [name]="themeIcon()" aria-hidden="true" />
+      </button>
+
+      @if (user(); as currentUser) {
+        <span class="account__identity">
+          <span class="account__name">{{ currentUser.fullName }}</span>
+          <span class="badge badge--accent">
+            {{ roleDescriptionKey(currentUser.role) | translate }}
+          </span>
+        </span>
+
+        <!--
+          The label is hidden below the small breakpoint, where the row cannot
+          fit both it and the language select. The aria-label carries the name
+          regardless, so the control never becomes an unlabelled icon.
+        -->
+        <button
+          type="button"
+          class="btn btn--secondary btn--sm account__action"
+          [attr.aria-label]="'actions.signOut' | translate"
+          (click)="logout()"
+        >
+          <i-feather name="log-out" aria-hidden="true" />
+          <span class="account__action-label">{{ 'actions.signOut' | translate }}</span>
+        </button>
+      } @else {
+        <a
+          class="btn btn--primary btn--sm account__action"
+          routerLink="/login"
+          [attr.aria-label]="'actions.signIn' | translate"
+        >
+          <i-feather name="log-in" aria-hidden="true" />
+          <span class="account__action-label">{{ 'actions.signIn' | translate }}</span>
+        </a>
+      }
+    </div>
+  </div>
+</header>

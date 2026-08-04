@@ -1,0 +1,26 @@
+# Everything the image must not inherit from the host.
+#
+# node_modules is the important one: it is built for the host's platform and
+# would shadow the one `npm ci` installs inside the image. `logs` matters too —
+# without it, real application logs from a developer's machine are baked into
+# the published image.
+node_modules
+coverage
+logs
+dist
+
+.git
+.gitignore
+.vscode
+.idea
+
+*.log
+npm-debug.log*
+
+.env
+.env.*
+!.env.example
+
+Dockerfile
+.dockerignore
+README.md

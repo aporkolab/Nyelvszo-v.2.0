@@ -69,12 +69,16 @@ typings/
 .node_repl_history
 
 # Environment
+#
+# Deny every dotenv variant and re-allow only the committed template. The
+# previous list named .env.production.local but not .env.production or
+# .env.prod, so the one file that holds real production credentials was the one
+# nothing stopped from being committed.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.test
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 
 # Framework outputs
 .next
@@ -105,3 +109,16 @@ dist
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Runtime state produced by the Docker stacks: TLS material and issued
+# certificates must never reach the repository.
+nginx/ssl/
+nginx/logs/
+certbot/
+backend/logs/

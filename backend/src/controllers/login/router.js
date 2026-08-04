@@ -1,178 +1,189 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../../models/user');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const createError = require('http-errors');
-const { validate, sanitize } = require('../../middleware/validation');
-const { loginSchema } = require('../../validation/schemas');
+
+const User = require('../../models/user');
+const { validate } = require('../../middleware/validation');
+const { loginSchema, refreshSchema } = require('../../validation/schemas');
+const { JWT_ISSUER, JWT_AUDIENCE, JWT_ALGORITHMS } = require('../../models/auth/authenticate');
+const { catchAsync } = require('../../middleware/errorHandler');
 const logger = require('../../logger/logger');
 
+const ACCESS_TOKEN_TTL = process.env.JWT_EXPIRES_IN || '15m';
+const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+// A bcrypt hash of a value nobody knows. Comparing against it when no account
+// matches keeps the response time for "unknown email" in the same range as
+// "wrong password", which is what actually prevents user enumeration — a fixed
+// sleep does not, because the real path's cost is variable.
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
+
 /**
+ * Read a required secret from the environment.
+ *
+ * @param {string} name - Environment variable name.
+ * @returns {string} The secret.
+ * @throws {Error} 500-level http error when unset.
+ */
+const requireSecret = (name) => {
+  const value = process.env[name];
+  if (!value) {
+    logger.error(`${name} environment variable is not set`);
+    throw createError(500, 'Server configuration error');
+  }
+  return value;
+};
+
+/**
+ * Mint an access/refresh token pair for an account.
+ *
+ * The two tokens are signed with different secrets and carry a `typ` claim, so
+ * an access token cannot be replayed against the refresh endpoint to renew
+ * itself indefinitely, and a refresh token cannot authorise API calls.
+ *
+ * @param {object} user - User document.
+ * @returns {{accessToken: string, refreshToken: string}} Token pair.
+ */
+const issueTokens = (user) => {
+  const accessSecret = requireSecret('JWT_SECRET');
+  const refreshSecret = requireSecret('JWT_REFRESH_SECRET');
+
+  const common = { issuer: JWT_ISSUER, audience: JWT_AUDIENCE, algorithm: JWT_ALGORITHMS[0] };
+
+  const accessToken = jwt.sign(
+    { typ: 'access', userId: user._id.toString(), email: user.email, role: user.role },
+    accessSecret,
+    { ...common, expiresIn: ACCESS_TOKEN_TTL }
+  );
+
+  const refreshToken = jwt.sign(
+    { typ: 'refresh', userId: user._id.toString(), jti: crypto.randomUUID() },
+    refreshSecret,
+    { ...common, expiresIn: REFRESH_TOKEN_TTL }
+  );
+
+  return { accessToken, refreshToken };
+};
+
+/**
+ * Shape a user document for the login response.
+ *
+ * @param {object} user - User document.
+ * @returns {object} Public projection.
+ */
+const publicUser = (user) => ({
+  _id: user._id,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+  lastLogin: user.lastLogin,
+});
+
+/**
+ * Authenticate a user and return a token pair.
+ *
  * @route POST /login
- * @desc Authenticate user and return JWT token
  * @access Public
  */
-router.post('/', sanitize('body'), validate(loginSchema), async (req, res, next) => {
-  try {
+router.post(
+  '/',
+  validate(loginSchema),
+  catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
-    const clientIp = req.ip || req.connection?.remoteAddress;
-    const userAgent = req.get('User-Agent');
+    const context = { email, ip: req.ip, userAgent: req.get('User-Agent') };
 
-    // Rate limiting is handled by middleware in server.js
-
-    // Find user by email
     const user = await User.findOne({ email }).select('+password');
 
-    if (!user) {
-      // Log failed login attempt
-      logger.warn('Failed login attempt - user not found', {
-        email,
-        ip: clientIp,
-        userAgent,
-        timestamp: new Date().toISOString(),
-      });
+    // Always run a bcrypt comparison, even when no account matched, so the
+    // timing of the two failure modes is indistinguishable.
+    const passwordMatches = user
+      ? await user.verifyPassword(password)
+      : await bcrypt.compare(password, DUMMY_HASH);
 
-      // Consistent response time to prevent user enumeration
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!user || !passwordMatches) {
+      logger.security('Failed login attempt', {
+        ...context,
+        reason: user ? 'invalid password' : 'unknown account',
+      });
       return next(createError(401, 'Invalid credentials'));
     }
 
-    // Verify password
-    const isValidPassword = await user.verifyPassword(password);
-
-    if (!isValidPassword) {
-      // Log failed login attempt
-      logger.warn('Failed login attempt - invalid password', {
-        email,
-        userId: user._id,
-        ip: clientIp,
-        userAgent,
-        timestamp: new Date().toISOString(),
-      });
-
-      return next(createError(401, 'Invalid credentials'));
+    if (!user.isActive) {
+      logger.security('Login attempt on a deactivated account', { ...context, userId: user._id });
+      return next(createError(403, 'This account has been deactivated'));
     }
 
-    // Check if JWT_SECRET is configured
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      logger.error('JWT_SECRET environment variable is not set');
-      return next(createError(500, 'Server configuration error'));
-    }
+    const { accessToken, refreshToken } = issueTokens(user);
 
-    // Generate JWT token
-    const tokenPayload = {
-      email: user.email,
-      role: user.role,
-      userId: user._id.toString(),
-    };
-
-    const accessToken = jwt.sign(tokenPayload, jwtSecret, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-      issuer: 'nyelvszo-api',
-      audience: 'nyelvszo-client',
-    });
-
-    // Log successful login
-    logger.info('Successful login', {
-      email: user.email,
-      userId: user._id,
-      role: user.role,
-      ip: clientIp,
-      userAgent,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Update last login timestamp
     user.lastLogin = new Date();
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
-    // Return success response (exclude password)
-    const userResponse = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      lastLogin: user.lastLogin,
-    };
+    logger.audit('Successful login', { ...context, userId: user._id, role: user.role });
 
     res.status(200).json({
       success: true,
       accessToken,
-      user: userResponse,
-      expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+      refreshToken,
+      user: publicUser(user),
+      expiresIn: ACCESS_TOKEN_TTL,
     });
-  } catch (error) {
-    logger.error('Login error:', {
-      error: error.message,
-      stack: error.stack,
-      email: req.body?.email,
-      ip: req.ip,
-      timestamp: new Date().toISOString(),
-    });
-
-    next(createError(500, 'Internal server error'));
-  }
-});
+  })
+);
 
 /**
+ * Exchange a refresh token for a new token pair.
+ *
  * @route POST /login/refresh
- * @desc Refresh JWT token
- * @access Private
+ * @access Public (bearer-free; the refresh token is the credential)
  */
-router.post('/refresh', async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
+router.post(
+  '/refresh',
+  validate(refreshSchema),
+  catchAsync(async (req, res, next) => {
+    const refreshSecret = requireSecret('JWT_REFRESH_SECRET');
 
-    if (!refreshToken) {
-      return next(createError(400, 'Refresh token is required'));
-    }
-
-    // Verify refresh token logic would go here
-    // For now, we'll implement a simple token refresh
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return next(createError(500, 'Server configuration error'));
-    }
-
+    let decoded;
     try {
-      const decoded = jwt.verify(refreshToken, jwtSecret);
-
-      // Find user to ensure they still exist and are active
-      const user = await User.findById(decoded.userId);
-      if (!user) {
-        return next(createError(401, 'User not found'));
-      }
-
-      // Generate new access token
-      const newTokenPayload = {
-        email: user.email,
-        role: user.role,
-        userId: user._id.toString(),
-      };
-
-      const newAccessToken = jwt.sign(newTokenPayload, jwtSecret, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-        issuer: 'nyelvszo-api',
-        audience: 'nyelvszo-client',
+      decoded = jwt.verify(req.body.refreshToken, refreshSecret, {
+        algorithms: JWT_ALGORITHMS,
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
       });
-
-      res.json({
-        success: true,
-        accessToken: newAccessToken,
-        expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-      });
-    } catch (tokenError) {
+    } catch (error) {
+      logger.security('Refresh token rejected', { reason: error.message, ip: req.ip });
       return next(createError(401, 'Invalid refresh token'));
     }
-  } catch (error) {
-    logger.error('Token refresh error:', error);
-    next(createError(500, 'Internal server error'));
-  }
-});
+
+    if (decoded.typ !== 'refresh') {
+      logger.security('Non-refresh token presented at the refresh endpoint', {
+        typ: decoded.typ,
+        ip: req.ip,
+      });
+      return next(createError(401, 'Invalid refresh token'));
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.isActive) {
+      return next(createError(401, 'Account is no longer active'));
+    }
+
+    // Rotate: the presented refresh token's replacement is returned, so a
+    // stolen token stops working as soon as the legitimate client refreshes.
+    const { accessToken, refreshToken } = issueTokens(user);
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken,
+      expiresIn: ACCESS_TOKEN_TTL,
+    });
+  })
+);
 
 module.exports = router;
