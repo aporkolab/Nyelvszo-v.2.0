@@ -8,10 +8,6 @@ ARG NODE_VERSION=24-alpine
 # source changes.
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS base
-LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
-LABEL org.opencontainers.image.title="NyelvSzó Backend API"
-LABEL org.opencontainers.image.version="2.5.0"
-LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 WORKDIR /app
 
@@ -73,6 +69,15 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS production
 ENV NODE_ENV=production
+
+# The labels belong on the stage that is actually shipped. They used to sit on
+# `base`, which this stage does not derive from — every published image went out
+# with an empty org.opencontainers.image.version, so a registry or a scanner had
+# no way to tell 2.2.0 from 2.5.0.
+LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
+LABEL org.opencontainers.image.title="NyelvSzó Backend API"
+LABEL org.opencontainers.image.version="2.5.0"
+LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache curl ca-certificates \

@@ -41,10 +41,6 @@ ARG NGINX_VERSION=1.30.4-alpine
 # Dependencies: manifests only, so the install layer survives source edits.
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS deps
-LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
-LABEL org.opencontainers.image.title="NyelvSzó Frontend"
-LABEL org.opencontainers.image.version="2.5.0"
-LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 WORKDIR /app
 
@@ -112,6 +108,15 @@ RUN npm run build -- --configuration production && \
 # Runtime: static files behind nginx, unprivileged.
 # ---------------------------------------------------------------------------
 FROM nginx:${NGINX_VERSION} AS production
+
+# The labels belong on the stage that is actually shipped. They used to sit on
+# `deps`, which this stage does not derive from — every published image went out
+# with an empty org.opencontainers.image.version, so a registry or a scanner had
+# no way to tell 2.2.0 from 2.5.0.
+LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
+LABEL org.opencontainers.image.title="NyelvSzó Frontend"
+LABEL org.opencontainers.image.version="2.5.0"
+LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 # Pinning the base fixes the packages to whatever that image shipped with, and
 # Alpine keeps patching the 3.24 branch after the image is cut. Without this
