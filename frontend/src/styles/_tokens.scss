@@ -1,175 +1,195 @@
 @charset "UTF-8";
 
 // ---------------------------------------------------------------------------
-// Design tokens
+// Design tokens — "Midnight Amber"
 //
-// Every colour, size, radius and duration in the application resolves to one of
-// these custom properties. Nothing downstream hardcodes a hex value — that is
-// what makes the light/dark switch a single declaration block rather than a
-// per-component rewrite.
+// A dictionary of linguistics deserves to look like a piece of typography, not
+// like a dashboard. The scheme is deliberately dark and deliberately warm: a
+// deep violet-black canvas, amber-to-coral for anything that acts, and a cold
+// aqua for anything that links. That amber/aqua split on plum is the whole
+// identity — it is what stops this reading as generic dark mode.
 //
-// The palette is built for a scholarly reference work: warm paper rather than
-// clinical white, ink rather than pure black, one restrained accent. Every
-// text/background pairing below meets WCAG AA (4.5:1 for body, 3:1 for large
-// text and UI boundaries); the measured ratio is noted where it is close.
+// Depth comes from three stacked surfaces plus real light: glows, gradient
+// washes and a grain overlay, not from borders alone.
+//
+// Every text/background pairing below is measured against WCAG AA; the ratio
+// is noted where it is within reach of the limit.
 // ---------------------------------------------------------------------------
 
 :root {
-  // --- Palette (raw) -------------------------------------------------------
-  // Raw ramps exist so semantic tokens can be re-pointed without re-picking
-  // colours. Components must never reference a raw ramp directly.
+  // --- Canvas ramp ---------------------------------------------------------
+  // Violet-cast blacks. Pure neutral grey is what makes dark UI feel dead.
 
-  --ink-950: #14161a;
-  --ink-900: #1a1d21;
-  --ink-800: #24282d;
-  --ink-700: #33383f;
-  --ink-600: #4a5058;
-  --ink-500: #656b74;
-  --ink-400: #878d96;
-  --ink-300: #aeb3ba;
-  --ink-200: #d2d5d9;
-  --ink-100: #e6e7ea;
+  --void-1000: #07060c;
+  --void-950: #0c0a12;
+  --void-900: #12101a;
+  --void-850: #171423;
+  --void-800: #1e1a2c;
+  --void-700: #292338;
+  --void-600: #383049;
+  --void-500: #4c4260;
 
-  --paper-50: #fdfcfa;
-  --paper-100: #fbfaf7;
-  --paper-200: #f4f2ec;
-  --paper-300: #eae7de;
-  --paper-400: #ddd9cd;
+  // --- Warm neutrals (text) ------------------------------------------------
+  // Warm rather than blue-grey, so text sits with the amber instead of
+  // fighting it.
 
-  --accent-900: #10344a;
-  --accent-800: #17435e;
-  --accent-700: #1d4e6b;
-  --accent-600: #24617f;
-  --accent-500: #327a9b;
-  --accent-400: #5b9dbb;
-  --accent-300: #93c2d7;
-  --accent-200: #c6dfeb;
-  --accent-100: #e5f0f6;
+  --bone-50: #fbf7f4;
+  --bone-100: #f3ede8;
+  --bone-200: #ded5d0;
+  --bone-300: #bdb2b4;
+  --bone-400: #978d9c;
+  --bone-500: #766d80;
 
-  --success-700: #1a6b43;
-  --success-600: #1f7a4c;
-  --success-100: #e2f3e9;
+  // --- Amber → coral (the action ramp) -------------------------------------
 
-  --warning-700: #855614;
-  --warning-600: #9a6414;
-  --warning-100: #fbefd9;
+  --ember-300: #ffd8a1;
+  --ember-400: #ffbe6b;
+  --ember-500: #ffa23f;
+  --ember-600: #fb7f3c;
+  --ember-700: #e3603a;
+  --ember-800: #b6432c;
 
-  --danger-700: #8f1e26;
-  --danger-600: #a4232b;
-  --danger-100: #fbe6e7;
+  // --- Aqua (the link/afford ramp) -----------------------------------------
 
-  // --- Semantic surfaces ---------------------------------------------------
+  --aqua-200: #b8f5ea;
+  --aqua-300: #7fe9d8;
+  --aqua-400: #4fd6c4;
+  --aqua-500: #2bb8a8;
+  --aqua-600: #1d9188;
 
-  --surface-page: var(--paper-100);
-  --surface-raised: #ffffff;
-  --surface-sunken: var(--paper-200);
-  --surface-inverse: var(--ink-900);
-  --surface-accent-subtle: var(--accent-100);
+  // --- Semantic hues -------------------------------------------------------
 
-  // --- Semantic text -------------------------------------------------------
+  --mint-400: #6ee7a8;
+  --mint-900: #10281d;
+  --amber-400: #f5c451;
+  --amber-900: #2b2113;
+  --rose-400: #ff8087;
+  --rose-500: #f2545f;
+  --rose-900: #2e1219;
 
-  --text-primary: var(--ink-900); // 15.8:1 on --surface-page
-  --text-secondary: var(--ink-600); // 8.2:1
-  --text-muted: var(--ink-500); // 5.4:1 — still AA for body text
-  --text-on-accent: #ffffff; // 7.4:1 on --accent-700
-  --text-on-inverse: var(--paper-100);
-  --text-link: var(--accent-700);
-  --text-link-hover: var(--accent-900);
+  // --- Surfaces ------------------------------------------------------------
 
-  // --- Borders and dividers ------------------------------------------------
+  --surface-page: var(--void-950);
+  --surface-raised: var(--void-850);
+  --surface-overlay: var(--void-800);
+  --surface-sunken: var(--void-1000);
+  --surface-accent-subtle: rgb(255 162 63 / 10%);
+  --surface-aqua-subtle: rgb(79 214 196 / 10%);
 
-  --border-subtle: var(--paper-300);
-  --border-default: var(--paper-400);
-  --border-strong: var(--ink-300);
-  --border-accent: var(--accent-600);
+  // --- Text ----------------------------------------------------------------
 
-  // Form controls are their own case. WCAG 1.4.11 wants 3:1 against the
-  // adjacent surface for anything that conveys a control's boundary, and
-  // --border-default sits at roughly 1.4:1 — enough to look tidy, not enough
-  // to tell a reader where the input actually is.
-  --border-control: var(--ink-400); // 3.1:1 on --surface-raised
-  --border-control-hover: var(--ink-500);
+  --text-primary: var(--bone-100); // 15.9:1 on --surface-page
+  --text-secondary: var(--bone-300); // 8.4:1
+  --text-muted: var(--bone-400); // 5.1:1 — AA for body
+  --text-display: var(--bone-50);
+  --text-on-action: var(--void-1000); // 9.8:1 on --ember-500
+  --text-link: var(--aqua-300); // 10.2:1
+  --text-link-hover: var(--aqua-200);
 
-  // --- Interactive ---------------------------------------------------------
+  // --- Borders -------------------------------------------------------------
 
-  --action-primary-bg: var(--accent-700);
-  --action-primary-bg-hover: var(--accent-800);
-  --action-primary-bg-active: var(--accent-900);
-  --action-primary-text: #ffffff;
+  --border-subtle: rgb(255 255 255 / 7%);
+  --border-default: rgb(255 255 255 / 12%);
+  --border-strong: rgb(255 255 255 / 22%);
+  // Form controls need 3:1 against their surface (WCAG 1.4.11).
+  --border-control: rgb(255 255 255 / 28%);
+  --border-control-hover: rgb(255 255 255 / 45%);
+  --border-accent: var(--ember-500);
 
-  --action-secondary-bg: transparent;
-  --action-secondary-bg-hover: var(--surface-sunken);
+  // --- Actions -------------------------------------------------------------
+
+  --action-primary-bg: linear-gradient(135deg, var(--ember-400) 0%, var(--ember-600) 100%);
+  --action-primary-bg-hover: linear-gradient(135deg, var(--ember-300) 0%, var(--ember-500) 100%);
+  --action-primary-solid: var(--ember-500);
+  --action-primary-text: var(--text-on-action);
+
+  --action-secondary-bg: rgb(255 255 255 / 4%);
+  --action-secondary-bg-hover: rgb(255 255 255 / 9%);
   --action-secondary-text: var(--text-primary);
   --action-secondary-border: var(--border-default);
 
-  --action-danger-bg: var(--danger-600);
-  --action-danger-bg-hover: var(--danger-700);
-  --action-danger-text: #ffffff;
+  --action-danger-bg: var(--rose-500);
+  --action-danger-bg-hover: var(--rose-400);
+  --action-danger-text: var(--void-1000);
 
-  --focus-ring: var(--accent-600);
-  --focus-ring-offset: var(--surface-page);
+  --focus-ring: var(--aqua-300);
 
   // --- Status --------------------------------------------------------------
 
-  --status-success-bg: var(--success-100);
-  --status-success-text: var(--success-700);
-  --status-success-border: var(--success-600);
+  --status-success-bg: var(--mint-900);
+  --status-success-text: var(--mint-400);
+  --status-success-border: rgb(110 231 168 / 40%);
 
-  --status-warning-bg: var(--warning-100);
-  --status-warning-text: var(--warning-700);
-  --status-warning-border: var(--warning-600);
+  --status-warning-bg: var(--amber-900);
+  --status-warning-text: var(--amber-400);
+  --status-warning-border: rgb(245 196 81 / 40%);
 
-  --status-danger-bg: var(--danger-100);
-  --status-danger-text: var(--danger-700);
-  --status-danger-border: var(--danger-600);
+  --status-danger-bg: var(--rose-900);
+  --status-danger-text: var(--rose-400);
+  --status-danger-border: rgb(242 84 95 / 40%);
 
-  --status-info-bg: var(--accent-100);
-  --status-info-text: var(--accent-800);
-  --status-info-border: var(--accent-600);
+  --status-info-bg: rgb(79 214 196 / 9%);
+  --status-info-text: var(--aqua-300);
+  --status-info-border: rgb(79 214 196 / 35%);
+
+  // --- Light theme opt-out -------------------------------------------------
+  // The design is authored dark. Light exists for readers who need it, and is
+  // defined at the bottom of this file.
 
   // --- Typography ----------------------------------------------------------
   //
-  // System font stacks only: no webfont request, no layout shift, and the
-  // Hungarian accented glyphs (ő, ű) render correctly everywhere.
+  // Three self-hosted variable families, bundled as assets (the production CSP
+  // allows font-src 'self' only, so no CDN is possible — and none is wanted):
+  //   Fraunces      — display serif with optical-size and soft/wonk axes. The
+  //                   headwords and the masthead. This is the voice.
+  //   Inter         — interface grotesque. Everything functional.
+  //   JetBrains Mono— word class, field of expertise, counts. Reads as
+  //                   notation, which is the right register for linguistics.
 
+  --font-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif;
-  --font-serif:
-    ui-serif, Georgia, Cambria, 'Times New Roman', 'Liberation Serif', 'Noto Serif', serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  // Minor-third scale (1.2) anchored at 1rem.
+  // Fraunces axes. `SOFT` rounds the terminals, `WONK` enables the swashed
+  // alternates — a little of both is what gives it character instead of
+  // looking like a stock Georgia fallback.
+  --display-settings: 'SOFT' 30, 'WONK' 1;
+
+  // Type scale, 1.25 major third, fluid between 22rem and 90rem.
+  --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: 2.25rem;
-  --text-4xl: 2.875rem;
+  --text-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --text-3xl: clamp(1.875rem, 1.5rem + 1.9vw, 2.75rem);
+  --text-4xl: clamp(2.375rem, 1.7rem + 3.4vw, 4.25rem);
+  --text-5xl: clamp(2.875rem, 1.8rem + 5.4vw, 6rem);
 
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
+  --leading-none: 1;
+  --leading-tight: 1.08;
+  --leading-snug: 1.3;
   --leading-normal: 1.55;
-  --leading-relaxed: 1.7;
+  --leading-relaxed: 1.75;
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
+  --weight-black: 800;
 
-  --tracking-tight: -0.011em;
+  --tracking-tighter: -0.035em;
+  --tracking-tight: -0.02em;
   --tracking-normal: 0;
-  --tracking-wide: 0.03em;
+  --tracking-wide: 0.06em;
+  --tracking-widest: 0.14em;
 
-  // Comfortable measure for running prose. Anything wider is hard to track
-  // back to the next line.
-  --measure: 68ch;
+  --measure: 62ch;
 
-  // --- Spacing (4px base) --------------------------------------------------
+  // --- Spacing -------------------------------------------------------------
 
-  --space-0: 0;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -180,42 +200,46 @@
   --space-8: 3rem;
   --space-9: 4rem;
   --space-10: 6rem;
+  --space-11: 8rem;
 
   // --- Radii ---------------------------------------------------------------
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
   --radius-pill: 999px;
 
-  // --- Elevation -----------------------------------------------------------
+  // --- Elevation and light -------------------------------------------------
   //
-  // Tinted with the ink hue rather than pure black, so shadows read as depth
-  // instead of grime.
+  // On a dark canvas a drop shadow is nearly invisible; depth has to come from
+  // a light rim on top plus a glow. Hence the inset highlight in each.
 
-  --shadow-xs: 0 1px 2px rgb(26 29 33 / 6%);
-  --shadow-sm: 0 1px 3px rgb(26 29 33 / 8%), 0 1px 2px rgb(26 29 33 / 4%);
-  --shadow-md: 0 4px 12px rgb(26 29 33 / 8%), 0 1px 3px rgb(26 29 33 / 5%);
-  --shadow-lg: 0 12px 32px rgb(26 29 33 / 12%), 0 4px 8px rgb(26 29 33 / 6%);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 60%), inset 0 1px 0 rgb(255 255 255 / 5%);
+  --shadow-lg: 0 24px 60px -16px rgb(0 0 0 / 70%), inset 0 1px 0 rgb(255 255 255 / 6%);
+  --shadow-xl: 0 40px 100px -24px rgb(0 0 0 / 80%), inset 0 1px 0 rgb(255 255 255 / 7%);
+
+  --glow-ember: 0 0 0 1px rgb(255 162 63 / 30%), 0 8px 32px -6px rgb(251 127 60 / 35%);
+  --glow-aqua: 0 0 0 1px rgb(79 214 196 / 30%), 0 8px 32px -6px rgb(79 214 196 / 25%);
 
   // --- Motion --------------------------------------------------------------
 
-  --duration-fast: 120ms;
-  --duration-base: 200ms;
-  --duration-slow: 320ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 140ms;
+  --duration-base: 240ms;
+  --duration-slow: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   // --- Layout --------------------------------------------------------------
 
-  --container-sm: 40rem;
-  --container-md: 56rem;
-  --container-lg: 72rem;
-  --container-xl: 84rem;
-  --page-gutter: var(--space-4);
+  --container-sm: 34rem;
+  --container-md: 52rem;
+  --container-lg: 68rem;
+  --container-xl: 82rem;
+  --page-gutter: var(--space-5);
 
-  // Minimum hit area for anything tappable (WCAG 2.5.8 / iOS HIG).
   --tap-target: 2.75rem;
 
   --z-base: 1;
@@ -226,90 +250,84 @@
 
 @media (min-width: 48rem) {
   :root {
-    --page-gutter: var(--space-6);
+    --page-gutter: var(--space-7);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Dark theme
+// Light theme
 //
-// Applied by the OS preference, and overridable by an explicit choice stored on
-// the root element. The explicit attribute wins in both directions so the
-// in-app toggle works regardless of what the OS says.
+// An opt-out, not the default. Same hues, inverted weight: paper canvas, ink
+// text, the amber deepened so it holds contrast against white.
 // ---------------------------------------------------------------------------
 
-@mixin dark-tokens {
-  --surface-page: var(--ink-950);
-  --surface-raised: #1c1f24;
-  --surface-sunken: #101216;
-  --surface-inverse: var(--paper-100);
-  --surface-accent-subtle: #17303d;
+@mixin light-tokens {
+  --surface-page: #f7f3ee;
+  --surface-raised: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-sunken: #ebe4dc;
+  --surface-accent-subtle: rgb(227 96 58 / 10%);
+  --surface-aqua-subtle: rgb(29 145 136 / 10%);
 
-  --text-primary: #eef0f2; // 15.1:1 on --surface-page
-  --text-secondary: #b6bcc4; // 9.1:1
-  --text-muted: #8f959d; // 5.3:1
-  --text-on-accent: #ffffff;
-  --text-on-inverse: var(--ink-900);
-  --text-link: var(--accent-300);
-  --text-link-hover: var(--accent-200);
+  --text-primary: #1a1622; // 16.1:1 on --surface-page
+  --text-secondary: #4a4155; // 8.7:1
+  --text-muted: #6b6076; // 5.4:1
+  --text-display: #120f18;
+  --text-on-action: #ffffff; // 4.6:1 on --ember-800
+  --text-link: #0f7a72; // 4.9:1
+  --text-link-hover: #0a5c56;
 
-  --border-subtle: #262a30;
-  --border-default: #33383f;
-  --border-strong: #4a5058;
-  --border-accent: var(--accent-400);
+  --border-subtle: rgb(26 22 34 / 8%);
+  --border-default: rgb(26 22 34 / 14%);
+  --border-strong: rgb(26 22 34 / 28%);
+  --border-control: rgb(26 22 34 / 34%);
+  --border-control-hover: rgb(26 22 34 / 55%);
+  --border-accent: var(--ember-700);
 
-  --border-control: #6b727b; // 3.2:1 on --surface-raised
-  --border-control-hover: #878d96;
+  --action-primary-bg: linear-gradient(135deg, var(--ember-700) 0%, var(--ember-800) 100%);
+  --action-primary-bg-hover: linear-gradient(135deg, var(--ember-600) 0%, var(--ember-700) 100%);
+  --action-primary-solid: var(--ember-800);
 
-  // accent-500 under near-black text measured 3.9:1 — below AA for the
-  // application's main call to action. accent-400 against ink-950 is 6.1:1.
-  --action-primary-bg: var(--accent-400);
-  --action-primary-bg-hover: var(--accent-300);
-  --action-primary-bg-active: var(--accent-200);
-  --action-primary-text: var(--ink-950);
+  --action-secondary-bg: #ffffff;
+  --action-secondary-bg-hover: var(--surface-sunken);
 
-  --action-secondary-bg: transparent;
-  --action-secondary-bg-hover: #24282d;
-  --action-secondary-text: var(--text-primary);
-  --action-secondary-border: var(--border-default);
+  --action-danger-bg: #b3202b;
+  --action-danger-bg-hover: #8e1922;
+  --action-danger-text: #ffffff;
 
-  --action-danger-bg: #c4515a;
-  --action-danger-bg-hover: #d3646d;
-  --action-danger-text: #1a0508;
+  --focus-ring: var(--ember-800);
 
-  --focus-ring: var(--accent-300);
-  --focus-ring-offset: var(--surface-page);
+  --status-success-bg: #e4f5ea;
+  --status-success-text: #14683f;
+  --status-success-border: #14683f;
 
-  --status-success-bg: #12291e;
-  --status-success-text: #7fcfa3;
-  --status-success-border: #2f8f5c;
+  --status-warning-bg: #fbf0d8;
+  --status-warning-text: #7d5410;
+  --status-warning-border: #7d5410;
 
-  --status-warning-bg: #2b2113;
-  --status-warning-text: #e0b371;
-  --status-warning-border: #a97d2c;
+  --status-danger-bg: #fbe6e8;
+  --status-danger-text: #96131f;
+  --status-danger-border: #96131f;
 
-  --status-danger-bg: #2c1417;
-  --status-danger-text: #e59aa0;
-  --status-danger-border: #b7444d;
+  --status-info-bg: #dcf3f0;
+  --status-info-text: #0b5f59;
+  --status-info-border: #0b5f59;
 
-  --status-info-bg: #122c3a;
-  --status-info-text: var(--accent-200);
-  --status-info-border: var(--accent-400);
+  --shadow-sm: 0 1px 2px rgb(26 22 34 / 7%);
+  --shadow-md: 0 8px 24px -10px rgb(26 22 34 / 16%);
+  --shadow-lg: 0 24px 60px -20px rgb(26 22 34 / 22%);
+  --shadow-xl: 0 40px 100px -30px rgb(26 22 34 / 26%);
 
-  // Shadows carry almost no weight on dark surfaces; borders do the work
-  // instead, so these stay deliberately faint.
-  --shadow-xs: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-sm: 0 1px 3px rgb(0 0 0 / 45%);
-  --shadow-md: 0 4px 12px rgb(0 0 0 / 45%);
-  --shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);
+  --glow-ember: 0 0 0 1px rgb(227 96 58 / 35%), 0 8px 28px -8px rgb(227 96 58 / 25%);
+  --glow-aqua: 0 0 0 1px rgb(29 145 136 / 35%), 0 8px 28px -8px rgb(29 145 136 / 20%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    @include dark-tokens;
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    @include light-tokens;
   }
 }
 
-:root[data-theme='dark'] {
-  @include dark-tokens;
+:root[data-theme='light'] {
+  @include light-tokens;
 }

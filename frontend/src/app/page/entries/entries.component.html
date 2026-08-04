@@ -6,66 +6,69 @@
   screen can be in, so it is impossible to ship a branch that renders nothing.
 -->
 <div class="container container--wide stack stack--section">
-  <section class="search-panel" aria-labelledby="search-title">
-    <div class="search-panel__inner stack stack--loose">
-      <div class="stack stack--tight">
-        <h1 class="search-panel__title" id="search-title">{{ 'search.title' | translate }}</h1>
-        <p class="search-panel__lead measure">{{ 'search.lead' | translate }}</p>
+  <section class="hero" aria-labelledby="search-title">
+    <p class="hero__eyebrow">
+      <i-feather name="book-open" aria-hidden="true" />
+      {{ 'Dictionary' | translate }}
+    </p>
+
+    <h1 class="hero__title" id="search-title">
+      <span class="text-gradient">{{ 'search.title' | translate }}</span>
+    </h1>
+    <p class="hero__lead">{{ 'search.lead' | translate }}</p>
+
+    <!--
+      One control, not two. The scope selector lives inside the bar because the
+      previous layout put the input and the select in sibling .field wrappers
+      whose labels and hints had different heights, so the two never lined up.
+    -->
+    <div class="searchbar">
+      <div class="searchbar__field">
+        <span class="searchbar__icon">
+          <i-feather name="search" aria-hidden="true" />
+        </span>
+
+        <label class="sr-only" for="entry-search">{{ 'search.label' | translate }}</label>
+        <input
+          #searchInput
+          id="entry-search"
+          type="search"
+          class="searchbar__input"
+          [formControl]="searchControl"
+          [attr.placeholder]="'search.placeholder' | translate"
+          aria-describedby="entry-search-hint"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          enterkeyhint="search"
+        />
+
+        @if (typed()) {
+          <button
+            type="button"
+            class="btn btn--ghost btn--icon btn--sm searchbar__clear"
+            (click)="onClear()"
+            [attr.aria-label]="'a11y.clearSearch' | translate"
+          >
+            <i-feather name="x" aria-hidden="true" />
+          </button>
+        }
       </div>
 
-      <div class="search-panel__controls">
-        <div class="field">
-          <label class="field__label sr-only" for="entry-search">
-            {{ 'search.label' | translate }}
-          </label>
+      <span class="searchbar__divider" aria-hidden="true"></span>
 
-          <div class="input-group">
-            <span class="input-group__icon">
-              <i-feather name="search" aria-hidden="true" />
-            </span>
-
-            <input
-              #searchInput
-              id="entry-search"
-              type="search"
-              class="input search-panel__input"
-              [formControl]="searchControl"
-              [attr.placeholder]="'search.placeholder' | translate"
-              aria-describedby="entry-search-hint"
-              autocomplete="off"
-              autocapitalize="none"
-              spellcheck="false"
-              enterkeyhint="search"
-            />
-
-            @if (typed()) {
-              <button
-                type="button"
-                class="btn btn--ghost btn--icon input-group__action"
-                (click)="onClear()"
-                [attr.aria-label]="'a11y.clearSearch' | translate"
-              >
-                <i-feather name="x" aria-hidden="true" />
-              </button>
-            }
-          </div>
-
-          <p class="field__hint" id="entry-search-hint">{{ 'search.hint' | translate }}</p>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="entry-column">
-            {{ 'search.columnLabel' | translate }}
-          </label>
-          <select id="entry-column" class="select select--compact" [formControl]="columnControl">
-            <option value="">{{ 'search.allColumns' | translate }}</option>
-            @for (column of columns; track column) {
-              <option [value]="column">{{ 'table.' + column | translate }}</option>
-            }
-          </select>
-        </div>
+      <div class="searchbar__scope">
+        <label class="sr-only" for="entry-column">{{ 'search.columnLabel' | translate }}</label>
+        <select id="entry-column" class="searchbar__select" [formControl]="columnControl">
+          <option value="">{{ 'search.allColumns' | translate }}</option>
+          @for (column of columns; track column) {
+            <option [value]="column">{{ 'table.' + column | translate }}</option>
+          }
+        </select>
       </div>
     </div>
+
+    <p class="searchbar__hint" id="entry-search-hint">{{ 'search.hint' | translate }}</p>
   </section>
 
   <div class="stack">
@@ -73,26 +76,26 @@
          the reader took, not an interruption. -->
     <p class="sr-only" role="status" aria-live="polite">{{ announcement() }}</p>
 
-    <div class="cluster cluster--between results-bar">
-      <p class="results-bar__summary">
+    <div class="results-bar">
+      <div class="results-bar__count">
         @if (status() === 'ready') {
-          <span>{{ 'search.resultCount' | translate: { count: total() } }}</span>
-          @if (totalPages() > 1) {
-            <span class="results-bar__page">
+          <span class="results-bar__number">{{ total() }}</span>
+          <span class="notation">
+            {{ 'search.resultsNoun' | translate }}
+            @if (totalPages() > 1) {
+              &middot;
               {{
                 'search.pageIndicator'
                   | translate: { current: pagination().currentPage, total: totalPages() }
               }}
-            </span>
-          }
+            }
+          </span>
         }
-      </p>
+      </div>
 
-      <div class="cluster cluster--tight">
+      <div class="results-bar__controls">
         @if (hasResults()) {
-          <label class="results-bar__label" for="entry-sort">
-            {{ 'search.sortLabel' | translate }}
-          </label>
+          <label class="sr-only" for="entry-sort">{{ 'search.sortLabel' | translate }}</label>
           <select id="entry-sort" class="select select--compact" [formControl]="sortControl">
             @for (option of sortOptions; track option) {
               <option [value]="option">{{ 'search.sort.' + option | translate }}</option>
@@ -101,7 +104,7 @@
         }
 
         @if (auth.isEditor) {
-          <a class="btn btn--primary" [routerLink]="['/entries', 'edit', '0']">
+          <a class="btn btn--primary btn--sm" [routerLink]="['/entries', 'edit', '0']">
             <i-feather name="plus" aria-hidden="true" />
             {{ 'actions.addEntry' | translate }}
           </a>

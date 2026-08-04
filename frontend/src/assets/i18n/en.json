@@ -69,7 +69,8 @@
     "idleTitle": "Start searching",
     "idleBody": "Results appear as you type.",
     "errorTitle": "The search failed",
-    "errorBody": "The dictionary is unavailable right now. Please try again shortly."
+    "errorBody": "The dictionary is unavailable right now. Please try again shortly.",
+    "resultsNoun": "results"
   },
   "table": {
     "id": "ID",

@@ -9,9 +9,125 @@
   <div class="prose">
     <p>Webfejlesztés, design: Dr. Porkoláb Ádám</p>
 
-    <p>Az adatbázisban található szócikkek száma a 2.2.0-ás verzióban: <strong>12384</strong></p>
+    <p>Az adatbázisban található szócikkek száma a 2.5.0-ás verzióban: <strong>12385</strong></p>
 
     <ol class="versions">
+      <li class="versions__item">
+        <h2 class="versions__heading">
+          2.5.0
+          <time class="versions__date" datetime="2026-08-04">2026-08-04</time>
+        </h2>
+
+        <p class="versions__summary">
+          Biztonsági átvilágítás, teljes vizuális újratervezés és a kiszolgálói oldal megtisztítása
+        </p>
+
+        <h3>Biztonság</h3>
+        <ul>
+          <li>
+            A <code>/users</code> végpont eddig csak bejelentkezést kért, jogosultságot nem: bármely
+            belépett <strong>megtekintő</strong> kilistázhatta az összes fiókot, és egyetlen
+            kéréssel <strong>adminisztrátorrá tehette magát</strong>. A teljes útvonal
+            admin-jogosultsághoz kötve.
+          </li>
+          <li>
+            A kérés törzse szűretlenül jutott a modellhez (<em>mass assignment</em>); mindkét
+            vezérlő mostantól explicit <strong>mezőfehérlistán</strong> engedi át az adatokat.
+          </li>
+          <li>
+            Jelszómódosításkor a mentés megkerülte a titkosító horgot, így a jelszó
+            <strong>titkosítatlanul</strong> került az adatbázisba, és utána a fiók sosem tudott
+            belépni. Javítva; a hashelés lekérdezés-alapú frissítésnél is lefut.
+          </li>
+          <li>
+            A hozzáférési és a frissítő token immár <strong>külön titkot</strong> és
+            <code>typ</code> jelölést használ, így egyik sem léptethető a másik helyébe. Korábban
+            bármely hozzáférési token korlátlanul megújíthatta önmagát.
+          </li>
+          <li>
+            A tokenellenőrzés rögzíti a kibocsátót, a célközönséget és az algoritmust, és minden
+            kérésnél újraolvassa a fiókot — a letiltás és a jogosultság-visszavonás azonnal
+            érvényesül.
+          </li>
+          <li>
+            A hibakezelő a teljes kéréstörzset naplózta, így
+            <strong>minden hibás bejelentkezés jelszava</strong> egy harminc napig őrzött fájlba
+            került. A napló mostantól redaktál.
+          </li>
+          <li>Éles környezetben minden 4xx hiba <strong>500-ként</strong> ment ki. Javítva.</li>
+          <li>
+            Minden lekérdezési paraméter, útvonalparaméter és kéréstörzs sémavalidált; a
+            <code>strictQuery</code> és a <code>sanitizeFilter</code> bekapcsolva.
+          </li>
+          <li>
+            Eltávolítva a tárolóból egy <strong>commitolt adminisztrátori jelszó</strong> és egy
+            tárhelyútvonalat szivárogtató <code>.htaccess</code>.
+          </li>
+          <li>
+            Indításkor kikényszerített konfiguráció: két különböző, legalább 32 karakteres titok
+            nélkül a kiszolgáló el sem indul.
+          </li>
+        </ul>
+
+        <h3>Megjelenés</h3>
+        <ul>
+          <li>
+            Teljes vizuális újratervezés. A Bootstrap helyére saját, tokenalapú
+            <strong>design rendszer</strong> került: mélylila vászon rétegzett felületekkel,
+            borostyán–korall akcentus, hűvös aqua kiemelés.
+          </li>
+          <li>
+            Tipográfia: <strong>Fraunces</strong> a címszavaknak és a fejlécnek,
+            <strong>Inter</strong> a felületnek, <strong>JetBrains Mono</strong> a nyelvtani
+            jelöléseknek. Mindhárom saját kiszolgálásból, külső betöltés nélkül.
+          </li>
+          <li>
+            A keresőmező és a mezőválasztó <strong>egyetlen sávvá</strong> olvadt össze — korábban
+            két külön mezőként, eltérő magassággal, láthatóan elcsúszva jelentek meg.
+          </li>
+          <li>
+            Sötét és világos séma, végigmért <strong>WCAG AA</strong> kontraszttal; mobilon a
+            táblázatok kártyákra bomlanak.
+          </li>
+          <li>
+            A szócikkszerkesztő űrlapján <strong>egyetlen beviteli mező sem volt</strong> — a
+            funkció papíron létezett, a gyakorlatban nem. Megépítve.
+          </li>
+          <li>
+            A bejelentkezési oldalon a szöveg a háttérrel azonos színű, azaz
+            <strong>olvashatatlan</strong> volt. Újratervezve.
+          </li>
+          <li>
+            Billentyűzetes rendezés, ugrás a tartalomhoz, valódi töltési, üres és hibaállapotok.
+          </li>
+        </ul>
+
+        <h3>Karbantarthatóság</h3>
+        <ul>
+          <li>
+            Eltávolítva mintegy <strong>3500 sor holt kód</strong>: a valós idejű és CQRS réteg,
+            amelyet egyetlen kliens sem használt, egy betöltésre képtelen keresőszolgáltatás,
+            valamint a hozzájuk tartozó hamis funkciójelzők.
+          </li>
+          <li>
+            Kiszolgálói tesztek: 61 helyett <strong>343</strong> (95,9% utasításlefedettség).
+            Kliensoldali tesztek: 38 helyett <strong>121</strong>.
+          </li>
+          <li>
+            A csomag mérete 771 kB-ról <strong>481 kB</strong>-ra csökkent, útvonalanként
+            késleltetett betöltéssel.
+          </li>
+          <li>
+            Node 24, Angular 21, frissített függőségek: <strong>nulla ismert sebezhetőség</strong>
+            mindkét oldalon és mindkét konténerképben.
+          </li>
+          <li>
+            A CI eddig a teljesíthetetlen sebezhetőségi kapun bukott; most a valós követelményekre
+            kapuz, és zölden fut.
+          </li>
+        </ul>
+      </li>
+
       <li class="versions__item">
         <h2 class="versions__heading">
           2.2.0

@@ -69,7 +69,8 @@
     "idleTitle": "Kezdje el a keresést",
     "idleBody": "A találatok gépelés közben jelennek meg.",
     "errorTitle": "A keresés nem sikerült",
-    "errorBody": "A szótár most nem érhető el. Próbálja újra néhány másodperc múlva."
+    "errorBody": "A szótár most nem érhető el. Próbálja újra néhány másodperc múlva.",
+    "resultsNoun": "találat"
   },
   "table": {
     "id": "Azonosító",

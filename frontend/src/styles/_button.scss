@@ -3,9 +3,9 @@
 // ---------------------------------------------------------------------------
 // Buttons
 //
-// One base class plus variant and size modifiers. Every button is at least
-// --tap-target tall so it is comfortably hittable on a phone, and icon-only
-// buttons are square rather than squashed.
+// The primary button is a warm gradient with a glow — it should be the
+// brightest thing on any screen it appears on, because on a canvas this dark a
+// flat fill reads as disabled.
 // ---------------------------------------------------------------------------
 
 .btn {
@@ -14,29 +14,36 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: var(--tap-target);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-5);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn:disabled,
 .btn[aria-disabled='true'] {
-  // Kept above 3:1 against the surface: a disabled control still has to be
-  // readable, it just must not look actionable.
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn svg {
@@ -45,10 +52,8 @@
   flex-shrink: 0;
 }
 
-// A spinner inside a button must be drawn in that button's own text colour.
-// The shared .spinner is tinted with --text-link, which on a filled danger
-// button measured 1.2:1 — the "deleting…" indicator was effectively invisible
-// exactly when the user most needed to see it.
+// A spinner inside a button must be drawn in that button's own text colour;
+// the shared .spinner is tinted for a surface, not for a filled control.
 .btn .spinner {
   width: 1em;
   height: 1em;
@@ -60,24 +65,23 @@
 // --- Variants --------------------------------------------------------------
 
 .btn--primary {
-  background-color: var(--action-primary-bg);
+  background: var(--action-primary-bg);
   color: var(--action-primary-text);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--glow-ember);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background-color: var(--action-primary-bg-hover);
-}
-
-.btn--primary:active:not(:disabled) {
-  background-color: var(--action-primary-bg-active);
-  box-shadow: none;
+  background: var(--action-primary-bg-hover);
+  box-shadow:
+    0 0 0 1px rgb(255 162 63 / 45%),
+    0 12px 40px -8px rgb(251 127 60 / 50%);
 }
 
 .btn--secondary {
-  background-color: var(--surface-raised);
+  background-color: var(--action-secondary-bg);
   border-color: var(--action-secondary-border);
   color: var(--action-secondary-text);
+  backdrop-filter: blur(8px);
 }
 
 .btn--secondary:hover:not(:disabled) {
@@ -91,7 +95,7 @@
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background-color: var(--surface-sunken);
+  background-color: var(--action-secondary-bg-hover);
   color: var(--text-primary);
 }
 
@@ -107,10 +111,11 @@
 .btn--link {
   min-height: auto;
   padding: 0;
+  border-radius: 0;
   background: none;
   color: var(--text-link);
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-underline-offset: 0.2em;
 }
 
 .btn--link:hover:not(:disabled) {
@@ -121,13 +126,13 @@
 
 .btn--sm {
   min-height: 2.25rem;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-4);
   font-size: var(--text-xs);
 }
 
 .btn--lg {
-  min-height: 3.25rem;
-  padding: var(--space-3) var(--space-6);
+  min-height: 3.5rem;
+  padding: var(--space-3) var(--space-7);
   font-size: var(--text-base);
 }
 
@@ -153,8 +158,6 @@
 
 // --- Groups ----------------------------------------------------------------
 
-// Segmented row of related actions. Collapses to a wrapping cluster below the
-// small breakpoint so a two-button group never forces horizontal scrolling.
 .btn-group {
   display: inline-flex;
   gap: var(--space-2);

@@ -1,11 +1,7 @@
 @charset "UTF-8";
 
 // ---------------------------------------------------------------------------
-// Reset and element defaults
-//
-// A short, opinionated reset rather than a vendor one: the application controls
-// every element it renders, so there is nothing to normalise away beyond the
-// handful of browser defaults that actively get in the way.
+// Reset, element defaults and the page atmosphere
 // ---------------------------------------------------------------------------
 
 *,
@@ -19,25 +15,103 @@
 }
 
 html {
-  // Respect the user's browser font-size setting; never set a px root size.
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  // Reserve the scrollbar gutter so navigating between a short and a long page
-  // does not shift the layout horizontally.
   scrollbar-gutter: stable;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+  }
 }
 
 body {
+  position: relative;
   min-height: 100dvh;
   background-color: var(--surface-page);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
+  font-optical-sizing: auto;
   line-height: var(--leading-normal);
-  font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  // Inter's contextual alternates and tabular figures where they matter.
+  font-feature-settings:
+    'cv05' 1,
+    'ss03' 1;
+  overflow-x: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Atmosphere
+//
+// Two fixed layers behind everything: a pair of colour washes that give the
+// canvas depth, and a grain overlay that stops the large flat areas from
+// banding. Both are pointer-events:none and sit at z-index 0, so nothing in
+// the application has to know they exist.
+// ---------------------------------------------------------------------------
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -8%, rgb(251 127 60 / 16%), transparent 60%),
+    radial-gradient(50rem 36rem at 92% 4%, rgb(79 214 196 / 12%), transparent 62%),
+    radial-gradient(70rem 50rem at 50% 108%, rgb(120 70 200 / 14%), transparent 65%);
+}
+
+// The washes are tuned for the dark canvas; on paper they only need to tint.
+:root[data-theme='light'] body::before {
+  opacity: 0.5;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) body::before {
+    opacity: 0.5;
+  }
+}
+
+:root[data-theme='light'] body::after {
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) body::after {
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+  }
+}
+
+// Film grain. An inline SVG turbulence rather than a raster: a few hundred
+// bytes, resolution-independent, and covered by `img-src data:` in the CSP.
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+}
+
+// Everything the application renders sits above the atmosphere.
+app-root {
+  position: relative;
+  z-index: var(--z-base);
+  display: block;
 }
 
 img,
@@ -64,9 +138,46 @@ button {
   cursor: pointer;
 }
 
-// Applied broadly rather than to paragraphs and headings alone: a long URL in
-// a list item, a table cell or a definition list overflowed the viewport on a
-// phone and scrolled the whole page sideways.
+// ---------------------------------------------------------------------------
+// Typography defaults
+//
+// Headings are the display serif. This single decision is most of the
+// difference between "a page" and "a dictionary".
+// ---------------------------------------------------------------------------
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-variation-settings: var(--display-settings);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-display);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tighter);
+}
+h2 {
+  font-size: var(--text-2xl);
+}
+h3 {
+  font-size: var(--text-xl);
+}
+h4 {
+  font-size: var(--text-lg);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+// Applied broadly: a long URL in a list item or table cell used to push the
+// layout wider than the viewport on a phone.
 p,
 li,
 dd,
@@ -84,42 +195,17 @@ h6 {
   overflow-wrap: break-word;
 }
 
-// A bare URL has no break opportunities at all, so in running text it forces
-// the layout wider than the viewport. Scoped to prose and table cells on
-// purpose: applying it to every <a> also lets the site wordmark break between
-// letters, which is worse than the problem it solves.
+// Only in running text — applying it to every <a> also breaks the wordmark
+// between letters.
 .prose a,
 .table a {
   overflow-wrap: anywhere;
 }
 
-h1,
-h2,
-h3,
-h4 {
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  text-wrap: balance;
-}
-
-h1 {
-  font-size: var(--text-3xl);
-}
-h2 {
-  font-size: var(--text-2xl);
-}
-h3 {
-  font-size: var(--text-xl);
-}
-h4 {
-  font-size: var(--text-lg);
-}
-
 a {
   color: var(--text-link);
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.15em;
+  text-underline-offset: 0.2em;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
@@ -151,39 +237,35 @@ hr {
   margin-block: var(--space-6);
 }
 
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+::selection {
+  background-color: var(--ember-500);
+  color: var(--void-1000);
+}
+
 // ---------------------------------------------------------------------------
 // Focus
 //
-// One visible ring everywhere, driven by :focus-visible so it appears for
-// keyboard users without following every mouse click. The previous stylesheets
-// set `outline: none` in several places, which left keyboard users with no way
-// to tell where they were.
+// One ring everywhere, driven by :focus-visible so it appears for keyboard
+// users without following every mouse click.
 // ---------------------------------------------------------------------------
 
 :focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: var(--radius-sm);
 }
 
-// Only suppress the default ring where :focus-visible is supported, so older
-// engines keep *some* indicator.
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-// Driven by tokens so it flips with the theme automatically.
-::selection {
-  background-color: var(--surface-accent-subtle);
-  color: var(--text-primary);
-}
-
 // ---------------------------------------------------------------------------
 // Motion
-//
-// Honour the OS "reduce motion" setting globally rather than per-component.
-// Durations collapse to ~0 instead of `animation: none`, so JS that waits on
-// transitionend still fires.
 // ---------------------------------------------------------------------------
 
 @media (prefers-reduced-motion: reduce) {
@@ -205,7 +287,6 @@ hr {
 // Accessibility helpers
 // ---------------------------------------------------------------------------
 
-// Visually hidden but available to assistive technology.
 .sr-only {
   position: absolute;
   width: 1px;
@@ -218,24 +299,50 @@ hr {
   border: 0;
 }
 
-// Skip link: off-screen until focused, then pinned to the top-left.
 .skip-link {
   position: absolute;
-  top: var(--space-2);
-  left: var(--space-2);
+  top: var(--space-3);
+  left: var(--space-3);
   z-index: var(--z-overlay);
-  padding: var(--space-2) var(--space-4);
-  background-color: var(--surface-raised);
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  font-weight: var(--weight-medium);
+  padding: var(--space-3) var(--space-5);
+  background: var(--action-primary-bg);
+  color: var(--action-primary-text);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+  font-weight: var(--weight-semibold);
   text-decoration: none;
-  transform: translateY(-200%);
-  transition: transform var(--duration-fast) var(--ease-out);
+  transform: translateY(-250%);
+  transition: transform var(--duration-base) var(--ease-spring);
 }
 
 .skip-link:focus-visible {
   transform: translateY(0);
+}
+
+// ---------------------------------------------------------------------------
+// Shared display treatments
+// ---------------------------------------------------------------------------
+
+// Amber-to-coral gradient text, for the one word per screen that deserves it.
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--ember-300) 0%,
+    var(--ember-500) 38%,
+    var(--ember-700) 78%,
+    var(--ember-600) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+// Small caps notation: word class, field of expertise, counts.
+.notation {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--text-muted);
 }

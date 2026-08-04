@@ -22,12 +22,14 @@ describe('VersionhistoryComponent', () => {
   });
 
   it('renders every release as a list item with a machine-readable date', () => {
-    expect(fixture.nativeElement.querySelectorAll('.versions__item').length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('.versions__item').length).toBe(5);
 
     const dates: (string | null)[] = Array.from(
       fixture.nativeElement.querySelectorAll('.versions__item time') as NodeListOf<HTMLTimeElement>
     ).map(time => time.getAttribute('datetime'));
 
-    expect(dates).toEqual(['2025-08-27', '2022-10-01', '2021-10-21', '2021-10-08']);
+    // Newest first. This assertion is deliberately exact: it is what caught the
+    // 2.5.0 entry being added, and it will catch the next one too.
+    expect(dates).toEqual(['2026-08-04', '2025-08-27', '2022-10-01', '2021-10-21', '2021-10-08']);
   });
 });

@@ -1,0 +1,275 @@
+@charset "UTF-8";
+
+// ---------------------------------------------------------------------------
+// The search hero
+//
+// This is the product. Everything else on the landing route is the answer to
+// what was typed here, so it gets the display face, the largest type on the
+// site and the only glow.
+//
+// The scope selector lives INSIDE the search bar rather than beside it. That
+// is a design choice and a bug fix at once: the previous layout put the input
+// and the select in two sibling .field wrappers whose labels and hints had
+// different heights, so the two controls never lined up. Inside one bar they
+// cannot drift.
+// ---------------------------------------------------------------------------
+
+.hero {
+  position: relative;
+  padding-block: var(--space-7) var(--space-6);
+  text-align: center;
+}
+
+.hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.3rem var(--space-4);
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background-color: rgb(255 255 255 / 4%);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hero__eyebrow svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--ember-500);
+}
+
+.hero__title {
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-none);
+  letter-spacing: var(--tracking-tighter);
+  font-variation-settings:
+    'SOFT' 40,
+    'WONK' 1;
+}
+
+.hero__lead {
+  max-width: 44ch;
+  margin: var(--space-5) auto 0;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  text-wrap: balance;
+}
+
+// ---------------------------------------------------------------------------
+// The bar
+// ---------------------------------------------------------------------------
+
+.searchbar {
+  display: flex;
+  align-items: stretch;
+  width: min(100%, 46rem);
+  margin: var(--space-6) auto 0;
+  background-color: rgb(255 255 255 / 5%);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+:root[data-theme='light'] .searchbar {
+  background-color: var(--surface-raised);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .searchbar {
+    background-color: var(--surface-raised);
+  }
+}
+
+// The whole bar lights up when anything inside it has focus, which is what
+// makes it feel like one control rather than three.
+.searchbar:focus-within {
+  border-color: var(--aqua-400);
+  box-shadow: var(--glow-aqua), var(--shadow-lg);
+}
+
+.searchbar__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.searchbar__icon {
+  position: absolute;
+  inset-inline-start: var(--space-5);
+  display: flex;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.searchbar__field:focus-within .searchbar__icon {
+  color: var(--aqua-400);
+}
+
+.searchbar__icon svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.searchbar__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 4rem;
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-10);
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+}
+
+.searchbar__input:focus {
+  outline: none;
+}
+
+// The platform's own clear affordance would collide with ours.
+.searchbar__input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.searchbar__clear {
+  flex-shrink: 0;
+  margin-inline-end: var(--space-2);
+}
+
+.searchbar__divider {
+  width: 1px;
+  margin-block: var(--space-4);
+  background-color: var(--border-default);
+  flex-shrink: 0;
+}
+
+.searchbar__scope {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// A bare select, styled to sit in the bar rather than look bolted onto it.
+.searchbar__select {
+  height: 100%;
+  min-height: 4rem;
+  padding: 0 var(--space-8) 0 var(--space-5);
+  appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23978d9c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-4) center;
+  border: none;
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.searchbar__select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.searchbar__select option {
+  background-color: var(--surface-overlay);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.searchbar__hint {
+  margin-top: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+// Below the small breakpoint the bar stacks: a full-width input with the scope
+// selector under it, still one visual unit.
+@media (max-width: 40rem) {
+  .searchbar {
+    flex-direction: column;
+    border-radius: var(--radius-xl);
+  }
+
+  .searchbar__input {
+    min-height: 3.5rem;
+    font-size: var(--text-lg);
+    padding-inline-start: var(--space-9);
+  }
+
+  .searchbar__icon {
+    inset-inline-start: var(--space-4);
+  }
+
+  .searchbar__divider {
+    width: auto;
+    height: 1px;
+    margin: 0 var(--space-4);
+  }
+
+  .searchbar__scope {
+    width: 100%;
+  }
+
+  .searchbar__select {
+    width: 100%;
+    min-height: 3rem;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Results toolbar
+// ---------------------------------------------------------------------------
+
+.results-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.results-bar__count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.results-bar__number {
+  font-family: var(--font-display);
+  font-variation-settings: var(--display-settings);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-none);
+  color: var(--text-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.results-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

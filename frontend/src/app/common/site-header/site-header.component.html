@@ -1,10 +1,13 @@
 <header class="site-header">
   <div class="container site-header__inner">
     <a class="brand" routerLink="/entries">
-      <img class="brand__mark" src="assets/img/minlogo.png" alt="" width="36" height="36" />
+      <img class="brand__mark" src="assets/img/minlogo.png" alt="" width="60" height="60" />
       <span>
         <span class="brand__name">NyelvSzó</span>
-        <span class="brand__tagline">{{ 'Dictionary' | translate }}</span>
+        <!-- The full title is not repeated here: the landing hero states it
+             directly below the masthead, and at this size it wrapped to five
+             lines and pushed the header to double height. -->
+        <span class="sr-only">{{ 'Dictionary' | translate }}</span>
       </span>
     </a>
 

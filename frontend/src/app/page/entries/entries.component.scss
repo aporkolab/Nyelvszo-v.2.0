@@ -3,86 +3,27 @@
 // ---------------------------------------------------------------------------
 // Dictionary search — screen-local styling only.
 //
-// Everything structural comes from the shared layer (.container, .stack,
-// .input-group, .table, .pagination). What is left here is the one thing that
-// is genuinely local: the search panel is the visual centre of the landing
-// page, so its input is larger than a standard form control.
+// The hero, the search bar and the results toolbar now live in the shared layer
+// (src/styles/_search.scss) because they carry the site's identity and have to
+// stay consistent with it.
+//
+// What used to be here was a grid placing the input and the scope selector in
+// two sibling .field wrappers with `align-items: start`. Their labels and hints
+// were different heights, which is exactly why the selector sat visibly lower
+// than the input. The selector is now inside the bar, so the misalignment is
+// gone by construction rather than by tuning.
 // ---------------------------------------------------------------------------
 
-.search-panel {
-  padding: var(--space-7) var(--space-5);
-  background-color: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
+:host {
+  display: block;
 }
 
-.search-panel__inner {
-  max-width: var(--container-sm);
-  margin-inline: auto;
-}
-
-.search-panel__title {
-  font-size: var(--text-3xl);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-}
-
-.search-panel__lead {
-  color: var(--text-secondary);
-}
-
-.search-panel__controls {
-  display: grid;
-  gap: var(--space-4);
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-}
-
-@media (min-width: 40rem) {
-  .search-panel__controls {
-    grid-template-columns: minmax(0, 1fr) minmax(10rem, 14rem);
-  }
-}
-
-.search-panel__input {
-  min-height: 3.25rem;
-  font-size: var(--text-lg);
-}
-
-// The reader already has a clear button; the platform's own search decoration
-// would sit on top of it.
-.search-panel__input::-webkit-search-cancel-button,
-.search-panel__input::-webkit-search-decoration {
-  appearance: none;
-}
-
-// --- Results toolbar -------------------------------------------------------
-
-.results-bar__summary,
-.results-bar__label {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.results-bar__page::before {
-  content: '·';
-  margin-inline: var(--space-2);
-}
-
-// --- Loading ---------------------------------------------------------------
-
+// Placeholder rows drawn while a page is in flight.
 .results-skeleton {
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background-color: var(--surface-raised);
-}
-
-// The shared rule keys off aria-sort, which belongs on the <th>; this marks the
-// active state on the button itself without duplicating the attribute there.
-.table__sort[data-sorted] svg {
-  opacity: 1;
-  color: var(--text-link);
 }
