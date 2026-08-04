@@ -55,11 +55,45 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # ---------------------------------------------------------------------------
 # Production: minimal runtime, non-root, only the files the server needs.
+#
+# The runtime carries no package manager. CMD is `node src/index.js`, the
+# HEALTHCHECK is curl, and nothing under src/ or config/ shells out — so npm,
+# npx, corepack and yarn are never invoked here. They are not merely dead
+# weight: npm's own bundled dependencies (brace-expansion, ip-address, tar,
+# undici) were the sole source of every HIGH/CRITICAL finding in this image,
+# and a package manager present in a production container is a ready-made
+# tool for an attacker who gets code execution. Removing them is the fix.
+#
+# `apk upgrade` is deliberate. The base tag node:24-alpine is mutable and can
+# lag Alpine's security releases; when it does, an ignore-unfixed HIGH/CRITICAL
+# gate turns red and blocks deploys through no fault of this repository. The
+# build is already non-reproducible by construction (floating base tag,
+# unpinned `apk add`), so upgrading adds no new class of non-determinism and
+# costs nothing while the base is current.
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS production
 ENV NODE_ENV=production
 
-RUN apk add --no-cache curl ca-certificates && rm -rf /var/cache/apk/*
+RUN apk upgrade --no-cache \
+    && apk add --no-cache curl ca-certificates \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf \
+        /usr/local/lib/node_modules/npm \
+        /usr/local/lib/node_modules/corepack \
+        /usr/local/bin/npm \
+        /usr/local/bin/npx \
+        /usr/local/bin/corepack \
+        /usr/local/bin/yarn \
+        /usr/local/bin/yarnpkg \
+        /opt/yarn-v* \
+        /root/.npm \
+    && node --version \
+    && for tool in npm npx corepack yarn yarnpkg; do \
+           if command -v "$tool" >/dev/null 2>&1; then \
+               echo "FATAL: $tool still present in the production stage" >&2; \
+               exit 1; \
+           fi; \
+       done
 
 WORKDIR /app
 

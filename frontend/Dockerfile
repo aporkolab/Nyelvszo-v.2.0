@@ -5,7 +5,37 @@
 # follows a comment is silently ignored.
 
 ARG NODE_VERSION=24-alpine
-ARG NGINX_VERSION=1.27-alpine
+
+# 1.30.4-alpine, not 1.27-alpine. Resolved 2026-08-04 to nginx 1.30.4 on
+# Alpine 3.24.1, digest
+# sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46.
+#
+# The old pin was the actual CVE source, not anything we wrote. `1.27-alpine`
+# is a release-branch tag: Docker rebuilds it only while that branch is
+# current, and 1.27 stopped being current long ago, so the tag froze on Alpine
+# 3.21.3 and kept shipping package versions Alpine had already patched — 35
+# fixable HIGH/CRITICAL findings (c-ares, libcrypto3/libssl3, libexpat,
+# libpng, libxml2, musl/musl-utils, nghttp2-libs, zlib), every one of them
+# inherited from the base image.
+#
+# Why this tag specifically, measured on the date above:
+#   1.27-alpine  -> Alpine 3.21.3  (dead branch, 35 findings)
+#   1.28-alpine  -> Alpine 3.23.3  (stale)
+#   1.29-alpine  -> Alpine 3.23.4  (stale)
+#   1.30-alpine  -> Alpine 3.24.1  (current, 0 findings)  <- stable branch
+#   alpine / mainline-alpine -> Alpine 3.24.1, nginx 1.31.3 (mainline)
+#
+# 1.30.x is nginx's stable branch (even minor); 1.31.x is mainline. Both scan
+# clean, and stable is the conservative pick for a box that only serves static
+# files — it takes bugfixes and security patches but no feature work, so an
+# image rebuild cannot change proxying or header behaviour underneath us.
+#
+# Pinned to the patch level rather than to `1.30-alpine` or `alpine`: a
+# floating tag can silently become a different nginx between two builds of the
+# same commit. The cost of pinning is that the tag stops receiving Alpine
+# patches, which is what the `apk upgrade` in the runtime stage covers — see
+# the note there. Bump this pin when nginx 1.30 leaves stable.
+ARG NGINX_VERSION=1.30.4-alpine
 
 # ---------------------------------------------------------------------------
 # Dependencies: manifests only, so the install layer survives source edits.
@@ -83,6 +113,23 @@ RUN npm run build -- --configuration production && \
 # ---------------------------------------------------------------------------
 FROM nginx:${NGINX_VERSION} AS production
 
+# Pinning the base fixes the packages to whatever that image shipped with, and
+# Alpine keeps patching the 3.24 branch after the image is cut. Without this
+# the pin slowly accumulates exactly the kind of findings that the old
+# 1.27-alpine tag had accumulated by the time anyone scanned it.
+#
+# `apk upgrade` pulls the current 3.24 packages at build time, so the image
+# stays clean as it ages without the tag having to move. It is a same-branch
+# upgrade (the repositories in the base point at v3.24/main and v3.24/community
+# — no branch hop), so it takes security patches only and cannot drag in a new
+# major of anything nginx links against.
+#
+# --no-cache leaves no package index behind to bloat the layer, and the
+# trailing `nginx -t` is on the stock config — it only asserts that the
+# upgraded libraries still load and the binary still runs. Our own config is
+# validated further down, once it has been copied in.
+RUN apk upgrade --no-cache && nginx -t
+
 COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY --from=build /site /usr/share/nginx/html
@@ -90,7 +137,21 @@ COPY --from=build /site /usr/share/nginx/html
 # The image already ships an unprivileged `nginx` user (uid 101); it only needs
 # the document root and the temp/cache directories. The pid file and the logs
 # are kept out of root-owned paths by nginx.conf itself.
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx
+#
+# `nginx -t` against the real config, as a build-time gate. The base moved from
+# nginx 1.27 to 1.30, and a directive that a newer nginx has dropped or renamed
+# would otherwise surface as a container that crash-loops on first start in
+# production. Here it fails the build instead.
+#
+# The `rm` is not tidiness, it is required. `nginx -t` creates the pid file
+# from the config (/tmp/nginx.pid) and leaves it behind owned by root, because
+# this layer still runs as root. The runtime process is uid 101 and cannot
+# reopen a root-owned pid file, so leaving it there makes every container exit
+# immediately with:
+#   [emerg] open() "/tmp/nginx.pid" failed (13: Permission denied)
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx && \
+    nginx -t && \
+    rm -f /tmp/nginx.pid
 
 USER nginx
 

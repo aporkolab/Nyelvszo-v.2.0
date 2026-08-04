@@ -247,10 +247,12 @@ jobs:
       # this repo; everything with a fix is a hard failure.
       - name: Trivy gate (fails on fixable HIGH/CRITICAL)
         uses: aquasecurity/trivy-action@v0.36.0
-        env:
-          # Reuse the database the previous step just downloaded into ~/.cache/trivy.
-          TRIVY_SKIP_DB_UPDATE: 'true'
-          TRIVY_SKIP_JAVA_DB_UPDATE: 'true'
+        # No TRIVY_SKIP_DB_UPDATE here. It was set to reuse the database the
+        # previous step downloaded, but the action restores its cache per
+        # invocation and the save only happens in post-job — so the gate found
+        # no database, was forbidden from fetching one, and exited 1 after 17ms
+        # without scanning anything. A second fetch is cheap; a gate that fails
+        # for the wrong reason is not.
         with:
           image-ref: ${{ env.LOCAL_TAG }}
           format: table
