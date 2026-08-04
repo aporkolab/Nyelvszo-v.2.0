@@ -59,7 +59,7 @@ info:
     responses carry `X-Cache: HIT|MISS|SKIP` and an `ETag`; a matching
     `If-None-Match` gets a `304`.
 
-  version: 2.2.0
+  version: 2.5.0
   contact:
     name: Dr. Ádám Porkoláb
     email: adam@porkolab.digital
@@ -111,7 +111,7 @@ paths:
                     example: NyelvSzó API
                   version:
                     type: string
-                    example: 2.2.0
+                    example: 2.5.0
                   documentation:
                     type: string
                     example: /api-docs
@@ -1859,7 +1859,7 @@ components:
           format: date-time
         version:
           type: string
-          example: 2.2.0
+          example: 2.5.0
         nodeVersion:
           type: string
           example: v24.4.0

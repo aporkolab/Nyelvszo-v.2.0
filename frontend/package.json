@@ -1,7 +1,7 @@
 {
   "name": "nyelvszo-frontend",
-  "version": "2.2.0",
-  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary Frontend",
+  "version": "2.5.0",
+  "description": "NyelvSz\u00f3 - English-Hungarian Linguistic Dictionary Frontend",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

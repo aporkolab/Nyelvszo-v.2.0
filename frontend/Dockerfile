@@ -43,7 +43,7 @@ ARG NGINX_VERSION=1.30.4-alpine
 FROM node:${NODE_VERSION} AS deps
 LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
 LABEL org.opencontainers.image.title="NyelvSzó Frontend"
-LABEL org.opencontainers.image.version="2.2.0"
+LABEL org.opencontainers.image.version="2.5.0"
 LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 WORKDIR /app

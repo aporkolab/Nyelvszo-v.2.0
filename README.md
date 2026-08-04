@@ -1,4 +1,4 @@
-# NyelvSzó v2.2.0
+# NyelvSzó v2.5.0
 
 English–Hungarian linguistic dictionary. Angol-magyar nyelvészeti szakszótár.
 

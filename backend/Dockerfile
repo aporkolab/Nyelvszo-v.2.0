@@ -10,7 +10,7 @@ ARG NODE_VERSION=24-alpine
 FROM node:${NODE_VERSION} AS base
 LABEL maintainer="Dr. Ádám Porkoláb <adam@porkolab.digital>"
 LABEL org.opencontainers.image.title="NyelvSzó Backend API"
-LABEL org.opencontainers.image.version="2.2.0"
+LABEL org.opencontainers.image.version="2.5.0"
 LABEL org.opencontainers.image.source="https://github.com/aporkolab/Nyelvszo-v.2.0"
 
 WORKDIR /app

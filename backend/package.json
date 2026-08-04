@@ -1,7 +1,7 @@
 {
   "name": "nyelvszo-backend",
-  "version": "2.2.0",
-  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary API",
+  "version": "2.5.0",
+  "description": "NyelvSz\u00f3 - English-Hungarian Linguistic Dictionary API",
   "main": "src/index.js",
   "engines": {
     "node": ">=24.0.0"
@@ -23,7 +23,7 @@
     "seed": "node ./src/seed/seeder.js",
     "health": "curl -s http://localhost:3000/health | jq"
   },
-  "author": "Adam Dr. Porkolab & Tamás Dr. Fekete",
+  "author": "Adam Dr. Porkolab & Tam\u00e1s Dr. Fekete",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
