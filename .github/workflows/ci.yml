@@ -228,7 +228,7 @@ jobs:
       # Full inventory for the Security tab, including vulnerabilities with no
       # released fix. Never fails the job — its purpose is visibility.
       - name: Trivy scan (SARIF report)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.LOCAL_TAG }}
           format: sarif
@@ -246,7 +246,7 @@ jobs:
       # an upstream base-image CVE with no patch available cannot be actioned in
       # this repo; everything with a fix is a hard failure.
       - name: Trivy gate (fails on fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         env:
           # Reuse the database the previous step just downloaded into ~/.cache/trivy.
           TRIVY_SKIP_DB_UPDATE: 'true'
