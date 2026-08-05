@@ -48,13 +48,16 @@
     "selectLanguage": "Select language"
   },
   "search": {
-    "title": "What are you looking for?",
-    "lead": "Type a Hungarian or English term from linguistics.",
+    "eyebrow": "A living dictionary of linguistics",
+    "titleStart": "The precise word.",
+    "titleAccent": "In two languages.",
+    "lead": "Hungarian and English linguistic terminology, fast and in context.",
     "label": "Search the dictionary",
     "placeholder": "For example: morpheme, allophone, fonéma…",
     "columnLabel": "Restrict search to a field",
     "allColumns": "All fields",
-    "hint": "Enter at least two characters.",
+    "hint": "Instant search from two characters",
+    "curated": "Expert-curated content",
     "sortLabel": "Sort",
     "sort": {
       "alphabetical": "Alphabetical",

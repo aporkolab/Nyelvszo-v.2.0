@@ -94,8 +94,8 @@
 .select:focus-visible,
 .textarea:focus-visible {
   outline: none;
-  border-color: var(--aqua-400);
-  box-shadow: var(--glow-aqua);
+  border-color: var(--focus-ring);
+  box-shadow: var(--glow-ember);
 }
 
 .input:disabled,
@@ -164,7 +164,7 @@
 }
 
 .input-group:focus-within .input-group__icon {
-  color: var(--aqua-400);
+  color: var(--focus-ring);
 }
 
 .input-group__icon svg {
@@ -202,7 +202,7 @@
   width: 1.5rem;
   height: 1.5rem;
   margin-block-start: 0.05rem;
-  accent-color: var(--ember-500);
+  accent-color: var(--action-primary-solid);
   cursor: pointer;
 }
 

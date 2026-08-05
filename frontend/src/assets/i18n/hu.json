@@ -48,13 +48,16 @@
     "selectLanguage": "Nyelv kiválasztása"
   },
   "search": {
-    "title": "Mit szeretne megkeresni?",
-    "lead": "Írjon be egy magyar vagy angol nyelvészeti szakkifejezést.",
+    "eyebrow": "Élő nyelvészeti szakszótár",
+    "titleStart": "A pontos szó.",
+    "titleAccent": "Két nyelven.",
+    "lead": "Magyar és angol nyelvészeti terminusok, gyorsan és összefüggéseiben.",
     "label": "Keresés a szótárban",
     "placeholder": "Például: morféma, allofón, phoneme…",
     "columnLabel": "Keresés mezőre szűkítve",
     "allColumns": "Minden mezőben",
-    "hint": "Írjon be legalább két karaktert.",
+    "hint": "Azonnali keresés két karaktertől",
+    "curated": "Szakértői tartalom",
     "sortLabel": "Rendezés",
     "sort": {
       "alphabetical": "Betűrend szerint",

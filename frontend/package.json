@@ -1,7 +1,7 @@
 {
   "name": "nyelvszo-frontend",
   "version": "2.5.0",
-  "description": "NyelvSz\u00f3 - English-Hungarian Linguistic Dictionary Frontend",
+  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary Frontend",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -29,6 +29,7 @@
     "@angular/platform-browser": "^21.2.19",
     "@angular/platform-browser-dynamic": "^21.2.19",
     "@angular/router": "^21.2.19",
+    "@fontsource-variable/exo-2": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

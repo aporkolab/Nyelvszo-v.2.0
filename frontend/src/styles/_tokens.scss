@@ -69,38 +69,38 @@
 
   // --- Surfaces ------------------------------------------------------------
 
-  --surface-page: var(--void-950);
-  --surface-raised: var(--void-850);
-  --surface-overlay: var(--void-800);
-  --surface-sunken: var(--void-1000);
-  --surface-accent-subtle: rgb(255 162 63 / 10%);
-  --surface-aqua-subtle: rgb(79 214 196 / 10%);
+  --surface-page: #1d2021;
+  --surface-raised: #282828;
+  --surface-overlay: #3c3836;
+  --surface-sunken: #1d2021;
+  --surface-accent-subtle: rgb(254 128 25 / 10%);
+  --surface-aqua-subtle: rgb(215 153 33 / 9%);
 
   // --- Text ----------------------------------------------------------------
 
-  --text-primary: var(--bone-100); // 15.9:1 on --surface-page
-  --text-secondary: var(--bone-300); // 8.4:1
-  --text-muted: var(--bone-400); // 5.1:1 — AA for body
-  --text-display: var(--bone-50);
+  --text-primary: #ebdbb2;
+  --text-secondary: #d5c4a1;
+  --text-muted: #a89984;
+  --text-display: #fbf1c7;
   --text-on-action: var(--void-1000); // 9.8:1 on --ember-500
-  --text-link: var(--aqua-300); // 10.2:1
-  --text-link-hover: var(--aqua-200);
+  --text-link: #fabd2f;
+  --text-link-hover: #fbd66f;
 
   // --- Borders -------------------------------------------------------------
 
-  --border-subtle: rgb(255 255 255 / 7%);
-  --border-default: rgb(255 255 255 / 12%);
-  --border-strong: rgb(255 255 255 / 22%);
+  --border-subtle: #3c3836;
+  --border-default: #504945;
+  --border-strong: #665c54;
   // Form controls need 3:1 against their surface (WCAG 1.4.11).
-  --border-control: rgb(255 255 255 / 28%);
-  --border-control-hover: rgb(255 255 255 / 45%);
-  --border-accent: var(--ember-500);
+  --border-control: #665c54;
+  --border-control-hover: #7c6f64;
+  --border-accent: #fe8019;
 
   // --- Actions -------------------------------------------------------------
 
-  --action-primary-bg: linear-gradient(135deg, var(--ember-400) 0%, var(--ember-600) 100%);
-  --action-primary-bg-hover: linear-gradient(135deg, var(--ember-300) 0%, var(--ember-500) 100%);
-  --action-primary-solid: var(--ember-500);
+  --action-primary-bg: #fe8019;
+  --action-primary-bg-hover: #fabd2f;
+  --action-primary-solid: #fe8019;
   --action-primary-text: var(--text-on-action);
 
   --action-secondary-bg: rgb(255 255 255 / 4%);
@@ -112,7 +112,7 @@
   --action-danger-bg-hover: var(--rose-400);
   --action-danger-text: var(--void-1000);
 
-  --focus-ring: var(--aqua-300);
+  --focus-ring: #fabd2f;
 
   // --- Status --------------------------------------------------------------
 
@@ -146,15 +146,14 @@
   //   JetBrains Mono— word class, field of expertise, counts. Reads as
   //                   notation, which is the right register for linguistics.
 
-  --font-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
-  --font-sans:
-    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Exo 2 Variable', 'Exo 2', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Exo 2 Variable', 'Exo 2', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   // Fraunces axes. `SOFT` rounds the terminals, `WONK` enables the swashed
   // alternates — a little of both is what gives it character instead of
   // looking like a stock Georgia fallback.
-  --display-settings: 'SOFT' 30, 'WONK' 1;
+  --display-settings: normal;
 
   // Type scale, 1.25 major third, fluid between 22rem and 90rem.
   --text-2xs: 0.6875rem;
@@ -221,8 +220,8 @@
   --shadow-lg: 0 24px 60px -16px rgb(0 0 0 / 70%), inset 0 1px 0 rgb(255 255 255 / 6%);
   --shadow-xl: 0 40px 100px -24px rgb(0 0 0 / 80%), inset 0 1px 0 rgb(255 255 255 / 7%);
 
-  --glow-ember: 0 0 0 1px rgb(255 162 63 / 30%), 0 8px 32px -6px rgb(251 127 60 / 35%);
-  --glow-aqua: 0 0 0 1px rgb(79 214 196 / 30%), 0 8px 32px -6px rgb(79 214 196 / 25%);
+  --glow-ember: 0 0 0 1px rgb(167 192 128 / 25%), 0 8px 32px -6px rgb(167 192 128 / 20%);
+  --glow-aqua: 0 0 0 1px rgb(131 192 146 / 25%), 0 8px 32px -6px rgb(131 192 146 / 18%);
 
   // --- Motion --------------------------------------------------------------
 
@@ -238,7 +237,7 @@
   --container-md: 52rem;
   --container-lg: 68rem;
   --container-xl: 82rem;
-  --page-gutter: var(--space-5);
+  --page-gutter: var(--space-4);
 
   --tap-target: 2.75rem;
 
@@ -262,31 +261,31 @@
 // ---------------------------------------------------------------------------
 
 @mixin light-tokens {
-  --surface-page: #f7f3ee;
-  --surface-raised: #ffffff;
-  --surface-overlay: #ffffff;
-  --surface-sunken: #ebe4dc;
-  --surface-accent-subtle: rgb(227 96 58 / 10%);
-  --surface-aqua-subtle: rgb(29 145 136 / 10%);
+  --surface-page: #fbf1c7;
+  --surface-raised: #f9eec0;
+  --surface-overlay: #ebdbb2;
+  --surface-sunken: #d5c4a1;
+  --surface-accent-subtle: rgb(214 93 14 / 10%);
+  --surface-aqua-subtle: rgb(215 153 33 / 8%);
 
-  --text-primary: #1a1622; // 16.1:1 on --surface-page
-  --text-secondary: #4a4155; // 8.7:1
-  --text-muted: #6b6076; // 5.4:1
-  --text-display: #120f18;
+  --text-primary: #282828;
+  --text-secondary: #504945;
+  --text-muted: #665c54;
+  --text-display: #1d2021;
   --text-on-action: #ffffff; // 4.6:1 on --ember-800
-  --text-link: #0f7a72; // 4.9:1
-  --text-link-hover: #0a5c56;
+  --text-link: #af3a03;
+  --text-link-hover: #7c2903;
 
-  --border-subtle: rgb(26 22 34 / 8%);
-  --border-default: rgb(26 22 34 / 14%);
-  --border-strong: rgb(26 22 34 / 28%);
-  --border-control: rgb(26 22 34 / 34%);
-  --border-control-hover: rgb(26 22 34 / 55%);
-  --border-accent: var(--ember-700);
+  --border-subtle: rgb(60 56 54 / 14%);
+  --border-default: rgb(60 56 54 / 24%);
+  --border-strong: rgb(60 56 54 / 42%);
+  --border-control: rgb(60 56 54 / 48%);
+  --border-control-hover: rgb(60 56 54 / 70%);
+  --border-accent: #d65d0e;
 
-  --action-primary-bg: linear-gradient(135deg, var(--ember-700) 0%, var(--ember-800) 100%);
-  --action-primary-bg-hover: linear-gradient(135deg, var(--ember-600) 0%, var(--ember-700) 100%);
-  --action-primary-solid: var(--ember-800);
+  --action-primary-bg: #af3a03;
+  --action-primary-bg-hover: #7c2903;
+  --action-primary-solid: #af3a03;
 
   --action-secondary-bg: #ffffff;
   --action-secondary-bg-hover: var(--surface-sunken);
@@ -295,7 +294,7 @@
   --action-danger-bg-hover: #8e1922;
   --action-danger-text: #ffffff;
 
-  --focus-ring: var(--ember-800);
+  --focus-ring: #d65d0e;
 
   --status-success-bg: #e4f5ea;
   --status-success-text: #14683f;

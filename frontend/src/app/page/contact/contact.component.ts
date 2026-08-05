@@ -17,4 +17,6 @@ import { IconModule } from '../../icon/icon.module';
   styleUrl: './contact.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ContactComponent {}
+export class ContactComponent {
+  readonly currentYear = new Date().getFullYear();
+}

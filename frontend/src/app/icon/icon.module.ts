@@ -18,6 +18,7 @@ import {
   Home,
   Inbox,
   Info,
+  Layers,
   LogIn,
   LogOut,
   Mail,
@@ -31,6 +32,7 @@ import {
   Trash2,
   Users,
   X,
+  Zap,
 } from 'angular-feather/icons';
 
 // Only the icons the templates actually use. angular-feather tree-shakes per
@@ -55,6 +57,7 @@ const icons = {
   Home,
   Inbox,
   Info,
+  Layers,
   LogIn,
   LogOut,
   Mail,
@@ -68,6 +71,7 @@ const icons = {
   Trash2,
   Users,
   X,
+  Zap,
 };
 
 @NgModule({

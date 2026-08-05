@@ -36,8 +36,7 @@
               }
             ],
             "styles": [
-              "@fontsource-variable/fraunces/index.css",
-              "@fontsource-variable/inter/index.css",
+              "@fontsource-variable/exo-2/index.css",
               "@fontsource-variable/jetbrains-mono/index.css",
               "src/styles.scss"
             ],

@@ -68,9 +68,9 @@
   width: 4.5rem;
   height: 4.5rem;
   border-radius: var(--radius-pill);
-  background: radial-gradient(circle at 50% 30%, rgb(255 162 63 / 22%), rgb(255 162 63 / 4%));
-  border: 1px solid rgb(255 162 63 / 22%);
-  color: var(--ember-400);
+  background: var(--surface-accent-subtle);
+  border: 1px solid var(--border-accent);
+  color: var(--text-link);
 }
 
 .state__icon svg {
@@ -91,6 +91,12 @@
   text-wrap: balance;
 }
 
+@media (max-width: 40rem) {
+  .state {
+    padding: var(--space-8) var(--space-4);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Loading
 // ---------------------------------------------------------------------------
@@ -100,7 +106,7 @@
   width: 1.25rem;
   height: 1.25rem;
   border: 2px solid var(--border-default);
-  border-top-color: var(--ember-500);
+  border-top-color: var(--action-primary-solid);
   border-radius: var(--radius-pill);
   animation: spinner-rotate 0.7s linear infinite;
 }

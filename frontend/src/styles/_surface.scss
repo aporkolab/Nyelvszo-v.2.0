@@ -93,8 +93,8 @@
 
 .badge--accent {
   background-color: var(--surface-accent-subtle);
-  border-color: rgb(255 162 63 / 35%);
-  color: var(--ember-400);
+  border-color: var(--border-accent);
+  color: var(--text-link);
 }
 
 .badge--aqua {
@@ -170,7 +170,7 @@
   height: 2px;
   margin-top: var(--space-3);
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--ember-500), transparent);
+  background: linear-gradient(90deg, var(--action-primary-solid), transparent);
 }
 
 .prose ul,
@@ -183,12 +183,12 @@
 }
 
 .prose li::marker {
-  color: var(--ember-500);
+  color: var(--action-primary-solid);
 }
 
 .prose blockquote {
   padding: var(--space-4) var(--space-5);
-  border-inline-start: 2px solid var(--ember-500);
+  border-inline-start: 2px solid var(--action-primary-solid);
   background-color: rgb(255 255 255 / 3%);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   color: var(--text-secondary);
@@ -225,4 +225,34 @@
 .prose dd {
   margin: 0;
   color: var(--text-primary);
+}
+
+@media (max-width: 40rem) {
+  .card__header,
+  .card__body,
+  .card__footer {
+    padding: var(--space-4);
+  }
+
+  .panel {
+    padding: var(--space-4);
+  }
+
+  .prose {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+  }
+
+  .prose h2 {
+    margin-top: var(--space-7);
+  }
+
+  .prose h3 {
+    margin-top: var(--space-6);
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-inline-start: var(--space-5);
+  }
 }

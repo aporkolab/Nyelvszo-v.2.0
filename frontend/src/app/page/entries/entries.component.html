@@ -7,15 +7,20 @@
 -->
 <div class="container container--wide stack stack--section">
   <section class="hero" aria-labelledby="search-title">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__identity">
+      <img src="assets/img/minlogo.png" alt="" class="hero__logo" width="250" height="172" />
+      <span class="hero__edition">2.5 / 2026</span>
+    </div>
+    <div class="hero__content">
     <p class="hero__eyebrow">
-      <i-feather name="book-open" aria-hidden="true" />
-      {{ 'Dictionary' | translate }}
+      <span class="hero__eyebrow-dot"></span>
+      {{ 'search.eyebrow' | translate }}
     </p>
 
-    <h1 class="hero__title" id="search-title">
-      <span class="text-gradient">{{ 'search.title' | translate }}</span>
-    </h1>
-    <p class="hero__lead">{{ 'search.lead' | translate }}</p>
+      <h1 class="hero__title" id="search-title">{{ 'Dictionary' | translate }}</h1>
+      <p class="hero__lead">{{ 'search.lead' | translate }}</p>
+    </div>
 
     <!--
       One control, not two. The scope selector lives inside the bar because the
@@ -68,7 +73,21 @@
       </div>
     </div>
 
-    <p class="searchbar__hint" id="entry-search-hint">{{ 'search.hint' | translate }}</p>
+    <div class="hero__meta">
+      <p class="searchbar__hint" id="entry-search-hint">
+        <i-feather name="zap" aria-hidden="true" />
+        {{ 'search.hint' | translate }}
+      </p>
+      <p class="hero__meta-item">
+        <i-feather name="layers" aria-hidden="true" />
+        {{ 'search.curated' | translate }}
+      </p>
+      <p class="hero__meta-item">
+        <i-feather name="globe" aria-hidden="true" />
+        HU ↔ EN
+      </p>
+    </div>
+
   </section>
 
   <div class="stack">
@@ -200,7 +219,11 @@
                     >
                       {{ entry.hungarian }}
                     </td>
-                    <td role="cell" [attr.data-label]="'table.english' | translate">
+                    <td
+                      role="cell"
+                      class="table__cell--secondary"
+                      [attr.data-label]="'table.english' | translate"
+                    >
                       {{ entry.english }}
                     </td>
                     <td
