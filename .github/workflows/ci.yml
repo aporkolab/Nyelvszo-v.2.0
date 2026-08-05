@@ -218,6 +218,10 @@ jobs:
         with:
           context: ./${{ matrix.component }}
           target: production
+          # Security fixes in the Node/nginx base must not be hidden by the GHA
+          # layer cache. The published image is rebuilt from the current base,
+          # then that exact candidate is scanned below.
+          pull: true
           load: true
           push: false
           tags: ${{ env.LOCAL_TAG }}
@@ -275,6 +279,7 @@ jobs:
         with:
           context: ./${{ matrix.component }}
           target: production
+          pull: true
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

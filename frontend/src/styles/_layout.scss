@@ -17,7 +17,13 @@
 
 .app-shell__main {
   flex: 1 1 auto;
-  padding-block: var(--space-6) var(--space-9);
+  padding-block: var(--space-4) var(--space-7);
+}
+
+@media (min-width: 48rem) {
+  .app-shell__main {
+    padding-block: var(--space-6) var(--space-9);
+  }
 }
 
 // Horizontal container with a responsive gutter.
@@ -115,6 +121,17 @@
   gap: var(--space-4);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 40rem) {
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .page-header > .btn,
+  .page-header > a.btn {
+    width: 100%;
+  }
 }
 
 .page-header__title {

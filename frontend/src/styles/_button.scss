@@ -72,9 +72,7 @@
 
 .btn--primary:hover:not(:disabled) {
   background: var(--action-primary-bg-hover);
-  box-shadow:
-    0 0 0 1px rgb(255 162 63 / 45%),
-    0 12px 40px -8px rgb(251 127 60 / 50%);
+  box-shadow: var(--glow-ember);
 }
 
 .btn--secondary {
@@ -164,6 +162,15 @@
 }
 
 @media (max-width: 30rem) {
+  .btn--sm {
+    min-height: var(--tap-target);
+  }
+
+  .btn--icon.btn--sm {
+    width: var(--tap-target);
+    min-width: var(--tap-target);
+  }
+
   .btn-group {
     display: flex;
     flex-wrap: wrap;

@@ -13,16 +13,19 @@
 
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  background-color: var(--surface-raised);
-  box-shadow: var(--shadow-md);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  box-shadow: 0 1.75rem 5rem rgb(0 0 0 / 25%);
 }
 
 .table {
   width: 100%;
   font-size: var(--text-base);
   text-align: start;
+  counter-reset: dictionary-row;
 }
 
 .table caption {
@@ -34,7 +37,7 @@
 
 .table th,
 .table td {
-  padding: var(--space-4) var(--space-5);
+  padding: 1.35rem clamp(1rem, 2.5vw, 2rem);
   text-align: start;
   vertical-align: middle;
 }
@@ -43,9 +46,10 @@
   position: sticky;
   top: 0;
   z-index: var(--z-base);
-  background-color: var(--surface-sunken);
-  border-bottom: 1px solid var(--border-default);
-  color: var(--text-muted);
+  background-color: rgb(8 12 17 / 90%);
+  border-top: 3px solid #fe8019;
+  border-bottom: 1px solid rgb(255 255 255 / 22%);
+  color: #d5c4a1;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
@@ -55,8 +59,23 @@
 }
 
 .table tbody tr {
-  border-top: 1px solid var(--border-subtle);
-  transition: background-color var(--duration-fast) var(--ease-out);
+  counter-increment: dictionary-row;
+  border-top: 1px solid rgb(255 255 255 / 14%);
+  transition: background-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.table tbody td:first-child { position: relative; padding-left: clamp(3.25rem, 5vw, 5rem); }
+
+.table tbody td:first-child::after {
+  content: counter(dictionary-row, decimal-leading-zero);
+  position: absolute;
+  left: clamp(1rem, 2.5vw, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  color: #58646e;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
 }
 
 .table tbody tr:first-child {
@@ -64,8 +83,10 @@
 }
 
 .table tbody tr:hover {
-  background-color: rgb(255 255 255 / 3%);
+  background: #3c3836;
+  box-shadow: inset 4px 0 #fe8019;
 }
+
 
 :root[data-theme='light'] .table tbody tr:hover {
   background-color: rgb(26 22 34 / 3%);
@@ -85,7 +106,7 @@
 .table__cell--primary {
   font-family: var(--font-display);
   font-variation-settings: var(--display-settings);
-  font-size: var(--text-lg);
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-tight);
   color: var(--text-display);
@@ -93,7 +114,14 @@
 
 // The translation.
 .table__cell--secondary {
-  color: var(--text-primary);
+  color: #fabd2f;
+  font-weight: var(--weight-medium);
+}
+
+:root[data-theme='light'] .table__cell--secondary { color: #af3a03; }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .table__cell--secondary { color: #af3a03; }
 }
 
 // Grammatical metadata: word class, field of expertise.
@@ -179,7 +207,8 @@ th[aria-sort='descending'] .table__sort svg,
     margin-bottom: var(--space-4);
     background-color: var(--surface-raised);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
+    border-left: 4px solid #fe8019;
     box-shadow: var(--shadow-sm);
   }
 
@@ -210,6 +239,9 @@ th[aria-sort='descending'] .table__sort svg,
     padding-top: 0;
     font-size: var(--text-xl);
   }
+
+  .table tbody td:first-child { padding-left: 0; }
+  .table tbody td:first-child::after { content: none; }
 
   .table td.table__cell--primary::before {
     content: none;
