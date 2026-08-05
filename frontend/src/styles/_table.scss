@@ -61,10 +61,15 @@
 .table tbody tr {
   counter-increment: dictionary-row;
   border-top: 1px solid rgb(255 255 255 / 14%);
-  transition: background-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
-.table tbody td:first-child { position: relative; padding-left: clamp(3.25rem, 5vw, 5rem); }
+.table tbody td:first-child {
+  position: relative;
+  padding-left: clamp(3.25rem, 5vw, 5rem);
+}
 
 .table tbody td:first-child::after {
   content: counter(dictionary-row, decimal-leading-zero);
@@ -86,7 +91,6 @@
   background: #3c3836;
   box-shadow: inset 4px 0 #fe8019;
 }
-
 
 :root[data-theme='light'] .table tbody tr:hover {
   background-color: rgb(26 22 34 / 3%);
@@ -118,10 +122,14 @@
   font-weight: var(--weight-medium);
 }
 
-:root[data-theme='light'] .table__cell--secondary { color: #af3a03; }
+:root[data-theme='light'] .table__cell--secondary {
+  color: #af3a03;
+}
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) .table__cell--secondary { color: #af3a03; }
+  :root:not([data-theme='dark']) .table__cell--secondary {
+    color: #af3a03;
+  }
 }
 
 // Grammatical metadata: word class, field of expertise.
@@ -240,8 +248,12 @@ th[aria-sort='descending'] .table__sort svg,
     font-size: var(--text-xl);
   }
 
-  .table tbody td:first-child { padding-left: 0; }
-  .table tbody td:first-child::after { content: none; }
+  .table tbody td:first-child {
+    padding-left: 0;
+  }
+  .table tbody td:first-child::after {
+    content: none;
+  }
 
   .table td.table__cell--primary::before {
     content: none;

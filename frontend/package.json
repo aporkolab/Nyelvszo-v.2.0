@@ -11,7 +11,7 @@
     "test": "ng test --watch=false --browsers=ChromeHeadless",
     "test:watch": "ng test",
     "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
-    "lint": "eslint \"src/**/*.{ts,html}\" --fix",
+    "lint": "eslint \"src/**/*.{ts,html}\" --fix && prettier --write \"src/**/*.{ts,html,scss}\"",
     "lint:check": "eslint \"src/**/*.{ts,html}\"",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
