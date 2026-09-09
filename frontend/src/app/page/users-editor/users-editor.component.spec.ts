@@ -5,7 +5,6 @@ import { FormGroup } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { ToastrModule } from 'ngx-toastr';
 import { of } from 'rxjs';
 
 import { UserRole } from '../../model/user';
@@ -13,7 +12,7 @@ import { UsersEditorComponent } from './users-editor.component';
 
 function configure(id: string) {
   TestBed.configureTestingModule({
-    imports: [UsersEditorComponent, TranslateModule.forRoot(), ToastrModule.forRoot()],
+    imports: [UsersEditorComponent, TranslateModule.forRoot(),],
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),

@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { ToastrModule } from 'ngx-toastr';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { Entry } from 'src/app/model/entry';
@@ -52,7 +51,6 @@ describe('EntriesComponent', () => {
       imports: [
         EntriesComponent,
         TranslateModule.forRoot(),
-        ToastrModule.forRoot(),
         NoopAnimationsModule,
       ],
       providers: [

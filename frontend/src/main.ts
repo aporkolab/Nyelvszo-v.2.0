@@ -4,7 +4,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 
-import { ToastrModule } from 'ngx-toastr';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
@@ -19,7 +18,7 @@ import { authInterceptor } from './app/service/auth.interceptor';
  * @returns Configured loader.
  */
 export function translateLoaderFactory(http: HttpClient): TranslateLoader {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+  return new TranslateHttpLoader();
 }
 
 bootstrapApplication(AppComponent, {
@@ -34,15 +33,6 @@ bootstrapApplication(AppComponent, {
     provideAnimations(),
     provideHttpClient(withInterceptors([authInterceptor])),
     importProvidersFrom(
-      ToastrModule.forRoot({
-        positionClass: 'toast-bottom-right',
-        closeButton: true,
-        preventDuplicates: true,
-        timeOut: 5000,
-        extendedTimeOut: 3000,
-        // Toasts are status messages; announce them without stealing focus.
-        toastClass: 'ngx-toastr',
-      }),
       TranslateModule.forRoot({
         defaultLanguage: 'hu',
         loader: {
