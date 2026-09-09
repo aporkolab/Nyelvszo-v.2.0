@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { ToastrModule } from 'ngx-toastr';
 import { of } from 'rxjs';
 
 import { LoginComponent } from './login.component';
@@ -33,7 +32,6 @@ describe('LoginComponent', () => {
       imports: [
         LoginComponent,
         TranslateModule.forRoot(),
-        ToastrModule.forRoot(),
         NoopAnimationsModule,
       ],
       providers: [

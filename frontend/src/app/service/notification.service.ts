@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService, ToastOptions } from '../service/toast.service';
 
 /** Heading shown on a toast when the call site does not supply one. */
 const DEFAULT_TITLE = 'NyelvSzó';
@@ -16,7 +16,7 @@ const DEFAULT_TITLE = 'NyelvSzó';
   providedIn: 'root',
 })
 export class NotificationService {
-  private readonly toastr = inject(ToastrService);
+  private readonly toastr = inject(ToastService);
 
   /**
    * Confirm that an action completed.

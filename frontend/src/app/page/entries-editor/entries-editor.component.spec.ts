@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { ToastrModule } from 'ngx-toastr';
 import { of } from 'rxjs';
 
 import { EntriesEditorComponent } from './entries-editor.component';
@@ -15,7 +14,7 @@ describe('EntriesEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EntriesEditorComponent, TranslateModule.forRoot(), ToastrModule.forRoot()],
+      imports: [EntriesEditorComponent, TranslateModule.forRoot(),],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
