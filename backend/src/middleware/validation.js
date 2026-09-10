@@ -18,6 +18,12 @@ const validate = (schema, source = 'body') => {
   return (req, res, next) => {
     const data = req[source] ?? {};
 
+    // The simple query parser preserves bracket notation in parameter names.
+    // Reject MongoDB operator syntax before Joi strips unknown parameters.
+    if (source === 'query' && Object.keys(data).some((key) => /\$|\[|\]/.test(key))) {
+      return next(createError(400, 'Validation Error', { type: 'ValidationError' }));
+    }
+
     const { error, value } = schema.validate(data, {
       abortEarly: false,
       allowUnknown: false,
