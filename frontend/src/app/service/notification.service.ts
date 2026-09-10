@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { ToastService, ToastOptions } from '../service/toast.service';
+import { ToastService } from '../service/toast.service';
 
 /** Heading shown on a toast when the call site does not supply one. */
 const DEFAULT_TITLE = 'NyelvSzó';
 
 /**
- * Thin wrapper over ngx-toastr.
+ * Application notification service.
  *
  * Its only job is to keep the toast library behind one seam and to supply the
  * application name as the default heading — every call site used to repeat the

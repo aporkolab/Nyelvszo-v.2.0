@@ -1,7 +1,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -14,10 +14,9 @@ import { authInterceptor } from './app/service/auth.interceptor';
 /**
  * Load translation files from the assets directory.
  *
- * @param http - Angular HTTP client.
  * @returns Configured loader.
  */
-export function translateLoaderFactory(http: HttpClient): TranslateLoader {
+export function translateLoaderFactory(): TranslateLoader {
   return new TranslateHttpLoader();
 }
 
@@ -38,7 +37,6 @@ bootstrapApplication(AppComponent, {
         loader: {
           provide: TranslateLoader,
           useFactory: translateLoaderFactory,
-          deps: [HttpClient],
         },
       })
     ),
