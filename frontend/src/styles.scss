@@ -21,9 +21,55 @@
 @use 'styles/feedback';
 
 /* Application notifications */
-.app-toast-container { position: fixed; z-index: 10000; top: 1rem; left: 50%; transform: translateX(-50%); display: grid; gap: .5rem; width: min(28rem, calc(100vw - 2rem)); }
-.app-toast-container.toast-bottom-right { top: auto; left: auto; right: 1rem; bottom: 1rem; transform: none; }
-.app-toast-container.toast-bottom-full-width { top: auto; bottom: 1rem; width: calc(100vw - 2rem); }
-.app-toast { display: flex; align-items: center; gap: .65rem; padding: .8rem 1rem; border-radius: .4rem; color: #fff; background: #2878a0; box-shadow: 0 .25rem 1rem #0005; }
-.app-toast-success { background: #247a45; } .app-toast-error { background: #a4232b; } .app-toast-warning { background: #946200; }
-.app-toast-title { margin-right: .25rem; } .app-toast button { margin-left: auto; border: 0; color: inherit; background: transparent; font-size: 1.25rem; cursor: pointer; }
+.app-toast-container {
+  position: fixed;
+  z-index: 10000;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 0.5rem;
+  width: min(28rem, calc(100vw - 2rem));
+}
+.app-toast-container.toast-bottom-right {
+  top: auto;
+  left: auto;
+  right: 1rem;
+  bottom: 1rem;
+  transform: none;
+}
+.app-toast-container.toast-bottom-full-width {
+  top: auto;
+  bottom: 1rem;
+  width: calc(100vw - 2rem);
+}
+.app-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.4rem;
+  color: #fff;
+  background: #2878a0;
+  box-shadow: 0 0.25rem 1rem #0005;
+}
+.app-toast-success {
+  background: #247a45;
+}
+.app-toast-error {
+  background: #a4232b;
+}
+.app-toast-warning {
+  background: #946200;
+}
+.app-toast-title {
+  margin-right: 0.25rem;
+}
+.app-toast button {
+  margin-left: auto;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 1.25rem;
+  cursor: pointer;
+}

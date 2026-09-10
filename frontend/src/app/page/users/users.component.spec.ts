@@ -36,11 +36,7 @@ describe('UsersComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        UsersComponent,
-        TranslateModule.forRoot(),
-        NoopAnimationsModule,
-      ],
+      imports: [UsersComponent, TranslateModule.forRoot(), NoopAnimationsModule],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
