@@ -91,20 +91,19 @@ UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
   }
-  next();
 });
 
 // Query-based updates bypass `pre('save')` entirely. Without this guard a
 // password sent through findOneAndUpdate/updateOne lands in the database in
 // cleartext and then never matches on login. Hash it here too rather than
 // relying on every call site to remember.
-const hashPasswordInUpdate = async function (next) {
+const hashPasswordInUpdate = async function () {
   const update = this.getUpdate();
-  if (!update) return next();
+  if (!update) return;
 
   // Both shapes must be handled, not one or the other. Mongoose's own
   // timestamps middleware registers first and injects `$set: { updatedAt }`,
@@ -120,8 +119,6 @@ const hashPasswordInUpdate = async function (next) {
 
   await hash(update);
   await hash(update.$set);
-
-  next();
 };
 
 UserSchema.pre('findOneAndUpdate', hashPasswordInUpdate);

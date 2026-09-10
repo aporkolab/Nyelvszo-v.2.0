@@ -1,7 +1,7 @@
 {
   "name": "nyelvszo-backend",
   "version": "2.5.0",
-  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary API",
+  "description": "NyelvSz\u00f3 - English-Hungarian Linguistic Dictionary API",
   "main": "src/index.js",
   "engines": {
     "node": ">=24.0.0"
@@ -9,12 +9,12 @@
   "scripts": {
     "start": "node ./src/index.js",
     "dev": "nodemon ./src/index.js",
-    "test": "jest --detectOpenHandles --forceExit",
-    "test:watch": "jest --watch --detectOpenHandles",
-    "test:coverage": "jest --coverage --detectOpenHandles --forceExit",
-    "test:integration": "jest --testPathPatterns=integration --detectOpenHandles --forceExit",
-    "test:unit": "jest --testPathPatterns=unit --detectOpenHandles --forceExit",
-    "test:ci": "jest --ci --coverage --detectOpenHandles --forceExit --maxWorkers=2",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch --detectOpenHandles",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --detectOpenHandles --forceExit",
+    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathPatterns=integration --detectOpenHandles --forceExit",
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathPatterns=unit --detectOpenHandles --forceExit",
+    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --ci --coverage --detectOpenHandles --forceExit --maxWorkers=2",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "format": "prettier --write \"{src,tests}/**/*.js\"",
@@ -23,7 +23,7 @@
     "seed": "node ./src/seed/seeder.js",
     "health": "curl -s http://localhost:3000/health | jq"
   },
-  "author": "Adam Dr. Porkolab & Tamás Dr. Fekete",
+  "author": "Adam Dr. Porkolab & Tam\u00e1s Dr. Fekete",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",

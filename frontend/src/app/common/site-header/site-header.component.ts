@@ -52,7 +52,7 @@ export class SiteHeaderComponent {
     NAV_ITEMS.filter(item => !item.minimumRole || this.auth.hasRole(item.minimumRole))
   );
 
-  readonly languages = computed(() => this.translate.getLangs());
+  readonly languages = () => this.translate.getLangs();
 
   /**
    * Current language, tracked reactively so the select stays in sync when the
