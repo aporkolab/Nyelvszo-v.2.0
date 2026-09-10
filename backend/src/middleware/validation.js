@@ -15,12 +15,16 @@ const createError = require('http-errors');
  * @returns {function} Express middleware.
  */
 const validate = (schema, source = 'body') => {
+  const queryFields = new Set(Object.keys(schema.describe().keys ?? {}));
   return (req, res, next) => {
     const data = req[source] ?? {};
 
     // The simple query parser preserves bracket notation in parameter names.
     // Reject MongoDB operator syntax before Joi strips unknown parameters.
-    if (source === 'query' && Object.keys(data).some((key) => /\$|\[|\]/.test(key))) {
+    if (
+      source === 'query' &&
+      Object.keys(data).some((key) => queryFields.has(key.split('[')[0]) && /\$|\[|\]/.test(key))
+    ) {
       return next(createError(400, 'Validation Error', { type: 'ValidationError' }));
     }
 
