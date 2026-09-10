@@ -218,7 +218,7 @@ export class AuthService {
    * saw every request fail.
    */
   private restoreSession(): void {
-    let stored: string | null = null;
+    let stored: string | null;
 
     try {
       stored = sessionStorage.getItem(STORAGE_KEY);
