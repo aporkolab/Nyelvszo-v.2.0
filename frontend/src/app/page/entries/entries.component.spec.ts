@@ -48,11 +48,7 @@ describe('EntriesComponent', () => {
       .and.returnValue(of({ data: [entry('morféma')], pagination: pagination() }));
 
     await TestBed.configureTestingModule({
-      imports: [
-        EntriesComponent,
-        TranslateModule.forRoot(),
-        NoopAnimationsModule,
-      ],
+      imports: [EntriesComponent, TranslateModule.forRoot(), NoopAnimationsModule],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

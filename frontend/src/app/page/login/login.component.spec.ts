@@ -29,11 +29,7 @@ describe('LoginComponent', () => {
     TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
-      imports: [
-        LoginComponent,
-        TranslateModule.forRoot(),
-        NoopAnimationsModule,
-      ],
+      imports: [LoginComponent, TranslateModule.forRoot(), NoopAnimationsModule],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

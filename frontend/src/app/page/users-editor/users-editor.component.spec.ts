@@ -12,7 +12,7 @@ import { UsersEditorComponent } from './users-editor.component';
 
 function configure(id: string) {
   TestBed.configureTestingModule({
-    imports: [UsersEditorComponent, TranslateModule.forRoot(),],
+    imports: [UsersEditorComponent, TranslateModule.forRoot()],
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),

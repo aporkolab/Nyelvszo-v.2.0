@@ -35,7 +35,9 @@ const parseEntryExport = (source) => {
       try {
         return JSON.parse(line);
       } catch (error) {
-        throw new Error(`entries.json line ${index + 1} is not valid JSON: ${error.message}`, { cause: error });
+        throw new Error(`entries.json line ${index + 1} is not valid JSON: ${error.message}`, {
+          cause: error,
+        });
       }
     });
 };

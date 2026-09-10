@@ -14,7 +14,7 @@ describe('EntriesEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EntriesEditorComponent, TranslateModule.forRoot(),],
+      imports: [EntriesEditorComponent, TranslateModule.forRoot()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
