@@ -5,7 +5,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { TRANSLATE_HTTP_LOADER_CONFIG, TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
@@ -31,6 +31,12 @@ bootstrapApplication(AppComponent, {
     ),
     provideAnimations(),
     provideHttpClient(withInterceptors([authInterceptor])),
+    // ngx-translate 17: the argument-less TranslateHttpLoader injects its
+    // prefix/suffix from this token; without it bootstrap fails with NG0201.
+    {
+      provide: TRANSLATE_HTTP_LOADER_CONFIG,
+      useValue: { prefix: './assets/i18n/', suffix: '.json' },
+    },
     importProvidersFrom(
       TranslateModule.forRoot({
         defaultLanguage: 'hu',
