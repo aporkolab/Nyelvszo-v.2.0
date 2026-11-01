@@ -1,7 +1,7 @@
 {
   "name": "nyelvszo-frontend",
   "version": "2.5.0",
-  "description": "NyelvSz\u00f3 - English-Hungarian Linguistic Dictionary Frontend",
+  "description": "NyelvSzó - English-Hungarian Linguistic Dictionary Frontend",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -49,12 +49,12 @@
     "webpack-dev-server": "^5.2.6"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "22.2.1",
     "@angular-eslint/builder": "^22.5.0",
     "@angular-eslint/eslint-plugin": "^22.5.0",
     "@angular-eslint/eslint-plugin-template": "^22.5.0",
     "@angular-eslint/schematics": "^22.5.0",
     "@angular-eslint/template-parser": "^22.5.0",
+    "@angular/build": "22.2.5",
     "@angular/cli": "22.2.3",
     "@angular/compiler-cli": "22.2.1",
     "@eslint/js": "^10.0.1",
@@ -63,6 +63,7 @@
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
+    "istanbul-lib-instrument": "^6.0.3",
     "jasmine-core": "~7.0.2",
     "karma": "^6.4.4",
     "karma-chrome-launcher": "^3.2.0",
